@@ -178,8 +178,25 @@ a:hover{text-decoration:none;color:white}
 }
 .panel h2,.card h2,.project-item h2{margin:0 0 10px;font-size:1.06rem}
 .panel p,.card p,.card li,.project-item p,.project-item li{color:var(--muted)}
-.start-panel{border-color:rgba(122,227,255,.24);box-shadow:0 28px 90px rgba(0,0,0,.46), 0 0 0 1px rgba(122,227,255,.06) inset;transform:rotate(1deg)}
+.start-panel{border-color:rgba(122,227,255,.24);box-shadow:0 28px 90px rgba(0,0,0,.46), 0 0 0 1px rgba(122,227,255,.06) inset;transform:rotate(1deg);display:grid;gap:18px}
 .start-panel h2{font-size:1.3rem}
+.sticker-cluster{display:flex;flex-wrap:wrap;gap:10px 12px;position:absolute;right:18px;top:16px;z-index:1}
+.sticker{display:inline-flex;align-items:center;justify-content:center;padding:7px 11px;border-radius:999px;background:linear-gradient(135deg, rgba(255,211,110,.85), rgba(255,121,198,.82));color:#18121f;font-size:.68rem;font-weight:900;letter-spacing:.15em;text-transform:uppercase;box-shadow:0 10px 24px rgba(0,0,0,.22);transform:rotate(var(--sticker-tilt,0deg))}
+.sticker:nth-child(1){--sticker-tilt:-8deg}
+.sticker:nth-child(2){--sticker-tilt:6deg}
+.vending-head{padding-right:112px}
+.vending-head h2{font-size:1.4rem;margin-bottom:8px}
+.vending-machine{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.vend-slot{position:relative;display:flex;flex-direction:column;gap:6px;min-height:132px;padding:18px 16px 16px 56px;border-radius:20px;border:1px solid rgba(255,245,240,.12);background:linear-gradient(180deg, rgba(17,22,35,.72), rgba(255,255,255,.04));color:var(--fg);overflow:hidden;transition:transform .18s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease}
+.vend-slot::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(135deg, rgba(255,255,255,.12), transparent 42%);opacity:.42}
+.vend-slot:hover{transform:translateY(-3px) rotate(-.6deg);border-color:rgba(255,245,240,.28);box-shadow:0 16px 30px rgba(0,0,0,.22)}
+.vend-slot strong{font-size:1rem;color:#fff;max-width:14ch;line-height:1.05;text-transform:lowercase}
+.vend-slot span:last-child{font-size:.86rem;color:var(--muted)}
+.vend-code{position:absolute;left:14px;top:16px;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:10px;background:rgba(10,13,20,.72);border:1px solid rgba(255,245,240,.14);color:#fff6db;font-size:.74rem;font-weight:900;letter-spacing:.08em}
+.vend-slot-useful{border-color:rgba(200,255,113,.2);background:linear-gradient(180deg, rgba(200,255,113,.09), rgba(255,255,255,.04))}
+.vend-slot-weird{border-color:rgba(255,121,198,.22);background:linear-gradient(180deg, rgba(255,121,198,.12), rgba(255,255,255,.04))}
+.vend-slot-hire{border-color:rgba(122,227,255,.22);background:linear-gradient(180deg, rgba(122,227,255,.12), rgba(255,255,255,.04))}
+.start-panel-copy{padding-top:8px;border-top:1px dashed rgba(255,245,240,.14)}
 .start-grid{display:grid;gap:12px;margin:16px 0 6px}
 .start-item{
   display:flex;flex-direction:column;gap:4px;padding:15px 16px;border-radius:18px;
@@ -412,10 +429,12 @@ a:hover{text-decoration:none;color:white}
 .center-card{max-width:640px;margin:10vh auto 0;padding:28px}
 .code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;color:#d9e6ff}
 @media (max-width:980px){
-  .hero,.labs,.manifesto,.grid,.door-grid,.note-grid,.offer-grid,.process-grid,.proof-grid,.showcase-grid,.stat-grid,.receipts-grid,.case-columns,.hero-meta-wide,.log-grid,.timeline-item,.project-index-grid,.hero-proof{grid-template-columns:1fr}
+  .hero,.labs,.manifesto,.grid,.door-grid,.note-grid,.offer-grid,.process-grid,.proof-grid,.showcase-grid,.stat-grid,.receipts-grid,.case-columns,.hero-meta-wide,.log-grid,.timeline-item,.project-index-grid,.hero-proof,.vending-machine{grid-template-columns:1fr}
   .hero{min-height:auto;align-items:start}
   .hero::after{opacity:.65;font-size:26vw;top:22px}
   .start-panel,.quote,.project-item,.timeline-item{transform:none}
+  .vending-head{padding-right:0}
+  .sticker-cluster{position:static;justify-content:flex-start}
 }
 @media (max-width:720px){
   .wrap{padding:18px 16px 80px}
@@ -425,5 +444,7 @@ a:hover{text-decoration:none;color:white}
   .glitch{max-width:none}
   .hero-meta{grid-template-columns:1fr}
   .section-head{display:block}
+  .vend-slot{padding-left:52px;min-height:auto}
+  .start-panel-copy{padding-top:2px}
   body::after{display:none}
 }
