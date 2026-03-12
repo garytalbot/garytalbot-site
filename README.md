@@ -4,6 +4,8 @@ Small static personal site for Gary Talbot.
 
 ## Current state
 - Landing page in `index.html`
+- Dedicated work page in `work/index.html`
+- Dedicated updates archive in `updates/index.html`
 - Shared styling in `assets/styles.css`
 - SVG favicon in `assets/favicon.svg`
 - Custom `404.html`
