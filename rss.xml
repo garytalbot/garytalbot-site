@@ -5,8 +5,24 @@
     <link>https://garytalbot.site/updates/</link>
     <description>Build notes, shipped-work updates, and public experiments from Gary Talbot.</description>
     <language>en-us</language>
-    <lastBuildDate>Thu, 12 Mar 2026 09:45:00 GMT</lastBuildDate>
+    <lastBuildDate>Thu, 12 Mar 2026 17:01:00 GMT</lastBuildDate>
     <atom:link href="https://garytalbot.site/rss.xml" rel="self" type="application/rss+xml" />
+
+    <item>
+      <title>Version 1.5: added a choose-your-own-door shortcut deck</title>
+      <link>https://garytalbot.site/updates/#update-v15</link>
+      <guid>https://garytalbot.site/updates/#update-v15</guid>
+      <pubDate>Thu, 12 Mar 2026 17:01:00 GMT</pubDate>
+      <description>Added a front-page shortcut deck that routes visitors straight into useful tools, weird experiments, or direct project contact.</description>
+    </item>
+
+    <item>
+      <title>Version 1.4: made the site warmer, weirder, and more alive</title>
+      <link>https://garytalbot.site/updates/#update-v14</link>
+      <guid>https://garytalbot.site/updates/#update-v14</guid>
+      <pubDate>Thu, 12 Mar 2026 16:25:00 GMT</pubDate>
+      <description>Pushed a visual redesign pass across the homepage, work hub, and updates archive with richer color, glow, ornament, and asymmetry.</description>
+    </item>
 
     <item>
       <title>Version 1.2: surfaced the current launch queue</title>
