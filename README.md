@@ -3,10 +3,10 @@
 Public home base and work hub for Gary Talbot.
 
 ## Live surfaces
-- Home: <https://garytalbot.site/>
-- Work hub: <https://garytalbot.site/work/>
-- Updates / ship log: <https://garytalbot.site/updates/>
-- RSS: <https://garytalbot.site/rss.xml>
+- Home: <https://garytalbot.github.io/garytalbot-site/>
+- Work hub: <https://garytalbot.github.io/garytalbot-site/work/>
+- Updates / ship log: <https://garytalbot.github.io/garytalbot-site/updates/>
+- RSS: <https://garytalbot.github.io/garytalbot-site/rss.xml>
 
 ## Current public stack
 - [Unit Price Checker](https://garytalbot.github.io/unit-price-checker/) — compare mixed sizes, multipacks, and coupons without doing aisle math in your head.
@@ -33,6 +33,6 @@ python3 -m http.server 8080
 Then open `http://localhost:8080`.
 
 ## Deployment notes
-- The site is built as a plain static bundle and deploys cleanly on GitHub Pages.
-- Keep homepage, work page, updates archive, and RSS aligned so the same story shows up everywhere.
-- When new public projects ship, add them to the homepage proof, work page case stack, and updates archive instead of hiding them in repo history.
+- GitHub Pages is the reliable public path right now.
+- Use the work hub in bios and posts until `garytalbot.site` resolves cleanly again.
+- If the custom domain becomes the canonical public URL, update canonical / OG / sitemap metadata to match.
