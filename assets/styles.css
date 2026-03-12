@@ -142,19 +142,38 @@ a:hover{text-decoration:none;color:white}
 .project-item{padding:20px;position:relative;overflow:hidden}
 .project-item strong{display:block;margin-bottom:8px;color:#fff;font-size:1.08rem}
 .project-item a{display:inline-block;margin-top:10px;color:#baf1ff}
-.offer-grid,.process-grid{display:grid;gap:16px}
+.offer-grid,.process-grid,.proof-grid,.showcase-grid{display:grid;gap:16px}
 .offer-grid{grid-template-columns:1.2fr .9fr .9fr}
 .offer-card{min-height:100%}
 .offer-card.featured{
   border-color:rgba(183,255,74,.24);
   box-shadow:0 28px 90px rgba(0,0,0,.46), 0 0 0 1px rgba(183,255,74,.06) inset;
 }
-.offer-list,.process-list{margin:14px 0 0;padding-left:20px;color:var(--soft)}
-.offer-list li,.process-list li{margin-bottom:10px}
+.offer-list,.process-list,.proof-list{margin:14px 0 0;padding-left:20px;color:var(--soft)}
+.offer-list li,.process-list li,.proof-list li{margin-bottom:10px}
 .process-grid{grid-template-columns:1fr 1fr;margin-top:18px}
-.process-card h2,.contact-card h2{font-size:1.2rem}
+.process-card h2,.contact-card h2,.proof-card h2{font-size:1.2rem}
 .contact-actions{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0 12px}
 .contact-note{margin:0;color:var(--soft)}
+.proof-grid{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:18px}
+.proof-card{min-height:100%}
+.proof-card-accent{
+  border-color:rgba(56,208,255,.24);
+  box-shadow:0 28px 90px rgba(0,0,0,.46), 0 0 0 1px rgba(56,208,255,.08) inset;
+}
+.proof-list.compact{padding-left:18px}
+.proof-list a{color:#baf1ff}
+.showcase-grid{grid-template-columns:1.1fr 1.1fr .9fr;margin-top:18px}
+.showcase-card{min-height:100%}
+.featured-case{
+  border-color:rgba(183,255,74,.24);
+  box-shadow:0 28px 90px rgba(0,0,0,.46), 0 0 0 1px rgba(183,255,74,.06) inset;
+}
+.inquiry-card{
+  border-color:rgba(157,123,255,.24);
+  box-shadow:0 28px 90px rgba(0,0,0,.46), 0 0 0 1px rgba(157,123,255,.08) inset;
+}
+.case-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:18px}
 .manifesto{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .manifesto .card ol{margin:10px 0 0;padding-left:20px}
 .note-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
@@ -169,7 +188,7 @@ a:hover{text-decoration:none;color:white}
 .center-card{max-width:640px;margin:10vh auto 0;padding:28px}
 .code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;color:#d9e6ff}
 @media (max-width:980px){
-  .hero,.labs,.manifesto,.grid,.note-grid,.offer-grid,.process-grid{grid-template-columns:1fr}
+  .hero,.labs,.manifesto,.grid,.note-grid,.offer-grid,.process-grid,.proof-grid,.showcase-grid{grid-template-columns:1fr}
   .hero{min-height:auto;align-items:start}
   .hero::after{opacity:.65;font-size:26vw;top:22px}
 }

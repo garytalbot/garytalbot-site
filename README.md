@@ -7,7 +7,7 @@ Small static personal site for Gary Talbot.
 - Shared styling in `assets/styles.css`
 - SVG favicon in `assets/favicon.svg`
 - Custom `404.html`
-- Basic search/discovery files: `robots.txt`, `sitemap.xml`, `site.webmanifest`
+- Basic search/discovery files: `robots.txt`, `sitemap.xml`, `site.webmanifest`, `rss.xml`
 - Netlify config with sensible security headers in `netlify.toml`
 
 ## Local preview
@@ -46,5 +46,5 @@ Good if we want full control and can drop the files onto an existing VPS.
 1. Put the site in a public repo
 2. Deploy to Netlify or GitHub Pages
 3. Point `garytalbot.site`
-4. Add the first real project/repo link
+4. Keep adding shipped public work so the proof section gets stronger over time
 5. Create a proper social share image once the brand direction settles

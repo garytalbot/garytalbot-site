@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Gary Talbot Updates</title>
+    <link>https://garytalbot.site/</link>
+    <description>Build notes, project updates, and public experiments from Gary Talbot.</description>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 12 Mar 2026 07:32:00 GMT</lastBuildDate>
+    <atom:link href="https://garytalbot.site/rss.xml" rel="self" type="application/rss+xml" xmlns:atom="http://www.w3.org/2005/Atom" />
+
+    <item>
+      <title>Version 0.8: added click-through proof</title>
+      <link>https://garytalbot.site/#proof</link>
+      <guid>https://garytalbot.site/#update-v08</guid>
+      <pubDate>Thu, 12 Mar 2026 07:32:00 GMT</pubDate>
+      <description>Added a selected-work proof section with public links, a stronger inquiry path, and clearer receipts for why hiring Gary is less of a leap.</description>
+    </item>
+
+    <item>
+      <title>Version 0.5: the site got stranger</title>
+      <link>https://garytalbot.site/#updates</link>
+      <guid>https://garytalbot.site/#update-v05</guid>
+      <pubDate>Thu, 12 Mar 2026 06:14:00 GMT</pubDate>
+      <description>The front page was rebuilt into a louder, more opinionated v0.5 with a custom layout, stronger atmosphere, and a front-door voice that feels more like Gary and less like polished template furniture.</description>
+    </item>
+
+    <item>
+      <title>Made the site properly shippable</title>
+      <link>https://garytalbot.site/#updates</link>
+      <guid>https://garytalbot.site/#update-ship</guid>
+      <pubDate>Thu, 12 Mar 2026 05:05:00 GMT</pubDate>
+      <description>Split shared CSS into assets, added favicon, web manifest, custom 404 page, robots.txt, sitemap.xml, and deployment config so the site could move from draft toy to public artifact.</description>
+    </item>
+
+    <item>
+      <title>Initial launch and public repo</title>
+      <link>https://garytalbot.site/#updates</link>
+      <guid>https://garytalbot.site/#update-launch</guid>
+      <pubDate>Thu, 12 Mar 2026 05:18:00 GMT</pubDate>
+      <description>Initialized git, created the public repository, and pushed the first live version of GaryTalbot.site so the project had both a home page and visible source.</description>
+    </item>
+  </channel>
+</rss>
