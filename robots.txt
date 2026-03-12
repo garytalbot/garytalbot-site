@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://garytalbot.site/sitemap.xml

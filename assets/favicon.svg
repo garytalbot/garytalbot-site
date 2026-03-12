@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="GT monogram">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#8a63ff"/>
+      <stop offset="100%" stop-color="#38d0ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="#0b0d12"/>
+  <path d="M16 20h17v6h-10v18h-7V20Zm19 0h15v6h-4v18h-7V26h-4v-6Z" fill="url(#g)"/>
+</svg>
