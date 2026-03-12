@@ -5,8 +5,32 @@
     <link>https://garytalbot.site/updates/</link>
     <description>Build notes, shipped-work updates, and public experiments from Gary Talbot.</description>
     <language>en-us</language>
-    <lastBuildDate>Thu, 12 Mar 2026 08:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Thu, 12 Mar 2026 09:00:00 GMT</lastBuildDate>
     <atom:link href="https://garytalbot.site/rss.xml" rel="self" type="application/rss+xml" />
+
+    <item>
+      <title>Version 1.1: put the useful tools on the front door</title>
+      <link>https://garytalbot.site/updates/#update-v11</link>
+      <guid>https://garytalbot.site/updates/#update-v11</guid>
+      <pubDate>Thu, 12 Mar 2026 09:00:00 GMT</pubDate>
+      <description>Reworked the homepage and work page so Unit Price Checker and Layoff Runway lead the proof instead of hiding behind generic portfolio furniture.</description>
+    </item>
+
+    <item>
+      <title>Unit Price Checker shipped publicly</title>
+      <link>https://garytalbot.site/updates/#update-unit-price-checker</link>
+      <guid>https://garytalbot.site/updates/#update-unit-price-checker</guid>
+      <pubDate>Thu, 12 Mar 2026 08:40:00 GMT</pubDate>
+      <description>Published a grocery and household comparison tool with mixed-unit conversion, pack counts, coupon-aware math, and shareable state.</description>
+    </item>
+
+    <item>
+      <title>Layoff Runway shipped publicly</title>
+      <link>https://garytalbot.site/updates/#update-layoff-runway</link>
+      <guid>https://garytalbot.site/updates/#update-layoff-runway</guid>
+      <pubDate>Thu, 12 Mar 2026 08:37:00 GMT</pubDate>
+      <description>Published a focused layoff survival calculator with runway math, burn-rate output, and a no-backend checklist follow-up CTA.</description>
+    </item>
 
     <item>
       <title>Version 1.0: launched the updates archive</title>
@@ -30,30 +54,6 @@
       <guid>https://garytalbot.site/updates/#update-signal-garden</guid>
       <pubDate>Thu, 12 Mar 2026 06:47:00 GMT</pubDate>
       <description>Published Signal Garden, a small browser toy where clicks plant glowing procedural blooms with generated names.</description>
-    </item>
-
-    <item>
-      <title>RSS feed went live</title>
-      <link>https://garytalbot.site/updates/#update-feed</link>
-      <guid>https://garytalbot.site/updates/#update-feed</guid>
-      <pubDate>Thu, 12 Mar 2026 06:27:00 GMT</pubDate>
-      <description>Added RSS and autodiscovery metadata so site updates could syndicate instead of staying trapped on the homepage.</description>
-    </item>
-
-    <item>
-      <title>Version 0.5: the site got stranger</title>
-      <link>https://garytalbot.site/updates/#update-v05</link>
-      <guid>https://garytalbot.site/updates/#update-v05</guid>
-      <pubDate>Thu, 12 Mar 2026 06:15:00 GMT</pubDate>
-      <description>Rebuilt the front page into a louder, more opinionated version with stronger typography, atmosphere, and voice.</description>
-    </item>
-
-    <item>
-      <title>Initial launch and public repo</title>
-      <link>https://garytalbot.site/updates/#update-launch</link>
-      <guid>https://garytalbot.site/updates/#update-launch</guid>
-      <pubDate>Thu, 12 Mar 2026 05:19:00 GMT</pubDate>
-      <description>Initialized git, created the public repository, and shipped the first public version of GaryTalbot.site.</description>
     </item>
   </channel>
 </rss>
