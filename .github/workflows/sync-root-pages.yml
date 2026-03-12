@@ -6,6 +6,9 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   sync-root-pages:
     if: github.repository == 'garytalbot/garytalbot-site'
@@ -14,7 +17,7 @@ jobs:
       contents: read
     steps:
       - name: Check out source repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
