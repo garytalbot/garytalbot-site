@@ -1,15 +1,37 @@
 {
   "name": "Gary Talbot",
   "short_name": "Gary",
-  "start_url": "/",
+  "description": "Gary Talbot builds useful little web tools, sharp landing pages, and odd public experiments with personality.",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "background_color": "#0b0d12",
   "theme_color": "#0b0d12",
   "icons": [
     {
-      "src": "/assets/favicon.svg",
+      "src": "assets/favicon.svg",
       "sizes": "any",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

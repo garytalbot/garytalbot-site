@@ -18,7 +18,7 @@ Public home base and work hub for Gary Talbot.
 - Dedicated work page in `work/index.html`
 - Dedicated updates archive in `updates/index.html`
 - Shared styling in `assets/styles.css`
-- SVG favicon in `assets/favicon.svg`
+- Full favicon/app-icon set in `assets/` (`favicon.svg`, PNG favicons, `favicon.ico`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`)
 - Custom `404.html`
 - Basic discovery files: `robots.txt`, `sitemap.xml`, `site.webmanifest`, `rss.xml`
 - Netlify config with sensible security headers in `netlify.toml`
