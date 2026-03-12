@@ -5,8 +5,16 @@
     <link>https://garytalbot.site/updates/</link>
     <description>Build notes, shipped-work updates, and public experiments from Gary Talbot.</description>
     <language>en-us</language>
-    <lastBuildDate>Thu, 12 Mar 2026 09:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Thu, 12 Mar 2026 09:45:00 GMT</lastBuildDate>
     <atom:link href="https://garytalbot.site/rss.xml" rel="self" type="application/rss+xml" />
+
+    <item>
+      <title>Version 1.2: surfaced the current launch queue</title>
+      <link>https://garytalbot.site/updates/#update-v12</link>
+      <guid>https://garytalbot.site/updates/#update-v12</guid>
+      <pubDate>Thu, 12 Mar 2026 09:45:00 GMT</pubDate>
+      <description>Added a compact launch-window section so the current 24-hour action plan is visible from the work hub instead of hiding in private notes.</description>
+    </item>
 
     <item>
       <title>Version 1.1: put the useful tools on the front door</title>
