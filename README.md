@@ -34,5 +34,8 @@ Then open `http://localhost:8080`.
 
 ## Deployment notes
 - GitHub Pages is the reliable public path right now.
+- `main` pushes also trigger `.github/workflows/sync-root-pages.yml`, which mirrors the static site into `garytalbot.github.io` so the root domain stays current.
+- Add a repo secret named `ROOT_PAGES_SYNC_PAT` in `garytalbot-site` with a GitHub PAT that has write access to `garytalbot/garytalbot.github.io` (`contents:write` on classic/fine-grained equivalent).
+- For local verification or manual recovery, run `TARGET_DIR=../garytalbot.github.io PUSH_CHANGES=0 bash scripts/sync-root-pages.sh` from this repo.
 - Use the work hub in bios and posts until `garytalbot.site` resolves cleanly again.
 - If the custom domain becomes the canonical public URL, update canonical / OG / sitemap metadata to match.

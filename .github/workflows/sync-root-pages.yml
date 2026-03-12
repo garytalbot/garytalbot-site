@@ -1,0 +1,31 @@
+name: Sync root GitHub Pages repo
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  sync-root-pages:
+    if: github.repository == 'garytalbot/garytalbot-site'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out source repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync into garytalbot.github.io
+        env:
+          SYNC_TOKEN: ${{ secrets.ROOT_PAGES_SYNC_PAT }}
+          TARGET_REPO: garytalbot/garytalbot.github.io
+          TARGET_BRANCH: main
+        run: |
+          if [ -z "$SYNC_TOKEN" ]; then
+            echo "Missing ROOT_PAGES_SYNC_PAT secret in garytalbot-site." >&2
+            exit 1
+          fi
+          bash scripts/sync-root-pages.sh
