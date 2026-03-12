@@ -154,6 +154,11 @@ a:hover{text-decoration:none;color:white}
 .ornament-pill:nth-child(2){--tilt:2deg}
 .ornament-pill:nth-child(3){--tilt:-2deg}
 .ornament-pill:nth-child(4){--tilt:3deg}
+.ornament-pill:nth-child(5){--tilt:-3deg}
+.ornament-pill-vending{
+  background:linear-gradient(135deg, rgba(255,211,110,.2), rgba(200,255,113,.18), rgba(122,227,255,.12));
+  border-style:solid;
+}
 .btn{
   display:inline-flex;align-items:center;gap:10px;padding:12px 18px;border-radius:999px;
   border:1px solid var(--border);background:rgba(255,245,240,.05);
