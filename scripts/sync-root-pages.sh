@@ -82,7 +82,24 @@ git -C "${TARGET_DIR}" config user.email "${COMMIT_AUTHOR_EMAIL}"
 git -C "${TARGET_DIR}" commit -m "chore: sync site from garytalbot-site (${SOURCE_HEAD})"
 
 if [[ "${PUSH_CHANGES}" == "1" ]]; then
-  git -C "${TARGET_DIR}" push origin "${TARGET_BRANCH}"
+  push_attempt=1
+  max_push_attempts=3
+
+  while true; do
+    if git -C "${TARGET_DIR}" push origin "${TARGET_BRANCH}"; then
+      break
+    fi
+
+    if [[ "${push_attempt}" -ge "${max_push_attempts}" ]]; then
+      echo "Push failed after ${push_attempt} attempts." >&2
+      exit 1
+    fi
+
+    echo "Push was rejected; fetching latest ${TARGET_BRANCH} and rebasing before retry ${push_attempt}." >&2
+    git -C "${TARGET_DIR}" fetch origin "${TARGET_BRANCH}"
+    git -C "${TARGET_DIR}" rebase "origin/${TARGET_BRANCH}"
+    push_attempt=$((push_attempt + 1))
+  done
 else
   echo "Push skipped because PUSH_CHANGES=${PUSH_CHANGES}."
 fi
