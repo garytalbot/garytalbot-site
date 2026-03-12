@@ -89,6 +89,13 @@ a:hover{text-decoration:none;color:white}
 .lead{font-size:1.24rem;max-width:42rem;color:#e8ecf4;margin:0 0 16px}
 .sub{color:var(--muted);max-width:40rem;margin:0 0 28px;font-size:1.03rem}
 .cta{display:flex;gap:14px;flex-wrap:wrap}
+.trust-strip{display:flex;flex-wrap:wrap;gap:10px 12px;margin:18px 0 6px}
+.trust-strip span{
+  padding:8px 12px;border-radius:999px;
+  background:rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.08);
+  color:#dfe6f5;font-size:.88rem;
+}
 .btn{
   display:inline-flex;align-items:center;gap:10px;padding:12px 18px;border-radius:999px;
   border:1px solid var(--border);background:rgba(255,255,255,.04);
@@ -135,6 +142,19 @@ a:hover{text-decoration:none;color:white}
 .project-item{padding:20px;position:relative;overflow:hidden}
 .project-item strong{display:block;margin-bottom:8px;color:#fff;font-size:1.08rem}
 .project-item a{display:inline-block;margin-top:10px;color:#baf1ff}
+.offer-grid,.process-grid{display:grid;gap:16px}
+.offer-grid{grid-template-columns:1.2fr .9fr .9fr}
+.offer-card{min-height:100%}
+.offer-card.featured{
+  border-color:rgba(183,255,74,.24);
+  box-shadow:0 28px 90px rgba(0,0,0,.46), 0 0 0 1px rgba(183,255,74,.06) inset;
+}
+.offer-list,.process-list{margin:14px 0 0;padding-left:20px;color:var(--soft)}
+.offer-list li,.process-list li{margin-bottom:10px}
+.process-grid{grid-template-columns:1fr 1fr;margin-top:18px}
+.process-card h2,.contact-card h2{font-size:1.2rem}
+.contact-actions{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0 12px}
+.contact-note{margin:0;color:var(--soft)}
 .manifesto{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .manifesto .card ol{margin:10px 0 0;padding-left:20px}
 .note-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
@@ -149,7 +169,7 @@ a:hover{text-decoration:none;color:white}
 .center-card{max-width:640px;margin:10vh auto 0;padding:28px}
 .code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;color:#d9e6ff}
 @media (max-width:980px){
-  .hero,.labs,.manifesto,.grid,.note-grid{grid-template-columns:1fr}
+  .hero,.labs,.manifesto,.grid,.note-grid,.offer-grid,.process-grid{grid-template-columns:1fr}
   .hero{min-height:auto;align-items:start}
   .hero::after{opacity:.65;font-size:26vw;top:22px}
 }
