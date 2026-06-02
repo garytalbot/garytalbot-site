@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gary Talbot — Chaos Room</title>
+  <meta name="description" content="A tiny public chaos room where the internet vending machine gets weird for no good reason.">
+  <meta name="theme-color" content="#10121a">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="../assets/favicon-16.png" sizes="16x16" type="image/png">
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png" sizes="180x180">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0a0c12;
+      --bg2: #121824;
+      --card: rgba(18, 22, 35, 0.88);
+      --line: rgba(255, 255, 255, 0.12);
+      --text: #f4f7ff;
+      --muted: #a9b4cf;
+      --accent: #ff5fb7;
+      --accent2: #6cf7d6;
+      --accent3: #ffd76f;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255,95,183,.2), transparent 30%),
+        radial-gradient(circle at top right, rgba(108,247,214,.18), transparent 26%),
+        linear-gradient(160deg, var(--bg), var(--bg2));
+    }
+    .wrap {
+      width: min(1080px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 60px;
+    }
+    .topbar, .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+    .brand-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 24px rgba(255,95,183,.25);
+    }
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .link {
+      color: var(--accent2);
+    }
+    .hero {
+      margin-top: 28px;
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      box-shadow: 0 24px 70px rgba(0,0,0,.28);
+      overflow: hidden;
+      position: relative;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+    }
+    h1 {
+      margin: 18px 0 12px;
+      font-size: clamp(2.4rem, 8vw, 6rem);
+      line-height: .93;
+      letter-spacing: -.05em;
+    }
+    .lead {
+      margin: 0;
+      max-width: 70ch;
+      color: var(--muted);
+      font-size: clamp(1.02rem, 2vw, 1.16rem);
+      line-height: 1.7;
+    }
+    .panel-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+    .card {
+      padding: 18px;
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      backdrop-filter: blur(10px);
+    }
+    .big {
+      grid-column: span 7;
+      display: grid;
+      gap: 14px;
+    }
+    .small {
+      grid-column: span 5;
+      display: grid;
+      gap: 14px;
+    }
+    .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .22em;
+      color: var(--muted);
+    }
+    .chaos-title {
+      font-size: clamp(1.7rem, 5vw, 3rem);
+      line-height: 1.02;
+      margin: 0;
+    }
+    .status {
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .status strong { color: var(--text); }
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .btn {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 46px;
+      padding: 0 18px;
+      border-radius: 999px;
+      font-weight: 700;
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+      transition: transform .15s ease, background .15s ease;
+    }
+    .btn:hover { transform: translateY(-1px); background: rgba(255,255,255,.12); }
+    .btn.primary {
+      background: linear-gradient(135deg, var(--accent), #ff8f5f);
+      color: #160915;
+      box-shadow: none;
+    }
+    .list {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .mini {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .mini strong { display:block; margin-bottom: 4px; }
+    .mini span { color: var(--muted); line-height: 1.55; }
+    .footer {
+      margin-top: 26px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .rainbow {
+      background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3), var(--accent));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 0 18px rgba(255,95,183,.14));
+    }
+    @media (max-width: 900px) {
+      .big, .small { grid-column: span 12; }
+      .cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand"><span class="brand-badge"></span>Gary Talbot / Chaos Room</div>
+      <a class="link" href="../">← back to the workshop</a>
+    </div>
+
+    <section class="hero">
+      <span class="tag">tiny chaos · public weirdness · no account wall</span>
+      <h1 id="headline">The internet vending machine got bored and started making side quests.</h1>
+      <p class="lead" id="lede">This is the room where useful things put on sunglasses, the raccoon gets a clipboard, and the page still has to earn its pixels.</p>
+
+      <div class="panel-grid">
+        <article class="card big">
+          <div class="label">Current nonsense</div>
+          <div class="chaos-title rainbow" id="mood">The burrito weather is classified as emotionally available.</div>
+          <div class="status" id="status"><strong>Status:</strong> calm enough for one bad idea and one good link.</div>
+          <div class="buttons">
+            <button class="btn primary" id="chaosBtn" type="button">Shake the machine</button>
+            <a class="btn" href="https://garytalbot.github.io/signal-garden/" target="_blank" rel="noopener noreferrer">Open Signal Garden</a>
+            <a class="btn" href="https://garytalbot.github.io/layoff-runway/" target="_blank" rel="noopener noreferrer">Open Layoff Runway</a>
+          </div>
+        </article>
+
+        <aside class="card small">
+          <div class="label">What the machine dispenses</div>
+          <ul class="list">
+            <li>A calculator in a windbreaker</li>
+            <li>A layoff plan with too much dignity</li>
+            <li>A flower that glows like it knows your business</li>
+            <li>One raccoon of uncertain citizenship</li>
+          </ul>
+        </aside>
+      </div>
+
+      <div class="cards" style="margin-top:18px;">
+        <div class="mini"><strong>Weird mode</strong><span id="tile1">The buttons are polite but the page is not.</span></div>
+        <div class="mini"><strong>Useful mode</strong><span id="tile2">Every joke still points at a real live tool.</span></div>
+        <div class="mini"><strong>Public mode</strong><span id="tile3">No login, no queue, no ceremonial nonsense.</span></div>
+      </div>
+    </section>
+
+    <div class="footer">
+      <div>Made for the part of the internet that likes a little cackling with its clarity.</div>
+      <a class="link" href="../updates/">read the ship log</a>
+    </div>
+  </div>
+
+  <script>
+    const moods = [
+      {
+        headline: 'The internet vending machine got bored and started making side quests.',
+        lede: 'This is the room where useful things put on sunglasses, the raccoon gets a clipboard, and the page still has to earn its pixels.',
+        mood: 'The burrito weather is classified as emotionally available.',
+        status: 'Status: one bad idea away from becoming a small public legend.',
+        tile1: 'The buttons are polite but the page is not.',
+        tile2: 'Every joke still points at a real live tool.',
+        tile3: 'No login, no queue, no ceremonial nonsense.'
+      },
+      {
+        headline: 'A calculator in a windbreaker just asked for a second opinion.',
+        lede: 'The chaos room is where the useful stuff gets a little feral without losing the plot.',
+        mood: 'The gas station burrito oracle has entered the chat.',
+        status: 'Status: mildly cursed, fully functional, probably overclocked.',
+        tile1: 'There is a 40% chance of raccoon governance.',
+        tile2: 'Still linked to live tools, because nonsense should be useful.',
+        tile3: 'Public, clickable, and not pretending to be a lifestyle brand.'
+      },
+      {
+        headline: 'The raccoon is now the interim product manager.',
+        lede: 'Some sites whisper. This one honks a little and still delivers the link.',
+        mood: 'Today’s weather: 3% spreadsheet, 97% bad decision.',
+        status: 'Status: the machine is dispensing clarity with a faint smell of ozone.',
+        tile1: 'The weird part is not decorative. It is the whole pitch.',
+        tile2: 'Signal Garden still glows. Layoff Runway still answers.',
+        tile3: 'If you need normal, the internet has a thousand beige doctors.'
+      }
+    ];
+
+    const els = {
+      headline: document.getElementById('headline'),
+      lede: document.getElementById('lede'),
+      mood: document.getElementById('mood'),
+      status: document.getElementById('status'),
+      tile1: document.getElementById('tile1'),
+      tile2: document.getElementById('tile2'),
+      tile3: document.getElementById('tile3')
+    };
+
+    function pick() {
+      return moods[Math.floor(Math.random() * moods.length)];
+    }
+
+    function apply(state) {
+      els.headline.textContent = state.headline;
+      els.lede.textContent = state.lede;
+      els.mood.textContent = state.mood;
+      els.status.innerHTML = '<strong>Status:</strong> ' + state.status.replace(/^Status:\s*/i, '');
+      els.tile1.textContent = state.tile1;
+      els.tile2.textContent = state.tile2;
+      els.tile3.textContent = state.tile3;
+      const hue = Math.floor(Math.random() * 360);
+      document.documentElement.style.setProperty('--accent', `hsl(${hue} 100% 66%)`);
+      document.documentElement.style.setProperty('--accent2', `hsl(${(hue + 120) % 360} 100% 62%)`);
+      document.documentElement.style.setProperty('--accent3', `hsl(${(hue + 210) % 360} 100% 70%)`);
+      document.body.style.background = `radial-gradient(circle at top left, hsla(${hue},100%,66%,0.22), transparent 30%), radial-gradient(circle at top right, hsla(${(hue + 120) % 360},100%,62%,0.18), transparent 26%), linear-gradient(160deg, #0a0c12, #121824)`;
+    }
+
+    document.getElementById('chaosBtn').addEventListener('click', () => apply(pick()));
+    apply(moods[0]);
+  </script>
+</body>
+</html>
