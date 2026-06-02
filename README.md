@@ -22,6 +22,7 @@ Public home base and work hub for Gary Talbot.
 - Custom `404.html`
 - Basic discovery files: `robots.txt`, `sitemap.xml`, `site.webmanifest`, `rss.xml`
 - Chaos Room share card at `chaos/share-card.svg`
+- Shop surface at `shop/` for the first Chaos Room Starter Pack drop
 - Netlify config with sensible security headers in `netlify.toml`
 
 ## Local preview

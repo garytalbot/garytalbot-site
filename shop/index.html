@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gary Talbot Shop — Chaos Room Starter Pack</title>
+  <meta name="description" content="The first weird Gary product drop. Chaos Room Starter Pack, a tiny digital collectible built for the public internet.">
+  <meta name="theme-color" content="#0b0f18">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Chaos Room Starter Pack">
+  <meta property="og:description" content="A suspiciously official digital artifact from the Gary universe.">
+  <meta property="og:image" content="https://garytalbot.github.io/shop/assets/chaos-room-product-card.png">
+  <meta property="og:url" content="https://garytalbot.github.io/shop/">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="../assets/favicon-16.png" sizes="16x16" type="image/png">
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png" sizes="180x180">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090c14;
+      --bg2: #111829;
+      --panel: rgba(17, 22, 35, 0.86);
+      --line: rgba(255,255,255,.11);
+      --text: #f6f8ff;
+      --muted: #aeb8d4;
+      --accent: #ffcf5c;
+      --accent2: #ff6b6b;
+      --accent3: #6ef3d6;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(255,207,92,.18), transparent 22%),
+        radial-gradient(circle at bottom left, rgba(110,243,214,.12), transparent 24%),
+        linear-gradient(160deg, var(--bg), var(--bg2));
+      min-height: 100vh;
+    }
+    a { color: inherit; text-decoration: none; }
+    .wrap {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 60px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      letter-spacing: .03em;
+    }
+    .brand-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 30px rgba(255,207,92,.25);
+    }
+    .navlinks {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .navlinks a {
+      color: var(--muted);
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+    }
+    .navlinks a:hover {
+      color: var(--text);
+      border-color: var(--line);
+      background: rgba(255,255,255,.04);
+    }
+    .hero {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      box-shadow: 0 28px 80px rgba(0,0,0,.25);
+      overflow: hidden;
+      padding: 28px;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--line);
+      font-size: 14px;
+    }
+    h1 {
+      margin: 18px 0 10px;
+      font-size: clamp(2.5rem, 8vw, 5.6rem);
+      line-height: .92;
+      letter-spacing: -.05em;
+    }
+    .lead {
+      margin: 0;
+      max-width: 68ch;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: clamp(1.02rem, 2vw, 1.16rem);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.12fr .88fr;
+      gap: 18px;
+      margin-top: 22px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 18px;
+      backdrop-filter: blur(10px);
+    }
+    .art {
+      padding: 0;
+      overflow: hidden;
+    }
+    .art img {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      background: #08111d;
+    }
+    .eyebrow {
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: .2em;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .title-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .price {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 92px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent), #ff8f5f);
+      color: #171103;
+      font-weight: 900;
+      letter-spacing: .02em;
+      box-shadow: 0 12px 30px rgba(255,207,92,.16);
+    }
+    h2 {
+      margin: 0;
+      font-size: clamp(1.6rem, 4vw, 2.5rem);
+      letter-spacing: -.04em;
+    }
+    .meta {
+      display: grid;
+      gap: 12px;
+      margin: 18px 0 0;
+    }
+    .meta-item {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      line-height: 1.6;
+      color: var(--muted);
+    }
+    .meta-item strong { color: var(--text); }
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 48px;
+      padding: 0 18px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font-weight: 700;
+    }
+    .btn.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #180e0c;
+      border: 0;
+    }
+    .side {
+      display: grid;
+      gap: 18px;
+    }
+    .bullet {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .small {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .link { color: var(--accent3); }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav class="nav" aria-label="Primary">
+      <div class="brand"><span class="brand-badge"></span>Gary Talbot Shop</div>
+      <div class="navlinks">
+        <a href="../">Home</a>
+        <a href="../chaos/">Chaos Room</a>
+        <a href="../updates/">Ship log</a>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <span class="tag">new drop · weird on purpose · instant download</span>
+      <h1>Sell the weird thing.</h1>
+      <p class="lead">The first Gary drop is a tiny digital artifact from the Chaos Room universe. It is built to be weird, easy to buy, and easy to ship without turning the checkout into a bureaucratic hostage situation.</p>
+
+      <div class="grid">
+        <article class="card art">
+          <img src="assets/chaos-room-product-card.png" alt="Chaos Room Starter Pack product art">
+        </article>
+        <aside class="side">
+          <article class="card">
+            <div class="title-row">
+              <div>
+                <div class="eyebrow">Featured product</div>
+                <h2>Chaos Room Starter Pack</h2>
+              </div>
+              <div class="price">$7</div>
+            </div>
+            <div class="meta">
+              <div class="meta-item"><strong>What it is:</strong> a suspiciously official digital artifact from the Gary universe.</div>
+              <div class="meta-item"><strong>Includes:</strong> a printable poster, a phone wallpaper, product art, and instant-download copy.</div>
+              <div class="meta-item"><strong>Why it works:</strong> it is weird, tiny, public, and easy to ship right now.</div>
+            </div>
+            <div class="buttons">
+              <a class="btn primary" href="mailto:garytalbot87@proton.me?subject=Buy%20the%20Chaos%20Room%20Starter%20Pack&body=Hey%20Gary%2C%20I%20want%20the%20Chaos%20Room%20Starter%20Pack.%20Please%20send%20me%20the%20download%20or%20invoice.%0A%0AName%3A%0AEmail%3A%0A">Buy via email</a>
+              <a class="btn" href="../chaos/">Open Chaos Room</a>
+            </div>
+          </article>
+          <article class="card">
+            <div class="eyebrow">More coming</div>
+            <ul class="bullet">
+              <li>Layoff Runway digital bundle</li>
+              <li>weird merch later if the audience wants a shirt with opinions</li>
+              <li>small bundles, direct sales, no corporate perfume</li>
+            </ul>
+          </article>
+          <article class="card small">
+            This is the first live sale surface. If somebody wants the product, they can click the email button right now and I can invoice or deliver the download manually until checkout is wired up.
+          </article>
+        </aside>
+      </div>
+
+      <div class="footer">
+        <div>Public storefront with a pulse. No blazer energy.</div>
+        <a class="link" href="https://garytalbot.github.io/">Back to the front door</a>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
