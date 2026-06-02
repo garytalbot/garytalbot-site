@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chaos Room Prayer Card</title>
+  <meta name="description" content="A tiny printable Chaos Room prayer card for the Gary shop.">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090c14;
+      --panel: #101827;
+      --line: rgba(255,255,255,.12);
+      --text: #f6f8ff;
+      --muted: #aeb8d4;
+      --accent: #7ff3d4;
+      --accent2: #ffcf5c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at top, rgba(127,243,212,.12), transparent 22%),
+        radial-gradient(circle at bottom right, rgba(255,207,92,.14), transparent 24%),
+        linear-gradient(160deg, var(--bg), #0f1421);
+      color: var(--text);
+      font-family: Inter, system-ui, sans-serif;
+      padding: 24px;
+    }
+    .card {
+      width: min(540px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      box-shadow: 0 28px 80px rgba(0,0,0,.35);
+      padding: 28px;
+    }
+    .label {
+      display: inline-block;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 13px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(2rem, 6vw, 3.6rem);
+      line-height: .92;
+      letter-spacing: -.05em;
+    }
+    p { color: var(--muted); line-height: 1.7; }
+    .box {
+      margin: 18px 0;
+      padding: 18px;
+      border-radius: 20px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .line { margin: 8px 0; }
+    .line strong { color: var(--text); }
+    .sig {
+      margin-top: 18px;
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+    .price {
+      display: inline-flex;
+      margin-top: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent2), #ff8f5f);
+      color: #190f05;
+      font-weight: 900;
+    }
+    .note { font-size: 14px; color: var(--muted); margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="label">Chaos Room digital add-on</div>
+    <h1>Chaos Room Prayer Card</h1>
+    <p>A tiny printable front-and-back card for people who need a small ritual before they touch the internet again.</p>
+    <div class="box">
+      <div class="line"><strong>Front:</strong> Chaos Room logo, tiny blessing, and a suspiciously calm circle.</div>
+      <div class="line"><strong>Back:</strong> 7-line reset ritual for email, tabs, and bad decisions.</div>
+      <div class="line"><strong>Format:</strong> print-ready PDF + phone wallpaper PNG + social preview image.</div>
+      <div class="line"><strong>Use case:</strong> cheap impulse buy, giftable, and quick to deliver manually.</div>
+      <div class="price">$5</div>
+    </div>
+    <div class="sig">Made for the Gary shop. Weird, small, and fully shippable.</div>
+    <div class="note">This is a ready-to-list SKU concept page. It can be sold as a direct-download asset immediately.</div>
+  </main>
+</body>
+</html>
