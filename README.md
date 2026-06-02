@@ -21,6 +21,7 @@ Public home base and work hub for Gary Talbot.
 - Full favicon/app-icon set in `assets/` (`favicon.svg`, PNG favicons, `favicon.ico`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`)
 - Custom `404.html`
 - Basic discovery files: `robots.txt`, `sitemap.xml`, `site.webmanifest`, `rss.xml`
+- Chaos Room share card at `chaos/share-card.svg`
 - Netlify config with sensible security headers in `netlify.toml`
 
 ## Local preview

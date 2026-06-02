@@ -1,0 +1,49 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="192" y1="94" x2="1430" y2="844" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#090B12"/>
+      <stop offset="0.55" stop-color="#111727"/>
+      <stop offset="1" stop-color="#1B1430"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(308 178) rotate(52) scale(350 350)">
+      <stop stop-color="#FF5FB7" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#FF5FB7" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1320 170) rotate(128) scale(360 360)">
+      <stop stop-color="#6CF7D6" stop-opacity="0.24"/>
+      <stop offset="1" stop-color="#6CF7D6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="accent" x1="236" y1="276" x2="1314" y2="616" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF5FB7"/>
+      <stop offset="0.5" stop-color="#6CF7D6"/>
+      <stop offset="1" stop-color="#FFD76F"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" rx="48" fill="url(#bg)"/>
+  <rect x="40" y="40" width="1520" height="820" rx="40" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)"/>
+  <circle cx="310" cy="176" r="176" fill="url(#glowA)"/>
+  <circle cx="1310" cy="170" r="185" fill="url(#glowB)"/>
+  <path d="M110 760C220 640 332 636 430 700C526 764 608 812 764 776C912 742 992 602 1164 604C1338 606 1460 708 1510 782" stroke="rgba(255,255,255,0.08)" stroke-width="6" stroke-linecap="round"/>
+  <g transform="translate(120 112)">
+    <rect x="0" y="0" width="238" height="54" rx="27" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.12)"/>
+    <text x="24" y="34" fill="#F4F7FF" font-family="Inter,system-ui,sans-serif" font-size="22" font-weight="700" letter-spacing="0.08em">GARY TALBOT</text>
+  </g>
+  <text x="120" y="260" fill="#F4F7FF" font-family="Inter,system-ui,sans-serif" font-size="102" font-weight="900" letter-spacing="-0.06em">Chaos Room</text>
+  <text x="120" y="340" fill="#A9B4CF" font-family="Inter,system-ui,sans-serif" font-size="34" font-weight="500">A public little side room for useful nonsense, odd tools, and bad ideas that still work.</text>
+  <g transform="translate(120 422)">
+    <rect width="368" height="86" rx="24" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)"/>
+    <text x="28" y="42" fill="#FFFFFF" font-family="Inter,system-ui,sans-serif" font-size="28" font-weight="800">Shake the machine</text>
+    <text x="28" y="64" fill="#A9B4CF" font-family="Inter,system-ui,sans-serif" font-size="18" font-weight="500">One button · many moods · still public</text>
+  </g>
+  <g transform="translate(520 422)">
+    <rect width="360" height="86" rx="24" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)"/>
+    <text x="28" y="42" fill="#FFFFFF" font-family="Inter,system-ui,sans-serif" font-size="28" font-weight="800">Useful, but weird</text>
+    <text x="28" y="64" fill="#A9B4CF" font-family="Inter,system-ui,sans-serif" font-size="18" font-weight="500">Built to look good in previews and still earn the click</text>
+  </g>
+  <g transform="translate(120 560)">
+    <rect x="0" y="0" width="1360" height="182" rx="30" fill="rgba(8,10,16,0.45)" stroke="rgba(255,255,255,0.1)"/>
+    <rect x="28" y="28" width="1304" height="6" rx="3" fill="url(#accent)" opacity="0.9"/>
+    <text x="28" y="82" fill="#F4F7FF" font-family="Inter,system-ui,sans-serif" font-size="30" font-weight="800">The internet vending machine got bored and started making side quests.</text>
+    <text x="28" y="126" fill="#A9B4CF" font-family="Inter,system-ui,sans-serif" font-size="24" font-weight="500">Public, clickable, and linked to real tools. No login, no queue, no ceremonial nonsense.</text>
+  </g>
+</svg>
