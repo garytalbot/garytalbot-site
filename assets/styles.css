@@ -469,3 +469,28 @@ a:hover{text-decoration:none;color:white}
   .status-grid{grid-template-columns:1fr}
   .status-card{padding:22px}
 }
+
+.json-smith .json-hero{align-items:start;min-height:auto;padding-top:34px}
+.json-smith .json-panel{padding:20px;min-height:320px;display:flex;flex-direction:column;justify-content:space-between;border-color:rgba(255,211,110,.22);background:linear-gradient(180deg, rgba(255,211,110,.12), rgba(255,121,198,.06))}
+.panel-ribbon{display:inline-flex;align-self:flex-start;padding:8px 12px;border-radius:999px;background:rgba(10,13,20,.72);border:1px solid rgba(255,245,240,.14);color:#fff8dd;font-size:.72rem;font-weight:900;letter-spacing:.22em;text-transform:uppercase}
+.json-stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:18px}
+.json-stat-grid div{padding:14px;border-radius:18px;background:rgba(255,245,240,.07);border:1px solid rgba(255,245,240,.1)}
+.json-stat-grid strong{display:block;font-size:.76rem;letter-spacing:.16em;text-transform:uppercase;color:#fff2bf;margin-bottom:6px}
+.json-stat-grid span{color:var(--muted);font-size:.9rem}
+.json-canvas{position:relative;min-height:180px;margin-top:18px;border-radius:24px;background:radial-gradient(circle at 30% 30%, rgba(255,211,110,.3), transparent 28%), radial-gradient(circle at 70% 70%, rgba(122,227,255,.22), transparent 30%), rgba(10,13,20,.65);border:1px solid rgba(255,245,240,.08);overflow:hidden}
+.json-glyph{position:absolute;font-weight:900;font-size:clamp(2.8rem,7vw,5rem);color:rgba(255,245,240,.22);text-shadow:0 0 22px rgba(255,121,198,.2)}
+.json-glyph-one{left:22px;top:18px;transform:rotate(-9deg)}
+.json-glyph-two{right:18px;top:30px;transform:rotate(12deg)}
+.json-glyph-three{left:50%;bottom:18px;transform:translateX(-50%) rotate(4deg);color:rgba(200,255,113,.28)}
+.json-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.json-field{display:flex;flex-direction:column;gap:10px;padding:18px;border-radius:24px;background:linear-gradient(180deg, rgba(255,245,240,.08), rgba(255,245,240,.035));border:1px solid rgba(255,245,240,.12);box-shadow:var(--shadow)}
+.json-field span{font-size:.76rem;letter-spacing:.18em;text-transform:uppercase;color:#f4ffbf}
+.json-field textarea{width:100%;min-height:360px;resize:vertical;border:1px solid rgba(255,245,240,.14);border-radius:18px;background:rgba(8,11,18,.78);color:var(--fg);padding:16px;font:14px/1.6 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;outline:none}
+.json-field textarea:focus{border-color:rgba(122,227,255,.4);box-shadow:0 0 0 4px rgba(122,227,255,.12)}
+.json-footer{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-top:16px;flex-wrap:wrap}
+.json-pills{display:flex;gap:10px;flex-wrap:wrap}
+.json-pills span{padding:8px 12px;border-radius:999px;background:rgba(255,245,240,.06);border:1px solid rgba(255,245,240,.1);color:#fff0f4;font-size:.82rem;text-transform:uppercase;letter-spacing:.12em}
+@media (max-width: 900px){
+  .json-grid,.json-smith .json-hero,.hero,.grid,.door-grid,.vending-machine,.hero-proof,.hero-meta{grid-template-columns:1fr}
+  .json-field textarea{min-height:260px}
+}

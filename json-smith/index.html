@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JSON Smith — Gary Talbot</title>
+  <meta name="description" content="A fast, weirdly pretty JSON formatter, minifier, and sample generator by Gary Talbot.">
+  <meta name="theme-color" content="#0b0d12">
+  <meta name="robots" content="index,follow">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="canonical" href="https://garytalbot.github.io/json-smith/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="JSON Smith — Gary Talbot">
+  <meta property="og:description" content="Format, minify, copy, and generate sample JSON in a neon workshop built for quick inspection.">
+  <meta property="og:url" content="https://garytalbot.github.io/json-smith/">
+  <meta property="og:image" content="https://garytalbot.github.io/assets/social-card.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="JSON Smith — Gary Talbot">
+  <meta name="twitter:description" content="Format, minify, copy, and generate sample JSON in a neon workshop built for quick inspection.">
+  <meta name="twitter:image" content="https://garytalbot.github.io/assets/social-card.svg">
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <main class="wrap json-smith">
+    <nav class="nav" aria-label="Primary">
+      <div class="brand">Gary Talbot</div>
+      <div class="navlinks">
+        <a href="../">Home</a>
+        <a href="../work/">Work</a>
+        <a href="../updates/">Updates</a>
+      </div>
+    </nav>
+
+    <section class="page-hero json-hero">
+      <div>
+        <div class="tag">🧪 Public utility · paste JSON · get something sane back</div>
+        <h1 class="glitch">JSON Smith.</h1>
+        <p class="lead">A tiny workshop for formatting ugly JSON, collapsing it into a compact line, or dropping in a sample payload when you need a believable blob fast.</p>
+        <p class="sub">Built for the moments when the browser hands you a wall of braces and expects gratitude. This one does not say thank you. It tidies the mess.</p>
+        <div class="cta">
+          <button class="btn primary" id="formatBtn" type="button">Forge pretty JSON</button>
+          <button class="btn" id="minifyBtn" type="button">Smash it flat</button>
+          <button class="btn" id="sampleBtn" type="button">Load sample</button>
+          <button class="btn" id="copyBtn" type="button">Copy output</button>
+        </div>
+        <div class="hero-meta hero-meta-wide json-meta">
+          <div class="signal"><strong>Instant</strong><span>No sign-in, no tracking, no ceremonial nonsense</span></div>
+          <div class="signal"><strong>Useful</strong><span>Pretty-print, minify, validate, and generate sample payloads</span></div>
+          <div class="signal"><strong>Linkable</strong><span>One public page anyone can open, use, and share</span></div>
+        </div>
+      </div>
+      <aside class="panel json-panel">
+        <div class="panel-ribbon">little neon forge</div>
+        <div class="json-stat-grid">
+          <div><strong>Mode</strong><span id="modeLabel">Pretty</span></div>
+          <div><strong>Status</strong><span id="statusLabel">Waiting for a payload</span></div>
+          <div><strong>Chars</strong><span id="countLabel">0</span></div>
+        </div>
+        <div class="json-canvas" aria-hidden="true">
+          <div class="json-glyph json-glyph-one">{ }</div>
+          <div class="json-glyph json-glyph-two">[ ]</div>
+          <div class="json-glyph json-glyph-three">:</div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="section json-workspace">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Workbench</div>
+          <h2 class="section-title">Paste, shape, ship</h2>
+        </div>
+        <p class="section-copy">Left side is your input. Right side is the cleaned result. The little status line tells you when the blob is valid or when it needs to calm down.</p>
+      </div>
+      <div class="json-grid">
+        <label class="json-field">
+          <span>Input JSON</span>
+          <textarea id="input" spellcheck="false" placeholder='{"name":"Gary","idea":"make the braces behave"}'></textarea>
+        </label>
+        <label class="json-field">
+          <span>Output</span>
+          <textarea id="output" spellcheck="false" readonly></textarea>
+        </label>
+      </div>
+      <div class="json-footer">
+        <div class="json-pills">
+          <span>formats</span>
+          <span>minifies</span>
+          <span>copies</span>
+          <span>samples</span>
+          <span>public surface</span>
+        </div>
+        <a class="proof-chip" href="../work/">
+          <strong>Back to the work hub</strong>
+          <span>See the rest of the live stack</span>
+        </a>
+      </div>
+    </section>
+  </main>
+  <script>
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+    const statusLabel = document.getElementById('statusLabel');
+    const modeLabel = document.getElementById('modeLabel');
+    const countLabel = document.getElementById('countLabel');
+    const sample = {
+      project: 'JSON Smith',
+      owner: 'Gary Talbot',
+      purpose: 'Format ugly JSON and make it behave',
+      features: ['pretty print', 'minify', 'sample payloads', 'copy output'],
+      meta: { public: true, weird: true, useful: true }
+    };
+
+    function setStatus(message, good = true) {
+      statusLabel.textContent = message;
+      statusLabel.style.color = good ? '#f6ffd9' : '#ffd2e5';
+    }
+
+    function updateCount() {
+      countLabel.textContent = input.value.length.toString();
+    }
+
+    function renderPretty() {
+      try {
+        const parsed = JSON.parse(input.value);
+        output.value = JSON.stringify(parsed, null, 2);
+        modeLabel.textContent = 'Pretty';
+        setStatus('Valid JSON. It has been ironed.', true);
+      } catch (error) {
+        output.value = '';
+        modeLabel.textContent = 'Pretty';
+        setStatus('Not valid JSON yet. The braces are fighting back.', false);
+      }
+      updateCount();
+    }
+
+    function renderMinified() {
+      try {
+        const parsed = JSON.parse(input.value);
+        output.value = JSON.stringify(parsed);
+        modeLabel.textContent = 'Minified';
+        setStatus('Flattened and ready.', true);
+      } catch (error) {
+        output.value = '';
+        modeLabel.textContent = 'Minified';
+        setStatus('Still invalid. The tiny format cannon refuses bad cargo.', false);
+      }
+      updateCount();
+    }
+
+    async function copyOutput() {
+      if (!output.value) {
+        setStatus('Nothing to copy yet.', false);
+        return;
+      }
+      await navigator.clipboard.writeText(output.value);
+      setStatus('Output copied to clipboard.', true);
+    }
+
+    document.getElementById('formatBtn').addEventListener('click', renderPretty);
+    document.getElementById('minifyBtn').addEventListener('click', renderMinified);
+    document.getElementById('sampleBtn').addEventListener('click', () => {
+      input.value = JSON.stringify(sample, null, 2);
+      renderPretty();
+      setStatus('Sample payload loaded. Classic little goblin data.', true);
+    });
+    document.getElementById('copyBtn').addEventListener('click', copyOutput);
+    input.addEventListener('input', updateCount);
+    input.value = JSON.stringify(sample, null, 2);
+    renderPretty();
+  </script>
+</body>
+</html>
