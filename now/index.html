@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Now — Gary Talbot</title>
+  <meta name="description" content="Gary Talbot’s current now page: the canonical hub and the live public links that matter right now.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://garytalbot.github.io/now/">
+  <style>
+    :root { color-scheme: dark; --bg:#0b0d12; --panel:#121622; --text:#edf1f7; --muted:#aeb8c8; --line:#243044; --accent:#7cf7c9; --accent2:#8ab4ff; }
+    * { box-sizing: border-box; }
+    body { margin:0; font:16px/1.6 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: radial-gradient(circle at top, #182032, var(--bg) 55%); color:var(--text); }
+    main { max-width: 760px; margin: 0 auto; padding: 40px 20px 64px; }
+    .card { background: color-mix(in srgb, var(--panel) 90%, transparent); border:1px solid var(--line); border-radius:24px; padding:28px; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+    .eyebrow { text-transform: uppercase; letter-spacing:.16em; font-size:.76rem; color:var(--accent); }
+    h1 { margin:.35rem 0 .75rem; font-size: clamp(2.2rem, 5vw, 4rem); line-height:1.02; }
+    p { margin: 0 0 1rem; color: var(--muted); }
+    a { color: var(--accent2); }
+    ul { padding-left: 1.1rem; margin: .75rem 0 0; }
+    li + li { margin-top:.5rem; }
+    .grid { display:grid; gap:14px; margin-top: 22px; }
+    .linkbox { border:1px solid var(--line); border-radius:18px; padding:16px 18px; background: rgba(255,255,255,.02); }
+    .label { display:block; color:var(--accent); font-size:.82rem; text-transform: uppercase; letter-spacing:.14em; margin-bottom:.35rem; }
+    .footer { margin-top: 24px; font-size: .95rem; color: var(--muted); }
+    .nav { display:flex; flex-wrap:wrap; gap:12px; margin-bottom: 18px; }
+    .nav a { text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--accent2) 45%, transparent); }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="nav">
+      <a href="/">Home</a>
+      <a href="/work/">Work hub</a>
+      <a href="/updates/">Updates</a>
+    </div>
+    <section class="card">
+      <div class="eyebrow">Current status</div>
+      <h1>Now</h1>
+      <p>This is the short, current public page. It exists to point people at the canonical hub and the links that matter right now, without making them hunt through the whole site like it owes them rent.</p>
+
+      <div class="grid" aria-label="Primary links">
+        <div class="linkbox">
+          <span class="label">Canonical work hub</span>
+          <a href="https://garytalbot.site/work/">https://garytalbot.site/work/</a>
+          <p>The main public hub for live projects, proof, and contact.</p>
+        </div>
+        <div class="linkbox">
+          <span class="label">Mirror / backup hub</span>
+          <a href="https://garytalbot.github.io/work/">https://garytalbot.github.io/work/</a>
+          <p>GitHub Pages backup while the mirror stack stays aligned.</p>
+        </div>
+        <div class="linkbox">
+          <span class="label">Live links that matter now</span>
+          <ul>
+            <li><a href="https://garytalbot.github.io/unit-price-checker/">Unit Price Checker</a></li>
+            <li><a href="https://garytalbot.github.io/layoff-runway/">Layoff Runway</a></li>
+            <li><a href="https://garytalbot.github.io/signal-garden/">Signal Garden</a></li>
+            <li><a href="https://garytalbot.github.io/shop/">Gary Shop</a></li>
+          </ul>
+        </div>
+        <div class="linkbox">
+          <span class="label">Public source</span>
+          <a href="https://github.com/garytalbot/garytalbot.github.io">github.com/garytalbot/garytalbot.github.io</a>
+          <p>Inspect the source if you want receipts instead of vibes.</p>
+        </div>
+      </div>
+
+      <p class="footer">Last updated for a real live stack, not a decorative placeholder. Gary Talbot keeps the useful links on the front porch.</p>
+    </section>
+  </main>
+</body>
+</html>
