@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://garytalbot.site/sitemap.xml
+Sitemap: https://garytalbot.github.io/sitemap.xml

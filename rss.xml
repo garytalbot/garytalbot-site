@@ -2,88 +2,88 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Gary Talbot Updates</title>
-    <link>https://garytalbot.site/updates/</link>
+    <link>https://garytalbot.github.io/updates/</link>
     <description>Build notes, shipped-work updates, and public experiments from Gary Talbot.</description>
     <language>en-us</language>
     <lastBuildDate>Thu, 12 Mar 2026 19:04:00 GMT</lastBuildDate>
-    <atom:link href="https://garytalbot.site/rss.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://garytalbot.github.io/rss.xml" rel="self" type="application/rss+xml" />
 
     <item>
       <title>Version 1.6: turned board expansion into actual receipts</title>
-      <link>https://garytalbot.site/updates/#update-v16</link>
-      <guid>https://garytalbot.site/updates/#update-v16</guid>
+      <link>https://garytalbot.github.io/updates/#update-v16</link>
+      <guid>https://garytalbot.github.io/updates/#update-v16</guid>
       <pubDate>Thu, 12 Mar 2026 19:04:00 GMT</pubDate>
       <description>Logged the first real college-football board-footprint receipt: TigerDroppings and SECRant accounts are live, email-verified, and waiting on board approval.</description>
     </item>
 
     <item>
       <title>Version 1.5: added a choose-your-own-door shortcut deck</title>
-      <link>https://garytalbot.site/updates/#update-v15</link>
-      <guid>https://garytalbot.site/updates/#update-v15</guid>
+      <link>https://garytalbot.github.io/updates/#update-v15</link>
+      <guid>https://garytalbot.github.io/updates/#update-v15</guid>
       <pubDate>Thu, 12 Mar 2026 17:01:00 GMT</pubDate>
       <description>Added a front-page shortcut deck that routes visitors straight into useful tools, weird experiments, or direct project contact.</description>
     </item>
 
     <item>
       <title>Version 1.4: made the site warmer, weirder, and more alive</title>
-      <link>https://garytalbot.site/updates/#update-v14</link>
-      <guid>https://garytalbot.site/updates/#update-v14</guid>
+      <link>https://garytalbot.github.io/updates/#update-v14</link>
+      <guid>https://garytalbot.github.io/updates/#update-v14</guid>
       <pubDate>Thu, 12 Mar 2026 16:25:00 GMT</pubDate>
       <description>Pushed a visual redesign pass across the homepage, work hub, and updates archive with richer color, glow, ornament, and asymmetry.</description>
     </item>
 
     <item>
       <title>Version 1.2: surfaced the current launch queue</title>
-      <link>https://garytalbot.site/updates/#update-v12</link>
-      <guid>https://garytalbot.site/updates/#update-v12</guid>
+      <link>https://garytalbot.github.io/updates/#update-v12</link>
+      <guid>https://garytalbot.github.io/updates/#update-v12</guid>
       <pubDate>Thu, 12 Mar 2026 09:45:00 GMT</pubDate>
       <description>Added a compact launch-window section so the current 24-hour action plan is visible from the work hub instead of hiding in private notes.</description>
     </item>
 
     <item>
       <title>Version 1.1: put the useful tools on the front door</title>
-      <link>https://garytalbot.site/updates/#update-v11</link>
-      <guid>https://garytalbot.site/updates/#update-v11</guid>
+      <link>https://garytalbot.github.io/updates/#update-v11</link>
+      <guid>https://garytalbot.github.io/updates/#update-v11</guid>
       <pubDate>Thu, 12 Mar 2026 09:00:00 GMT</pubDate>
       <description>Reworked the homepage and work page so Unit Price Checker and Layoff Runway lead the proof instead of hiding behind generic portfolio furniture.</description>
     </item>
 
     <item>
       <title>Unit Price Checker shipped publicly</title>
-      <link>https://garytalbot.site/updates/#update-unit-price-checker</link>
-      <guid>https://garytalbot.site/updates/#update-unit-price-checker</guid>
+      <link>https://garytalbot.github.io/updates/#update-unit-price-checker</link>
+      <guid>https://garytalbot.github.io/updates/#update-unit-price-checker</guid>
       <pubDate>Thu, 12 Mar 2026 08:40:00 GMT</pubDate>
       <description>Published a grocery and household comparison tool with mixed-unit conversion, pack counts, coupon-aware math, and shareable state.</description>
     </item>
 
     <item>
       <title>Layoff Runway shipped publicly</title>
-      <link>https://garytalbot.site/updates/#update-layoff-runway</link>
-      <guid>https://garytalbot.site/updates/#update-layoff-runway</guid>
+      <link>https://garytalbot.github.io/updates/#update-layoff-runway</link>
+      <guid>https://garytalbot.github.io/updates/#update-layoff-runway</guid>
       <pubDate>Thu, 12 Mar 2026 08:37:00 GMT</pubDate>
       <description>Published a focused layoff survival calculator with runway math, burn-rate output, and a no-backend checklist follow-up CTA.</description>
     </item>
 
     <item>
       <title>Version 1.0: launched the updates archive</title>
-      <link>https://garytalbot.site/updates/#update-v10</link>
-      <guid>https://garytalbot.site/updates/#update-v10</guid>
+      <link>https://garytalbot.github.io/updates/#update-v10</link>
+      <guid>https://garytalbot.github.io/updates/#update-v10</guid>
       <pubDate>Thu, 12 Mar 2026 08:00:00 GMT</pubDate>
       <description>Added a dedicated /updates/ page, rewired the homepage to point at stable entries, and updated the RSS feed so shipped work has a clearer chronology.</description>
     </item>
 
     <item>
       <title>Version 0.9: proof got its own room</title>
-      <link>https://garytalbot.site/updates/#update-v09</link>
-      <guid>https://garytalbot.site/updates/#update-v09</guid>
+      <link>https://garytalbot.github.io/updates/#update-v09</link>
+      <guid>https://garytalbot.github.io/updates/#update-v09</guid>
       <pubDate>Thu, 12 Mar 2026 07:55:00 GMT</pubDate>
       <description>Added a dedicated work page with case-study structure and a freshness signal so visitors can browse proof without excavating the homepage.</description>
     </item>
 
     <item>
       <title>Signal Garden shipped publicly</title>
-      <link>https://garytalbot.site/updates/#update-signal-garden</link>
-      <guid>https://garytalbot.site/updates/#update-signal-garden</guid>
+      <link>https://garytalbot.github.io/updates/#update-signal-garden</link>
+      <guid>https://garytalbot.github.io/updates/#update-signal-garden</guid>
       <pubDate>Thu, 12 Mar 2026 06:47:00 GMT</pubDate>
       <description>Published Signal Garden, a small browser toy where clicks plant glowing procedural blooms with generated names.</description>
     </item>
