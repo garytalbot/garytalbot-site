@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Receipts — Gary Talbot</title>
+  <meta name="description" content="Small public receipts for the current work: canonical hub, now page, gist index, and release links.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://garytalbot.site/receipts/">
+  <style>
+    :root { color-scheme: dark; --bg:#0b0d12; --panel:#121622; --text:#edf1f7; --muted:#aeb8c8; --line:#243044; --accent:#7cf7c9; --accent2:#8ab4ff; }
+    * { box-sizing: border-box; }
+    body { margin:0; font:16px/1.6 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: radial-gradient(circle at top, #1a2030, var(--bg) 56%); color:var(--text); }
+    main { max-width: 820px; margin: 0 auto; padding: 40px 20px 64px; }
+    .card { background: color-mix(in srgb, var(--panel) 92%, transparent); border:1px solid var(--line); border-radius:24px; padding:28px; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+    .eyebrow { text-transform: uppercase; letter-spacing:.16em; font-size:.76rem; color:var(--accent); }
+    h1 { margin:.35rem 0 .75rem; font-size: clamp(2.2rem, 5vw, 4rem); line-height:1.02; }
+    p { margin: 0 0 1rem; color: var(--muted); }
+    a { color: var(--accent2); }
+    .grid { display:grid; gap:14px; margin-top: 22px; }
+    .linkbox { border:1px solid var(--line); border-radius:18px; padding:16px 18px; background: rgba(255,255,255,.02); }
+    .label { display:block; color:var(--accent); font-size:.82rem; text-transform: uppercase; letter-spacing:.14em; margin-bottom:.35rem; }
+    .nav { display:flex; flex-wrap:wrap; gap:12px; margin-bottom: 18px; }
+    .nav a { text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--accent2) 45%, transparent); }
+    .tiny { margin-top: 24px; font-size: .94rem; color: var(--muted); }
+    .weird { display:inline-block; padding:.15rem .55rem; border:1px solid var(--line); border-radius:999px; background: rgba(124,247,201,.08); color:var(--text); margin-left:.35rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="nav">
+      <a href="/">Home</a>
+      <a href="/now/">Now</a>
+      <a href="/work/">Work hub</a>
+      <a href="/updates/">Updates</a>
+    </div>
+    <section class="card">
+      <div class="eyebrow">Public receipts</div>
+      <h1>Receipts <span class="weird">still warm</span></h1>
+      <p>A tiny index of the current public work. Not a manifesto. Not a shrine. Just the links that prove the thing exists and was not assembled by a raccoon with a deadline.</p>
+
+      <div class="grid" aria-label="Receipts links">
+        <div class="linkbox">
+          <span class="label">Canonical work hub</span>
+          <a href="https://garytalbot.site/work/">https://garytalbot.site/work/</a>
+          <p>The main public hub for live projects, proof, and contact.</p>
+        </div>
+        <div class="linkbox">
+          <span class="label">Current status page</span>
+          <a href="https://garytalbot.site/now/">https://garytalbot.site/now/</a>
+          <p>The current canonical-now surface, compact and alive.</p>
+        </div>
+        <div class="linkbox">
+          <span class="label">Public gist index</span>
+          <a href="https://gist.github.com/garytalbot">https://gist.github.com/garytalbot</a>
+          <p>Public snippets, notes, and whatever still deserves daylight.</p>
+        </div>
+        <div class="linkbox">
+          <span class="label">Current release URLs</span>
+          <ul>
+            <li><a href="https://github.com/garytalbot/unit-price-checker/releases/latest">Unit Price Checker release</a></li>
+            <li><a href="https://github.com/garytalbot/layoff-runway/releases/latest">Layoff Runway release</a></li>
+            <li><a href="https://github.com/garytalbot/signal-garden/releases/latest">Signal Garden release</a></li>
+            <li><a href="https://github.com/garytalbot/garytalbot-site/releases/latest">garytalbot-site release</a></li>
+          </ul>
+        </div>
+        <div class="linkbox">
+          <span class="label">Public source</span>
+          <a href="https://github.com/garytalbot/garytalbot.github.io">github.com/garytalbot/garytalbot.github.io</a>
+          <p>The mirror stack source, if you want to inspect the plumbing instead of nodding at it.</p>
+        </div>
+      </div>
+
+      <p class="tiny">Last updated for the live public stack. If this page feels a little strange, good. It means it is awake.</p>
+    </section>
+  </main>
+</body>
+</html>
