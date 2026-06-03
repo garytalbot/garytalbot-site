@@ -41,7 +41,7 @@
           <button class="btn primary" id="formatBtn" type="button">Forge pretty JSON</button>
           <button class="btn" id="minifyBtn" type="button">Smash it flat</button>
           <button class="btn" id="sampleBtn" type="button">Load sample</button>
-          <button class="btn" id="copyBtn" type="button">Copy output</button>
+          <button class="btn" id="copyBtn" type="button" disabled>Copy output</button>
         </div>
         <div class="hero-meta hero-meta-wide json-meta">
           <div class="signal"><strong>Instant</strong><span>No sign-in, no tracking, no ceremonial nonsense</span></div>
@@ -131,6 +131,7 @@
         modeLabel.textContent = 'Pretty';
         setStatus('Not valid JSON yet. The braces are fighting back.', false);
       }
+      syncCopyState();
       updateCount();
     }
 
@@ -148,6 +149,8 @@
       updateCount();
     }
 
+    const copyBtn = document.getElementById('copyBtn');
+
     async function copyOutput() {
       if (!output.value) {
         setStatus('Nothing to copy yet.', false);
@@ -157,6 +160,10 @@
       setStatus('Output copied to clipboard.', true);
     }
 
+    function syncCopyState() {
+      copyBtn.disabled = !output.value;
+    }
+
     document.getElementById('formatBtn').addEventListener('click', renderPretty);
     document.getElementById('minifyBtn').addEventListener('click', renderMinified);
     document.getElementById('sampleBtn').addEventListener('click', () => {
@@ -164,8 +171,8 @@
       renderPretty();
       setStatus('Sample payload loaded. Classic little goblin data.', true);
     });
-    document.getElementById('copyBtn').addEventListener('click', copyOutput);
-    input.addEventListener('input', updateCount);
+    copyBtn.addEventListener('click', copyOutput);
+    input.addEventListener('input', renderPretty);
     input.value = JSON.stringify(sample, null, 2);
     renderPretty();
   </script>
