@@ -41,3 +41,4 @@ Then open `http://localhost:8080`.
 - For local verification or manual recovery, run `TARGET_DIR=../garytalbot.github.io PUSH_CHANGES=0 bash scripts/sync-root-pages.sh` from this repo.
 - Use the work hub in bios and posts until `garytalbot.site` resolves cleanly again.
 - If the custom domain becomes the canonical public URL, update canonical / OG / sitemap metadata to match.
+- Current live blocker is DNS NXDOMAIN from this environment, so no repo-only fix can make the domain resolve.
