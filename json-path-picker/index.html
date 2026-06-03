@@ -4,19 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>JSON Path Picker — Gary Talbot</title>
-  <meta name="description" content="Paste JSON, browse a clickable tree, and copy JSONPath or dot paths with the selected value. Built by Gary Talbot.">
+  <meta name="description" content="Paste JSON, browse a clickable tree, and copy JSONPath, JSON Pointer, or dot paths with the selected value. Built by Gary Talbot.">
   <meta name="theme-color" content="#0b0d12">
   <meta name="robots" content="index,follow">
   <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
   <link rel="canonical" href="https://garytalbot.github.io/json-path-picker/">
   <meta property="og:type" content="website">
   <meta property="og:title" content="JSON Path Picker — Gary Talbot">
-  <meta property="og:description" content="Paste JSON, browse a clickable tree, and copy JSONPath or dot paths with the selected value.">
+  <meta property="og:description" content="Paste JSON, browse a clickable tree, and copy JSONPath, JSON Pointer, or dot paths with the selected value.">
   <meta property="og:url" content="https://garytalbot.github.io/json-path-picker/">
   <meta property="og:image" content="https://garytalbot.github.io/assets/social-card.svg">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="JSON Path Picker — Gary Talbot">
-  <meta name="twitter:description" content="Paste JSON, browse a clickable tree, and copy JSONPath or dot paths with the selected value.">
+  <meta name="twitter:description" content="Paste JSON, browse a clickable tree, and copy JSONPath, JSON Pointer, or dot paths with the selected value.">
   <meta name="twitter:image" content="https://garytalbot.github.io/assets/social-card.svg">
   <link rel="stylesheet" href="../assets/styles.css">
   <style>
@@ -94,6 +94,7 @@
         <p class="sub">Browser-only. No backend. No build step. Just a clean little tool that turns ugly payloads into reachable, copyable structure.</p>
         <div class="cta">
           <button class="btn primary mini-btn" id="copyJsonPathBtn" type="button" disabled>Copy JSONPath</button>
+          <button class="btn mini-btn" id="copyPointerBtn" type="button" disabled>Copy JSON Pointer</button>
           <button class="btn mini-btn" id="copyDotPathBtn" type="button" disabled>Copy dot path</button>
           <button class="btn mini-btn" id="copyValueBtn" type="button" disabled>Copy value</button>
           <button class="btn mini-btn" id="sampleBtn" type="button">Load sample</button>
@@ -101,7 +102,7 @@
         </div>
         <div class="hero-meta hero-meta-wide">
           <div class="signal"><strong>Fast</strong><span>Paste, inspect, click, copy</span></div>
-          <div class="signal"><strong>Practical</strong><span>JSONPath and dot notation both available</span></div>
+          <div class="signal"><strong>Practical</strong><span>JSONPath, JSON Pointer, and dot notation available</span></div>
           <div class="signal"><strong>Inspectable</strong><span>Single file page on GitHub Pages</span></div>
         </div>
       </div>
@@ -137,7 +138,7 @@
         <article class="card picker-card">
           <div>
             <h2>Input JSON</h2>
-            <p class="field-note">Any valid JSON object or array. Invalid input keeps the previous tree visible and shows a readable error.</p>
+            <p class="field-note">Any valid JSON object or array. Invalid input keeps the previous tree visible and shows a readable error. Click nodes or use the arrow buttons to move around faster.</p>
           </div>
           <textarea id="input" class="text-area" spellcheck="false"></textarea>
         </article>
@@ -146,7 +147,7 @@
             <h2 style="margin-right:auto">Clickable tree</h2>
             <span class="status-badge" id="treeStatus"><span class="status-dot"></span><strong>Live</strong></span>
           </div>
-          <p class="field-note">Click any node to select it. The selected path, dot path, and value update instantly, and the copy buttons use the current selection.</p>
+          <p class="field-note">Click any node to select it. The selected path, JSON Pointer, dot path, and value update instantly, and the copy buttons use the current selection.</p>
           <div id="tree" class="picker-tree" aria-live="polite"></div>
         </article>
       </div>
@@ -163,6 +164,7 @@
     const typePill = document.getElementById('typePill');
     const countPill = document.getElementById('countPill');
     const copyJsonPathBtn = document.getElementById('copyJsonPathBtn');
+    const copyPointerBtn = document.getElementById('copyPointerBtn');
     const copyDotPathBtn = document.getElementById('copyDotPathBtn');
     const copyValueBtn = document.getElementById('copyValueBtn');
     const sampleBtn = document.getElementById('sampleBtn');
@@ -210,10 +212,12 @@
     function buildNodes(value, segments = [], name = '$', depth = 0) {
       const path = toJsonPath(segments);
       const dotPath = toDotPath(segments);
+      const pointer = toJsonPointer(segments);
       const node = {
         name,
         path,
         dotPath,
+        pointer,
         value,
         kind: value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value,
         depth,
@@ -248,6 +252,7 @@
       kindPill.textContent = node.kind;
       typePill.textContent = node.children && node.children.length ? `branch node (${node.children.length})` : 'leaf node';
       copyJsonPathBtn.disabled = false;
+      copyPointerBtn.disabled = false;
       copyDotPathBtn.disabled = false;
       copyValueBtn.disabled = false;
       document.querySelectorAll('.tree-node').forEach(el => el.classList.toggle('selected', el.dataset.path === node.path));
@@ -272,6 +277,7 @@
       toggle.className = 'tree-toggle';
       toggle.type = 'button';
       toggle.textContent = node.children && node.children.length ? (expanded.has(node.path) ? '−' : '+') : '•';
+      toggle.title = node.children && node.children.length ? (expanded.has(node.path) ? 'Collapse branch' : 'Expand branch') : 'Leaf node';
       toggle.addEventListener('click', (event) => {
         event.stopPropagation();
         if (node.children && node.children.length) {
@@ -321,14 +327,6 @@
       } catch (error) {
         setStatus(`Invalid JSON: ${error.message}`, false);
       }
-    }
-
-    function getSelectionPayload() {
-      return selected ? {
-        jsonPath: selected.path,
-        dotPath: selected.dotPath,
-        value: describeValue(selected.value)
-      } : null;
     }
 
     copyJsonPathBtn.addEventListener('click', () => selected && copyText(selected.path, 'JSONPath'));
