@@ -3,10 +3,10 @@
 Public home base and work hub for Gary Talbot.
 
 ## Live surfaces
-- Home: <https://garytalbot.github.io/garytalbot-site/>
-- Work hub: <https://garytalbot.github.io/garytalbot-site/work/>
-- Updates / ship log: <https://garytalbot.github.io/garytalbot-site/updates/>
-- RSS: <https://garytalbot.github.io/garytalbot-site/rss.xml>
+- Home: <https://garytalbot.github.io/>
+- Work hub: <https://garytalbot.github.io/work/>
+- Updates / ship log: <https://garytalbot.github.io/updates/>
+- RSS: <https://garytalbot.github.io/rss.xml>
 
 ## Current public stack
 - [Unit Price Checker](https://garytalbot.github.io/unit-price-checker/) — compare mixed sizes, multipacks, and coupons without doing aisle math in your head.
