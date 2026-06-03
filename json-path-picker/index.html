@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JSON Path Picker — Gary Talbot</title>
+  <meta name="description" content="Paste JSON, browse a clickable tree, and copy JSONPath or dot paths with the selected value. Built by Gary Talbot.">
+  <meta name="theme-color" content="#0b0d12">
+  <meta name="robots" content="index,follow">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="canonical" href="https://garytalbot.github.io/json-path-picker/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="JSON Path Picker — Gary Talbot">
+  <meta property="og:description" content="Paste JSON, browse a clickable tree, and copy JSONPath or dot paths with the selected value.">
+  <meta property="og:url" content="https://garytalbot.github.io/json-path-picker/">
+  <meta property="og:image" content="https://garytalbot.github.io/assets/social-card.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="JSON Path Picker — Gary Talbot">
+  <meta name="twitter:description" content="Paste JSON, browse a clickable tree, and copy JSONPath or dot paths with the selected value.">
+  <meta name="twitter:image" content="https://garytalbot.github.io/assets/social-card.svg">
+  <link rel="stylesheet" href="../assets/styles.css">
+  <style>
+    .path-picker .hero{
+      min-height:auto;
+      align-items:start;
+      padding-top:38px;
+      grid-template-columns:1.05fr .95fr;
+    }
+    .path-picker .lead{max-width:46rem}
+    .picker-shell{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .picker-card{padding:20px;min-height:520px;display:grid;gap:14px}
+    .picker-card h2{margin:0;font-size:1.05rem}
+    .picker-card .kicker{margin-bottom:4px}
+    .field-note{color:var(--muted);font-size:.9rem;margin:0}
+    .text-area{
+      width:100%;min-height:420px;resize:vertical;border-radius:18px;border:1px solid rgba(255,245,240,.14);
+      background:rgba(9,11,18,.72);color:var(--fg);padding:16px;font:14px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      outline:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.03);
+    }
+    .text-area:focus{border-color:rgba(122,227,255,.34);box-shadow:0 0 0 4px rgba(122,227,255,.08)}
+    .picker-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    .mini-btn{padding:10px 14px;font-size:.92rem}
+    .picker-tree{
+      display:grid;gap:6px;align-content:start;max-height:420px;overflow:auto;padding-right:4px;
+    }
+    .tree-node{
+      display:grid;grid-template-columns:auto 1fr auto;align-items:start;gap:10px;
+      padding:10px 12px;border-radius:16px;border:1px solid rgba(255,245,240,.08);
+      background:rgba(255,245,240,.035);transition:transform .15s ease, border-color .15s ease, background .15s ease;
+    }
+    .tree-node:hover{transform:translateY(-1px);border-color:rgba(255,245,240,.18);background:rgba(255,245,240,.06)}
+    .tree-node.selected{border-color:rgba(200,255,113,.32);background:linear-gradient(180deg, rgba(200,255,113,.12), rgba(255,245,240,.05))}
+    .tree-toggle{appearance:none;border:none;background:transparent;color:var(--accent2);font-weight:900;padding:0 4px;cursor:pointer;min-width:22px}
+    .tree-meta{display:grid;gap:2px}
+    .tree-name{font-weight:800;color:#fff}
+    .tree-path,.tree-value{font-size:.84rem;color:var(--muted);overflow-wrap:anywhere}
+    .tree-value{color:#e7dbef}
+    .tree-children{grid-column:1/-1;display:grid;gap:6px;margin-left:22px;padding-left:12px;border-left:1px dashed rgba(255,245,240,.12)}
+    .pill-row{display:flex;flex-wrap:wrap;gap:8px}
+    .pill-row span{padding:7px 10px;border-radius:999px;background:rgba(255,245,240,.06);border:1px solid rgba(255,245,240,.08);color:#fff;font-size:.8rem}
+    .result-box{display:grid;gap:10px;padding:14px;border-radius:18px;border:1px solid rgba(255,245,240,.1);background:rgba(9,11,18,.65)}
+    .result-line{font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#f7efe8;overflow-wrap:anywhere}
+    .muted-small{font-size:.88rem;color:var(--muted)}
+    .status-badge{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;background:rgba(255,245,240,.06);border:1px solid rgba(255,245,240,.08)}
+    .status-dot{width:9px;height:9px;border-radius:50%;background:var(--acid);box-shadow:0 0 14px rgba(200,255,113,.55)}
+    .status-badge.bad .status-dot{background:#ff7fa3;box-shadow:0 0 14px rgba(255,127,163,.45)}
+    .panel-hero{display:grid;gap:10px}
+    .picker-info{display:grid;gap:10px}
+    .path-actions{display:flex;flex-wrap:wrap;gap:10px}
+    @media (max-width: 980px){
+      .picker-shell,.path-picker .hero{grid-template-columns:1fr}
+      .picker-card{min-height:auto}
+      .text-area{min-height:280px}
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap path-picker">
+    <nav class="nav" aria-label="Primary">
+      <div class="brand">Gary Talbot</div>
+      <div class="navlinks">
+        <a href="../">Home</a>
+        <a href="../json-smith/">JSON Smith</a>
+        <a href="../work/">Work</a>
+        <a href="../updates/">Updates</a>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div>
+        <div class="tag">🧭 Public utility · click the tree · copy the path</div>
+        <h1 class="glitch">JSON Path Picker.</h1>
+        <p class="lead">Paste JSON, click any node, and instantly copy a JSONPath or dot path plus the selected value. Built for the moment you need to name the exact thing hiding inside the blob without manually counting brackets like a raccoon with a spreadsheet.</p>
+        <p class="sub">Browser-only. No backend. No build step. Just a clean little tool that turns ugly payloads into reachable, copyable structure.</p>
+        <div class="cta">
+          <button class="btn primary mini-btn" id="copyJsonPathBtn" type="button" disabled>Copy JSONPath</button>
+          <button class="btn mini-btn" id="copyDotPathBtn" type="button" disabled>Copy dot path</button>
+          <button class="btn mini-btn" id="copyValueBtn" type="button" disabled>Copy value</button>
+          <button class="btn mini-btn" id="sampleBtn" type="button">Load sample</button>
+          <button class="btn mini-btn" id="expandBtn" type="button">Expand all</button>
+        </div>
+        <div class="hero-meta hero-meta-wide">
+          <div class="signal"><strong>Fast</strong><span>Paste, inspect, click, copy</span></div>
+          <div class="signal"><strong>Practical</strong><span>JSONPath and dot notation both available</span></div>
+          <div class="signal"><strong>Inspectable</strong><span>Single file page on GitHub Pages</span></div>
+        </div>
+      </div>
+      <aside class="panel panel-hero">
+        <div class="status-badge" id="statusBadge"><span class="status-dot"></span><strong id="statusLabel">Ready</strong></div>
+        <div class="picker-info">
+          <div class="result-box">
+            <div class="muted-small">Selected path</div>
+            <div class="result-line" id="selectedPath">$.inventory.items[0].name</div>
+          </div>
+          <div class="result-box">
+            <div class="muted-small">Selected value</div>
+            <div class="result-line" id="selectedValue">"Potion"</div>
+          </div>
+          <div class="pill-row">
+            <span id="kindPill">string</span>
+            <span id="typePill">leaf node</span>
+            <span id="countPill">0 nodes</span>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Workbench</div>
+          <h2 class="section-title">Paste the payload, then pick a branch</h2>
+        </div>
+        <p class="section-copy">Left side is raw JSON. Right side becomes a clickable tree with enough context to know what you clicked and enough copy buttons to stop the browser from making you do algebra.</p>
+      </div>
+      <div class="picker-shell">
+        <article class="card picker-card">
+          <div>
+            <h2>Input JSON</h2>
+            <p class="field-note">Any valid JSON object or array. Invalid input keeps the previous tree visible and shows a readable error.</p>
+          </div>
+          <textarea id="input" class="text-area" spellcheck="false"></textarea>
+        </article>
+        <article class="card picker-card">
+          <div class="picker-toolbar">
+            <h2 style="margin-right:auto">Clickable tree</h2>
+            <span class="status-badge" id="treeStatus"><span class="status-dot"></span><strong>Live</strong></span>
+          </div>
+          <p class="field-note">Click any node to select it. The selected path, dot path, and value update instantly, and the copy buttons use the current selection.</p>
+          <div id="tree" class="picker-tree" aria-live="polite"></div>
+        </article>
+      </div>
+    </section>
+  </main>
+  <script>
+    const input = document.getElementById('input');
+    const tree = document.getElementById('tree');
+    const statusLabel = document.getElementById('statusLabel');
+    const statusBadge = document.getElementById('statusBadge');
+    const selectedPath = document.getElementById('selectedPath');
+    const selectedValue = document.getElementById('selectedValue');
+    const kindPill = document.getElementById('kindPill');
+    const typePill = document.getElementById('typePill');
+    const countPill = document.getElementById('countPill');
+    const copyJsonPathBtn = document.getElementById('copyJsonPathBtn');
+    const copyDotPathBtn = document.getElementById('copyDotPathBtn');
+    const copyValueBtn = document.getElementById('copyValueBtn');
+    const sampleBtn = document.getElementById('sampleBtn');
+    const expandBtn = document.getElementById('expandBtn');
+
+    const sample = {
+      inventory: {
+        items: [
+          { name: 'Potion', price: 12, tags: ['heal', 'common'], stock: 4 },
+          { name: 'Elixir', price: 28, tags: ['rare', 'mana'], stock: 1 }
+        ],
+        location: 'warehouse-7'
+      },
+      owner: 'Gary Talbot',
+      flags: { public: true, weird: true, useful: true }
+    };
+
+    let parsed = null;
+    let flatNodes = [];
+    let selected = null;
+    let expanded = new Set(['$']);
+
+    function describeValue(value) {
+      if (value === null) return 'null';
+      if (Array.isArray(value)) return `array(${value.length})`;
+      if (typeof value === 'object') return `object(${Object.keys(value).length})`;
+      if (typeof value === 'string') return JSON.stringify(value);
+      return String(value);
+    }
+
+    function quoteBracketKey(key) {
+      return key.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+
+    function toDotPath(segments) {
+      if (!segments.length) return '$';
+      return '$' + segments.map(seg => typeof seg === 'number' ? `[${seg}]` : /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(seg) ? `.${seg}` : `['${quoteBracketKey(seg)}']`).join('');
+    }
+
+    function toJsonPath(segments) {
+      if (!segments.length) return '$';
+      return '$' + segments.map(seg => typeof seg === 'number' ? `[${seg}]` : /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(seg) ? `.${seg}` : `['${quoteBracketKey(seg)}']`).join('');
+    }
+
+    function buildNodes(value, segments = [], name = '$', depth = 0) {
+      const path = toJsonPath(segments);
+      const dotPath = toDotPath(segments);
+      const node = {
+        name,
+        path,
+        dotPath,
+        value,
+        kind: value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value,
+        depth,
+        children: []
+      };
+      flatNodes.push(node);
+      if (value && typeof value === 'object') {
+        const entries = Array.isArray(value) ? value.map((child, index) => [index, child]) : Object.entries(value);
+        node.children = entries.map(([key, child]) => buildNodes(child, segments.concat(key), String(key), depth + 1));
+      }
+      return node;
+    }
+
+    function formatForDisplay(value) {
+      if (typeof value === 'string') return JSON.stringify(value);
+      if (typeof value === 'number' || typeof value === 'boolean' || value === null) return String(value);
+      if (Array.isArray(value)) return `Array(${value.length})`;
+      if (typeof value === 'object') return `Object(${Object.keys(value).length})`;
+      return String(value);
+    }
+
+    function setStatus(message, good = true) {
+      statusLabel.textContent = message;
+      statusBadge.classList.toggle('bad', !good);
+      statusLabel.style.color = good ? '#f6ffd9' : '#ffd2e5';
+    }
+
+    function selectNode(node) {
+      selected = node;
+      selectedPath.textContent = node.path;
+      selectedValue.textContent = describeValue(node.value);
+      kindPill.textContent = node.kind;
+      typePill.textContent = node.children && node.children.length ? `branch node (${node.children.length})` : 'leaf node';
+      copyJsonPathBtn.disabled = false;
+      copyDotPathBtn.disabled = false;
+      copyValueBtn.disabled = false;
+      document.querySelectorAll('.tree-node').forEach(el => el.classList.toggle('selected', el.dataset.path === node.path));
+      setStatus(`Selected ${node.path}`, true);
+    }
+
+    async function copyText(text, label) {
+      await navigator.clipboard.writeText(text);
+      setStatus(`${label} copied to clipboard`, true);
+    }
+
+    function escapeHtml(value) {
+      return value.replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
+
+    function renderNode(node) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'tree-node';
+      wrapper.dataset.path = node.path;
+      wrapper.style.marginLeft = `${Math.max(0, node.depth - 1) * 6}px`;
+      const toggle = document.createElement('button');
+      toggle.className = 'tree-toggle';
+      toggle.type = 'button';
+      toggle.textContent = node.children && node.children.length ? (expanded.has(node.path) ? '−' : '+') : '•';
+      toggle.addEventListener('click', (event) => {
+        event.stopPropagation();
+        if (node.children && node.children.length) {
+          if (expanded.has(node.path)) expanded.delete(node.path); else expanded.add(node.path);
+          renderTree();
+        }
+      });
+      const meta = document.createElement('div');
+      meta.className = 'tree-meta';
+      meta.innerHTML = `<div class="tree-name">${escapeHtml(node.name)}</div><div class="tree-path">${escapeHtml(node.path)}</div><div class="tree-value">${escapeHtml(formatForDisplay(node.value))}</div>`;
+      const badge = document.createElement('div');
+      badge.className = 'status-badge';
+      badge.innerHTML = `<span class="status-dot"></span><strong>${node.kind}</strong>`;
+      wrapper.append(toggle, meta, badge);
+      wrapper.addEventListener('click', () => selectNode(node));
+      if (node.children && node.children.length && expanded.has(node.path)) {
+        const childrenWrap = document.createElement('div');
+        childrenWrap.className = 'tree-children';
+        node.children.forEach(child => childrenWrap.appendChild(renderNode(child)));
+        wrapper.appendChild(childrenWrap);
+      }
+      return wrapper;
+    }
+
+    function renderTree() {
+      tree.innerHTML = '';
+      if (!parsed) return;
+      tree.appendChild(renderNode(flatNodes[0]));
+      countPill.textContent = `${flatNodes.length} nodes`;
+      if (selected) {
+        document.querySelectorAll('.tree-node').forEach(el => el.classList.toggle('selected', el.dataset.path === selected.path));
+      }
+    }
+
+    function parseAndRender() {
+      try {
+        parsed = JSON.parse(input.value);
+        flatNodes = [];
+        buildNodes(parsed, [] , '$', 0);
+        renderTree();
+        if (!selected || !flatNodes.some(node => node.path === selected.path)) {
+          selectNode(flatNodes[0]);
+        } else {
+          selectNode(flatNodes.find(node => node.path === selected.path) || flatNodes[0]);
+        }
+        setStatus('JSON loaded. Pick a node.', true);
+      } catch (error) {
+        setStatus(`Invalid JSON: ${error.message}`, false);
+      }
+    }
+
+    function getSelectionPayload() {
+      return selected ? {
+        jsonPath: selected.path,
+        dotPath: selected.dotPath,
+        value: describeValue(selected.value)
+      } : null;
+    }
+
+    copyJsonPathBtn.addEventListener('click', () => selected && copyText(selected.path, 'JSONPath'));
+    copyDotPathBtn.addEventListener('click', () => selected && copyText(selected.dotPath, 'Dot path'));
+    copyValueBtn.addEventListener('click', () => selected && copyText(describeValue(selected.value), 'Value'));
+    sampleBtn.addEventListener('click', () => {
+      input.value = JSON.stringify(sample, null, 2);
+      expanded = new Set(['$']);
+      selected = null;
+      parseAndRender();
+    });
+    expandBtn.addEventListener('click', () => {
+      if (!parsed) return;
+      expanded = new Set(flatNodes.filter(node => node.children && node.children.length).map(node => node.path));
+      renderTree();
+      setStatus('Expanded all branch nodes.', true);
+    });
+    input.addEventListener('input', parseAndRender);
+
+    input.value = JSON.stringify(sample, null, 2);
+    parseAndRender();
+  </script>
+</body>
+</html>
