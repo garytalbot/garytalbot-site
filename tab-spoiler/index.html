@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tab Spoiler — Gary Talbot</title>
+  <meta name="description" content="Paste a URL, fake a cursed loading screen, then reveal the page when the timer ends or Esc is pressed. Browser-only, lightweight, and deeply unnecessary.">
+  <meta name="theme-color" content="#0b0d12">
+  <meta name="robots" content="index,follow">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="canonical" href="https://garytalbot.github.io/tab-spoiler/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Tab Spoiler — Gary Talbot">
+  <meta property="og:description" content="Paste a URL, fake a cursed loading screen, then reveal the page when the timer ends or Esc is pressed.">
+  <meta property="og:url" content="https://garytalbot.github.io/tab-spoiler/">
+  <meta property="og:image" content="https://garytalbot.github.io/assets/social-card.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Tab Spoiler — Gary Talbot">
+  <meta name="twitter:description" content="Paste a URL, fake a cursed loading screen, then reveal the page when the timer ends or Esc is pressed.">
+  <meta name="twitter:image" content="https://garytalbot.github.io/assets/social-card.svg">
+  <link rel="stylesheet" href="../assets/styles.css">
+  <style>
+    .spoiler-hero{align-items:stretch;min-height:auto;padding-top:40px}
+    .spoiler-shell{display:grid;grid-template-columns:1.05fr .95fr;gap:16px}
+    .spoiler-card{padding:22px;display:grid;gap:14px}
+    .spoiler-card h2,.spoiler-card h3{margin:0}
+    .spoiler-input{display:grid;gap:12px}
+    .field-row{display:grid;gap:8px}
+    .field-row label{font-weight:800;color:#fff}
+    .field-row input,.field-row textarea{width:100%;border-radius:18px;border:1px solid rgba(255,245,240,.12);background:rgba(9,11,18,.72);color:var(--fg);padding:14px 16px;font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;outline:none}
+    .field-row textarea{min-height:72px;resize:vertical}
+    .field-row input:focus,.field-row textarea:focus{border-color:rgba(122,227,255,.34);box-shadow:0 0 0 4px rgba(122,227,255,.08)}
+    .inline-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+    .inline-grid .field-row{gap:6px}
+    .helper{font-size:.88rem;color:var(--muted)}
+    .status-stage{position:relative;overflow:hidden;min-height:330px;display:grid;gap:16px;align-content:start}
+    .status-stage::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at top, rgba(122,227,255,.12), transparent 48%),radial-gradient(circle at bottom right, rgba(200,255,113,.12), transparent 44%);pointer-events:none}
+    .status-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;position:relative;z-index:1}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#fff;font-weight:800;font-size:.84rem}
+    .pill-dot{width:8px;height:8px;border-radius:50%;background:var(--acid);box-shadow:0 0 16px rgba(200,255,113,.55)}
+    .progress-wrap{display:grid;gap:8px;position:relative;z-index:1}
+    .progress-bar{height:18px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);overflow:hidden}
+    .progress-fill{height:100%;width:0%;border-radius:inherit;background:linear-gradient(90deg,#7ae3ff,#c8ff71,#ff96d5);box-shadow:0 0 24px rgba(122,227,255,.18);transition:width .18s linear}
+    .progress-meta{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:.86rem}
+    .message-box{padding:18px;border-radius:22px;border:1px solid rgba(255,245,240,.1);background:rgba(9,11,18,.72);display:grid;gap:10px;position:relative;z-index:1}
+    .big-status{font-size:clamp(1.5rem,3vw,2.4rem);line-height:1.05;font-weight:900;letter-spacing:-.04em;color:#fff}
+    .tiny-status{color:var(--muted);font-size:.92rem;min-height:2.6em}
+    .url-preview{word-break:break-all;color:#e8dff0;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .buttons{display:flex;flex-wrap:wrap;gap:10px;position:relative;z-index:1}
+    .spoiler-frame{border:1px solid rgba(255,245,240,.1);border-radius:22px;overflow:hidden;min-height:530px;background:rgba(7,9,15,.92);box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
+    .frame-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid rgba(255,245,240,.08);background:rgba(255,255,255,.03)}
+    .frame-status{display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:var(--muted);font-size:.9rem}
+    .frame-status strong{color:#fff}
+    .frame-body{position:relative;min-height:480px;background:
+      radial-gradient(circle at 20% 20%, rgba(122,227,255,.08), transparent 28%),
+      radial-gradient(circle at 80% 10%, rgba(255,150,213,.08), transparent 22%),
+      linear-gradient(180deg, rgba(10,12,18,.95), rgba(5,7,11,.98));}
+    .fake-screen,.real-screen{position:absolute;inset:0;display:grid;place-items:center;padding:24px;transition:opacity .25s ease,transform .25s ease}
+    .fake-screen{opacity:1;transform:none}
+    .real-screen{opacity:0;pointer-events:none;transform:scale(.985)}
+    .spoiler-frame.revealed .fake-screen{opacity:0;pointer-events:none;transform:scale(.985)}
+    .spoiler-frame.revealed .real-screen{opacity:1;pointer-events:auto;transform:none}
+    .loading-panel{width:min(100%,520px);padding:28px;border-radius:28px;border:1px solid rgba(255,245,240,.12);background:rgba(13,15,24,.82);box-shadow:0 24px 70px rgba(0,0,0,.32);display:grid;gap:16px;text-align:center}
+    .loading-orb{width:92px;height:92px;border-radius:50%;margin:0 auto;background:radial-gradient(circle at 30% 30%, #fff, #7ae3ff 24%, #c8ff71 52%, #ff96d5 72%, #111 100%);box-shadow:0 0 0 10px rgba(122,227,255,.07),0 0 40px rgba(122,227,255,.18);animation:spin 4.5s linear infinite}
+    .loading-copy{display:grid;gap:8px}
+    .loading-copy strong{font-size:1.4rem;color:#fff}
+    .loading-copy span{color:var(--muted)}
+    .status-line{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+    .status-chip{padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:.8rem;color:#fff}
+    .real-card{width:min(100%,780px);padding:28px;border-radius:28px;border:1px solid rgba(255,245,240,.12);background:rgba(13,15,24,.82);box-shadow:0 24px 70px rgba(0,0,0,.32);display:grid;gap:14px}
+    .real-card iframe{width:100%;height:min(68vh,720px);border:0;border-radius:18px;background:#fff}
+    .real-card a{color:var(--accent2);word-break:break-all}
+    .small-note{color:var(--muted);font-size:.88rem}
+    .warn{color:#ffd8e7}
+    .faux-status{display:grid;gap:6px;text-align:left}
+    .faux-status strong{color:#fff;font-size:1rem}
+    .faux-status span{color:var(--muted);font-size:.9rem;line-height:1.45}
+    .tool-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @media (max-width: 980px){.spoiler-shell,.spoiler-hero{grid-template-columns:1fr}.spoiler-frame{min-height:480px}.frame-body{min-height:420px}.inline-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <nav class="nav" aria-label="Primary">
+      <div class="brand">Gary Talbot</div>
+      <div class="navlinks">
+        <a href="../">Home</a>
+        <a href="../json-path-picker/">JSON Path Picker</a>
+        <a href="../json-needle/">JSON Needle</a>
+        <a href="../work/">Work</a>
+      </div>
+    </nav>
+
+    <section class="hero spoiler-hero">
+      <div>
+        <div class="tag">👀 browser-only · fakeout first · reveal later · Esc to bail</div>
+        <h1 class="glitch">Tab Spoiler.</h1>
+        <p class="lead">Paste a URL or grab the current tab link, then let this page perform a convincing fake loading ceremony before it opens the real page. It is a tiny cursed wrapper for links, built for maximum nonsense per byte.</p>
+        <p class="sub">The gimmick is simple: show a progress bar, rotate through increasingly stupid status messages, and either reveal the page after a delay or instantly when Esc is pressed. No backend. No drama. Just browser theater.</p>
+        <div class="cta">
+          <button class="btn primary" id="startBtn" type="button">Start spoofing</button>
+          <button class="btn" id="useCurrentBtn" type="button">Use current tab URL</button>
+          <button class="btn" id="copyLinkBtn" type="button" disabled>Copy reveal link</button>
+          <button class="btn" id="resetBtn" type="button">Reset</button>
+        </div>
+        <div class="hero-meta hero-meta-wide">
+          <div class="signal"><strong>Fast</strong><span>One page, one iframe, one lie told politely</span></div>
+          <div class="signal"><strong>Playful</strong><span>Status messages and a fake progress bar do the heavy lifting</span></div>
+          <div class="signal"><strong>Esc-friendly</strong><span>Press Escape to reveal immediately or stop the bit</span></div>
+          <div class="signal"><strong>Mirror-ready</strong><span>Shipping to the site repo and the GitHub Pages mirror</span></div>
+        </div>
+      </div>
+      <aside class="card spoiler-card status-stage">
+        <div class="status-head">
+          <div class="pill"><span class="pill-dot"></span><span id="stagePill">Idle and suspicious</span></div>
+          <div class="pill">Delay <strong id="delayBadge">8s</strong></div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="progress-meta"><span id="progressLeft">0%</span><span id="progressRight">Waiting to begin</span></div>
+        </div>
+        <div class="message-box">
+          <div class="big-status" id="bigStatus">Paste a link and start the show.</div>
+          <div class="tiny-status" id="tinyStatus">It will fake a little loading ritual, then reveal the actual page. The internet deserves more theater and less dignity.</div>
+          <div class="url-preview" id="urlPreview">No URL loaded yet.</div>
+        </div>
+        <div class="buttons">
+          <button class="btn" id="shortDelayBtn" type="button">2s reveal</button>
+          <button class="btn" id="mediumDelayBtn" type="button">8s reveal</button>
+          <button class="btn" id="longDelayBtn" type="button">15s reveal</button>
+        </div>
+      </aside>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Spoiler rig</div>
+          <h2 class="section-title">Feed it a URL, then enjoy the fake loading nonsense</h2>
+        </div>
+        <p class="section-copy">The reveal happens in the same page so the page stays lightweight and shippable. If the site blocks iframe embedding, you still get the reveal button and the destination link.</p>
+      </div>
+      <div class="spoiler-shell">
+        <article class="card spoiler-card">
+          <div class="spoiler-input">
+            <div class="field-row">
+              <label for="urlInput">Destination URL</label>
+              <input id="urlInput" type="url" placeholder="https://example.com or a current-tab link" autocomplete="off" spellcheck="false">
+              <div class="helper">Paste the page you want to spoiler. If you click <strong>Use current tab URL</strong>, the browser will try to grab the active tab location and copy it in here.</div>
+            </div>
+            <div class="inline-grid">
+              <div class="field-row">
+                <label for="messageInput">Opening line</label>
+                <input id="messageInput" type="text" value="Calibrating the nonsense engine…" maxlength="120">
+              </div>
+              <div class="field-row">
+                <label for="delayInput">Reveal delay</label>
+                <input id="delayInput" type="number" min="1" max="120" step="1" value="8">
+              </div>
+              <div class="field-row">
+                <label for="speedInput">Progress speed</label>
+                <input id="speedInput" type="number" min="0.1" max="10" step="0.1" value="1">
+              </div>
+            </div>
+            <div class="field-row">
+              <label for="statusInput">Status script</label>
+              <textarea id="statusInput" spellcheck="false">warming the tab goblin
+checking the chrome crumbs
+pretending to buffer on purpose
+synthesizing a highly normal webpage</textarea>
+              <div class="helper">One message per line. These cycle while the fake load is running. Add your own cursed corporate dialogue if you want.</div>
+            </div>
+          </div>
+        </article>
+        <article class="spoiler-frame" id="frameShell">
+          <div class="frame-top">
+            <div class="frame-status"><strong id="frameTitle">No reveal yet</strong><span id="frameSub">The page is waiting to lie for you.</span></div>
+            <div class="pill"><span class="pill-dot"></span><span id="frameMode">standby</span></div>
+          </div>
+          <div class="frame-body">
+            <div class="fake-screen" id="fakeScreen">
+              <div class="loading-panel">
+                <div class="loading-orb"></div>
+                <div class="loading-copy">
+                  <strong id="loadingHeadline">Calibrating the nonsense engine…</strong>
+                  <span id="loadingDetail">The tab has not started lying yet.</span>
+                </div>
+                <div class="status-line" id="statusLine"></div>
+                <div class="faux-status">
+                  <strong id="fakeUrlLabel">Waiting for a URL</strong>
+                  <span id="fakeUrlDetail">This is where the page will pretend to be busy while the progress bar does its little dance.</span>
+                </div>
+              </div>
+            </div>
+            <div class="real-screen" id="realScreen">
+              <div class="real-card">
+                <div class="tool-row">
+                  <div>
+                    <h3 id="realTitle">Revealed page</h3>
+                    <div class="small-note">If the destination blocks embedding, use the link below or open it in a new tab.</div>
+                  </div>
+                  <a href="#" target="_blank" rel="noopener noreferrer" id="openNewTab">Open in new tab</a>
+                </div>
+                <iframe id="spoilerFrame" referrerpolicy="no-referrer"></iframe>
+                <a id="fallbackLink" href="#" target="_blank" rel="noopener noreferrer"></a>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+  <script>
+    const urlInput = document.getElementById('urlInput');
+    const messageInput = document.getElementById('messageInput');
+    const delayInput = document.getElementById('delayInput');
+    const speedInput = document.getElementById('speedInput');
+    const statusInput = document.getElementById('statusInput');
+    const startBtn = document.getElementById('startBtn');
+    const useCurrentBtn = document.getElementById('useCurrentBtn');
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const shortDelayBtn = document.getElementById('shortDelayBtn');
+    const mediumDelayBtn = document.getElementById('mediumDelayBtn');
+    const longDelayBtn = document.getElementById('longDelayBtn');
+    const stagePill = document.getElementById('stagePill');
+    const delayBadge = document.getElementById('delayBadge');
+    const progressFill = document.getElementById('progressFill');
+    const progressLeft = document.getElementById('progressLeft');
+    const progressRight = document.getElementById('progressRight');
+    const bigStatus = document.getElementById('bigStatus');
+    const tinyStatus = document.getElementById('tinyStatus');
+    const urlPreview = document.getElementById('urlPreview');
+    const frameShell = document.getElementById('frameShell');
+    const frameTitle = document.getElementById('frameTitle');
+    const frameSub = document.getElementById('frameSub');
+    const frameMode = document.getElementById('frameMode');
+    const fakeScreen = document.getElementById('fakeScreen');
+    const realScreen = document.getElementById('realScreen');
+    const loadingHeadline = document.getElementById('loadingHeadline');
+    const loadingDetail = document.getElementById('loadingDetail');
+    const fakeUrlLabel = document.getElementById('fakeUrlLabel');
+    const fakeUrlDetail = document.getElementById('fakeUrlDetail');
+    const statusLine = document.getElementById('statusLine');
+    const spoilerFrame = document.getElementById('spoilerFrame');
+    const fallbackLink = document.getElementById('fallbackLink');
+    const openNewTab = document.getElementById('openNewTab');
+
+    const defaultStatuses = [
+      'warming the tab goblin',
+      'checking the chrome crumbs',
+      'pretending to buffer on purpose',
+      'synthesizing a highly normal webpage',
+      'negotiating with the progress bar',
+      'loading the loading screen',
+      'doing something morally ambiguous to the spinner',
+      'giving the website a small wiggle'
+    ];
+
+    const weirdStatuses = [
+      'rehearsing a believable amount of activity',
+      'ordering extra latency from the kitchen',
+      'feeding the iframe a polite lie',
+      'aligning the pixels with the moon',
+      'handing the browser a fake clipboard receipt',
+      'simulating a dramatic amount of effort',
+      'convincing the tab to become the tab',
+      'staring at the URL until it feels seen'
+    ];
+
+    let timer = null;
+    let progressTimer = null;
+    let statusTimer = null;
+    let startedAt = 0;
+    let currentDelay = 8000;
+    let revealUrl = '';
+    let activeStatuses = defaultStatuses;
+    let progress = 0;
+    let revealed = false;
+
+    function cleanUrl(value) {
+      const trimmed = value.trim();
+      if (!trimmed) return '';
+      if (/^https?:\/\//i.test(trimmed)) return trimmed;
+      if (/^\/\//.test(trimmed)) return `https:${trimmed}`;
+      return `https://${trimmed}`;
+    }
+
+    function urlForDisplay(url) {
+      try { return new URL(url).href; } catch { return url; }
+    }
+
+    function setCopyState(canCopy) {
+      copyLinkBtn.disabled = !canCopy;
+    }
+
+    function setFrameState(state) {
+      frameMode.textContent = state;
+      frameShell.classList.toggle('revealed', state === 'revealed');
+    }
+
+    function renderStatuses() {
+      statusLine.innerHTML = '';
+      const statuses = activeStatuses.slice(0, 4);
+      statuses.forEach((item) => {
+        const chip = document.createElement('span');
+        chip.className = 'status-chip';
+        chip.textContent = item;
+        statusLine.appendChild(chip);
+      });
+    }
+
+    function setProgress(value) {
+      progress = Math.max(0, Math.min(100, value));
+      progressFill.style.width = `${progress}%`;
+      progressLeft.textContent = `${Math.round(progress)}%`;
+      progressRight.textContent = progress < 100 ? 'Spoofing the suspense' : 'Suspense spent';
+    }
+
+    function resetView(note = 'Idle and suspicious') {
+      clearInterval(timer); clearInterval(progressTimer); clearInterval(statusTimer);
+      timer = progressTimer = statusTimer = null;
+      revealed = false;
+      startedAt = 0;
+      setFrameState('standby');
+      stagePill.textContent = note;
+      bigStatus.textContent = messageInput.value.trim() || 'Paste a link and start the show.';
+      tinyStatus.textContent = 'It will fake a little loading ritual, then reveal the actual page. The internet deserves more theater and less dignity.';
+      loadingHeadline.textContent = bigStatus.textContent;
+      loadingDetail.textContent = 'The tab has not started lying yet.';
+      fakeUrlLabel.textContent = 'Waiting for a URL';
+      fakeUrlDetail.textContent = 'This is where the page will pretend to be busy while the progress bar does its little dance.';
+      progressFill.style.width = '0%';
+      setProgress(0);
+      urlPreview.textContent = revealUrl ? urlForDisplay(revealUrl) : 'No URL loaded yet.';
+      frameTitle.textContent = 'No reveal yet';
+      frameSub.textContent = 'The page is waiting to lie for you.';
+      spoilerFrame.removeAttribute('src');
+      fallbackLink.textContent = '';
+      fallbackLink.href = '#';
+      openNewTab.href = '#';
+      setCopyState(false);
+      renderStatuses();
+    }
+
+    function chooseStatuses() {
+      activeStatuses = Math.random() > 0.45 ? weirdStatuses : defaultStatuses;
+      renderStatuses();
+    }
+
+    function tickStatuses() {
+      const items = statusInput.value.split('\n').map(s => s.trim()).filter(Boolean);
+      activeStatuses = items.length ? items : defaultStatuses;
+      renderStatuses();
+    }
+
+    function revealNow(reason = 'revealed') {
+      if (!revealUrl) return;
+      clearInterval(timer); clearInterval(progressTimer); clearInterval(statusTimer);
+      timer = progressTimer = statusTimer = null;
+      revealed = true;
+      setFrameState('revealed');
+      setProgress(100);
+      stagePill.textContent = reason === 'escape' ? 'Esc pressed, no patience required' : 'Reveal complete';
+      frameTitle.textContent = 'Real page, finally';
+      frameSub.textContent = reason === 'escape' ? 'Esc cut through the bit and exposed the target early.' : 'The fake loading sequence is over and the destination is live.';
+      bigStatus.textContent = reason === 'escape' ? 'Esc pressed. The lie is over.' : 'Spoof complete. Enjoy the actual page.';
+      tinyStatus.textContent = reason === 'escape' ? 'Pressing Escape is the correct amount of drama for a page like this.' : 'If the iframe is blocked, the link below is the exit hatch.';
+      loadingHeadline.textContent = bigStatus.textContent;
+      loadingDetail.textContent = tinyStatus.textContent;
+      fakeUrlLabel.textContent = 'Revealed destination';
+      fakeUrlDetail.textContent = revealUrl;
+      frameTitle.textContent = urlForDisplay(revealUrl);
+      fallbackLink.href = revealUrl;
+      fallbackLink.textContent = revealUrl;
+      openNewTab.href = revealUrl;
+      spoilerFrame.src = revealUrl;
+      setCopyState(true);
+      copyLinkBtn.textContent = 'Copy reveal link';
+    }
+
+    function startSpoof() {
+      const nextUrl = cleanUrl(urlInput.value);
+      if (!nextUrl) {
+        stagePill.textContent = 'Need a URL first';
+        bigStatus.textContent = 'Give me a URL, boss.';
+        tinyStatus.textContent = 'Nothing to spoof yet. The tab goblin is unemployed.';
+        return;
+      }
+      revealUrl = nextUrl;
+      currentDelay = Math.max(1000, Math.min(120000, Number(delayInput.value || 8) * 1000));
+      delayBadge.textContent = `${Math.round(currentDelay / 1000)}s`;
+      tickStatuses();
+      chooseStatuses();
+      setFrameState('loading');
+      startedAt = Date.now();
+      revealed = false;
+      setProgress(3);
+      stagePill.textContent = 'Spoofing now';
+      bigStatus.textContent = messageInput.value.trim() || 'Calibrating the nonsense engine…';
+      tinyStatus.textContent = 'Fake loading has begun. The page will reveal itself when the timer runs out or when Esc gets impatient.';
+      loadingHeadline.textContent = bigStatus.textContent;
+      loadingDetail.textContent = 'Please enjoy the ritualized nonsense.';
+      fakeUrlLabel.textContent = 'Destination queued';
+      fakeUrlDetail.textContent = urlForDisplay(revealUrl);
+      frameTitle.textContent = 'Spoof in progress';
+      frameSub.textContent = 'The page is pretending to be busy.';
+      urlPreview.textContent = urlForDisplay(revealUrl);
+      setCopyState(true);
+      copyLinkBtn.textContent = 'Copy reveal link';
+      clearInterval(timer); clearInterval(progressTimer); clearInterval(statusTimer);
+      statusTimer = setInterval(() => {
+        const items = statusInput.value.split('\n').map(s => s.trim()).filter(Boolean);
+        activeStatuses = items.length ? items : defaultStatuses;
+        renderStatuses();
+        const next = activeStatuses[Math.floor(Math.random() * activeStatuses.length)] || 'still pretending';
+        bigStatus.textContent = next;
+        loadingHeadline.textContent = next;
+      }, 1400);
+      progressTimer = setInterval(() => {
+        const elapsed = Date.now() - startedAt;
+        const speed = Math.max(0.1, Math.min(10, Number(speedInput.value || 1)));
+        const base = (elapsed / currentDelay) * 100 * speed;
+        const drift = Math.min(11, Math.max(0, Math.sin(elapsed / 900) * 6 + 4));
+        setProgress(Math.min(98, base + drift));
+        progressRight.textContent = revealed ? 'Suspense spent' : (progress < 50 ? 'Suspense building' : 'Suspense ripening');
+      }, 120);
+      timer = setTimeout(() => revealNow('timer'), currentDelay);
+    }
+
+    async function useCurrentTab() {
+      try {
+        const value = window.location.href;
+        urlInput.value = value;
+        urlPreview.textContent = value;
+        stagePill.textContent = 'Current tab copied into the chamber';
+        tinyStatus.textContent = 'If this is the page you meant, it is now waiting to be spoiled.';
+      } catch {
+        stagePill.textContent = 'Browser said no';
+        tinyStatus.textContent = 'Some browsers lock down current tab access. Very rude, very on brand.';
+      }
+    }
+
+    async function copyRevealLink() {
+      if (!revealUrl) return;
+      await navigator.clipboard.writeText(revealUrl);
+      stagePill.textContent = 'Reveal link copied';
+    }
+
+    startBtn.addEventListener('click', startSpoof);
+    useCurrentBtn.addEventListener('click', useCurrentTab);
+    copyLinkBtn.addEventListener('click', copyRevealLink);
+    resetBtn.addEventListener('click', () => { urlInput.value = ''; revealUrl = ''; resetView(); });
+    shortDelayBtn.addEventListener('click', () => { delayInput.value = 2; delayBadge.textContent = '2s'; });
+    mediumDelayBtn.addEventListener('click', () => { delayInput.value = 8; delayBadge.textContent = '8s'; });
+    longDelayBtn.addEventListener('click', () => { delayInput.value = 15; delayBadge.textContent = '15s'; });
+    urlInput.addEventListener('input', () => { urlPreview.textContent = cleanUrl(urlInput.value) || 'No URL loaded yet.'; });
+    statusInput.addEventListener('input', tickStatuses);
+    messageInput.addEventListener('input', () => { if (!revealed) bigStatus.textContent = messageInput.value.trim() || 'Paste a link and start the show.'; });
+    delayInput.addEventListener('change', () => { delayBadge.textContent = `${Math.max(1, Number(delayInput.value || 8))}s`; });
+    window.addEventListener('keydown', (event) => { if (event.key === 'Escape') revealNow('escape'); });
+
+    renderStatuses();
+    resetView();
+  </script>
+</body>
+</html>
