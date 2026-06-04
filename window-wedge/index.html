@@ -37,6 +37,8 @@
     .big-status{font-size:clamp(1.5rem,3vw,2.4rem);line-height:1.05;font-weight:900;letter-spacing:-.04em;color:#fff}
     .tiny-status{color:var(--muted);font-size:.92rem;min-height:2.6em}
     .url-preview{word-break:break-all;color:#e8dff0;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .url-warning{min-height:1.3em;color:#ffcd7a;font-size:.84rem;font-weight:700}
+    .url-warning.bad{color:#ff8aa8}
     .preset-row{display:flex;flex-wrap:wrap;gap:8px}
     .preset{padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05);color:#fff;cursor:pointer;font-weight:800;font-size:.84rem}
     .frame-shell{border:1px solid rgba(255,245,240,.1);border-radius:22px;overflow:hidden;min-height:530px;background:rgba(7,9,15,.92)}
@@ -99,6 +101,7 @@
           <div class="big-status" id="bigStatus">Pick a mode and jam it in place.</div>
           <div class="tiny-status" id="tinyStatus">The fake screen is what everyone sees first. The real page waits underneath like a raccoon in the vents.</div>
           <div class="url-preview" id="urlPreview">No URL loaded yet.</div>
+          <div class="url-warning" id="urlWarning" aria-live="polite"></div>
         </div>
         <div class="preset-row">
           <button class="preset" data-mode="inbox">Inbox</button>
@@ -213,6 +216,7 @@ Q2 follow-up:
     const bigStatus = document.getElementById('bigStatus');
     const tinyStatus = document.getElementById('tinyStatus');
     const urlPreview = document.getElementById('urlPreview');
+    const urlWarning = document.getElementById('urlWarning');
     const frameShell = document.getElementById('frameShell');
     const frameTitle = document.getElementById('frameTitle');
     const frameSub = document.getElementById('frameSub');
@@ -308,13 +312,22 @@ ${notesInput?.value || d.surface}`;
       bigStatus.textContent = 'Pick a mode and jam it in place.';
       tinyStatus.textContent = 'The fake screen is what everyone sees first. The real page waits underneath like a raccoon in the vents.';
       urlPreview.textContent = 'No URL loaded yet.';
+      urlWarning.textContent = '';
+      urlWarning.classList.remove('bad');
       copyLinkBtn.disabled = true;
     }
 
-    function sanitizeUrl(value){
+    function normalizeUrl(value){
       const trimmed = value.trim();
-      if(!trimmed) return '';
-      try { return new URL(trimmed, window.location.href).toString(); } catch { return ''; }
+      if(!trimmed) return { url: '', warning: '' };
+      if (/^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(trimmed)) {
+        try { return { url: new URL(trimmed).toString(), warning: '' }; } catch { return { url: '', warning: 'That URL is not valid yet.' }; }
+      }
+      if (/^[^\s/]+\.[^\s/]+/.test(trimmed)) {
+        const prefixed = `https://${trimmed.replace(/^\/+/, '')}`;
+        try { return { url: new URL(prefixed).toString(), warning: 'Added https:// to a bare host.' }; } catch { return { url: '', warning: 'That URL is not valid yet.' }; }
+      }
+      try { return { url: new URL(trimmed, window.location.href).toString(), warning: 'That looks like a relative path, not a full URL.' }; } catch { return { url: '', warning: 'That does not look like a usable URL yet.' }; }
     }
 
     function revealNow(){
@@ -330,7 +343,7 @@ ${notesInput?.value || d.surface}`;
     }
 
     function startCloak(){
-      const url = sanitizeUrl(urlInput.value);
+      const { url, warning } = normalizeUrl(urlInput.value);
       if(!url) return;
       resetTimers();
       const delay = clampDelay(delayInput.value);
@@ -342,6 +355,8 @@ ${notesInput?.value || d.surface}`;
       bigStatus.textContent = 'Hiding the tab behind a fake work screen.';
       tinyStatus.textContent = 'Press Escape if you get bored or suddenly become morally honest.';
       urlPreview.textContent = url;
+      urlWarning.textContent = warning;
+      urlWarning.classList.toggle('bad', warning.includes('not valid') || warning.includes('does not'));
       delayBadge.textContent = `${delay}s`;
       startTime = Date.now();
       progressTimer = setInterval(() => {
@@ -361,7 +376,7 @@ ${notesInput?.value || d.surface}`;
     startBtn.addEventListener('click', startCloak);
     resetBtn.addEventListener('click', () => { resetTimers(); urlInput.value = ''; setIdle(); cloakFrame.removeAttribute('src'); fallbackLink.removeAttribute('href'); fallbackLink.textContent = ''; openNewTab.removeAttribute('href'); });
     copyLinkBtn.addEventListener('click', async () => {
-      const url = sanitizeUrl(urlInput.value);
+      const { url } = normalizeUrl(urlInput.value);
       if(!url) return;
       const share = buildShareLink(url);
       await navigator.clipboard.writeText(share);
@@ -370,6 +385,12 @@ ${notesInput?.value || d.surface}`;
     });
     useCurrentBtn.addEventListener('click', async () => {
       try { urlInput.value = await navigator.clipboard.readText(); } catch {}
+    });
+    urlInput.addEventListener('input', () => {
+      const { url, warning } = normalizeUrl(urlInput.value);
+      urlPreview.textContent = url || 'No URL loaded yet.';
+      urlWarning.textContent = warning;
+      urlWarning.classList.toggle('bad', warning.includes('not valid') || warning.includes('does not'));
     });
     document.querySelectorAll('.preset').forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.disguise)));
     screenInput?.addEventListener('change', () => setMode(screenInput?.value));

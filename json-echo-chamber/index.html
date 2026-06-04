@@ -83,6 +83,7 @@
           <button class="btn mini-btn" id="copyJsonPathBtn" type="button" disabled>Copy JSONPath</button>
           <button class="btn mini-btn" id="copyPointerBtn" type="button" disabled>Copy JSON Pointer</button>
           <button class="btn mini-btn" id="copyDotPathBtn" type="button" disabled>Copy dot path</button>
+          <button class="btn mini-btn" id="copyPermalinkBtn" type="button" disabled>Copy permalink</button>
           <button class="btn mini-btn" id="sampleBtn" type="button">Load sample</button>
           <button class="btn mini-btn" id="expandBtn" type="button">Expand all</button>
         </div>
@@ -156,6 +157,7 @@
     const copyJsonPathBtn = document.getElementById('copyJsonPathBtn');
     const copyPointerBtn = document.getElementById('copyPointerBtn');
     const copyDotPathBtn = document.getElementById('copyDotPathBtn');
+    const copyPermalinkBtn = document.getElementById('copyPermalinkBtn');
     const sampleBtn = document.getElementById('sampleBtn');
     const expandBtn = document.getElementById('expandBtn');
 
@@ -172,6 +174,7 @@
     let flatNodes = [];
     let selected = null;
     let expanded = new Set(['$']);
+    let pendingSelectionPath = null;
 
     function escapeHtml(value) { return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
     function quoteBracketKey(key) { return key.replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
@@ -181,6 +184,46 @@
     function describeValue(value) { if (value === null) return 'null'; if (Array.isArray(value)) return `array(${value.length})`; if (typeof value === 'object') return `object(${Object.keys(value).length})`; if (typeof value === 'string') return JSON.stringify(value); return String(value); }
     function formatForDisplay(value) { if (typeof value === 'string') return JSON.stringify(value); if (typeof value === 'number' || typeof value === 'boolean' || value === null) return String(value); if (Array.isArray(value)) return `Array(${value.length})`; if (typeof value === 'object') return `Object(${Object.keys(value).length})`; return String(value); }
     function breadcrumbLabel(segments) { return ['root', ...segments.map(seg => String(seg))].join(' ▸ '); }
+    function encodeUrlState(state) {
+      const bytes = new TextEncoder().encode(JSON.stringify(state));
+      let binary = '';
+      bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+      return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+    }
+    function decodeUrlState(token) {
+      const normalized = token.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
+      const binary = atob(padded);
+      const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
+      return JSON.parse(new TextDecoder().decode(bytes));
+    }
+    function readUrlState() {
+      const hash = location.hash.startsWith('#') ? location.hash.slice(1) : '';
+      if (!hash) return null;
+      const params = new URLSearchParams(hash);
+      const token = params.get('state');
+      if (!token) return null;
+      try {
+        const state = decodeUrlState(token);
+        if (!state || typeof state.json !== 'string') return null;
+        return { json: state.json, sel: typeof state.sel === 'string' ? state.sel : '$' };
+      } catch (error) {
+        return null;
+      }
+    }
+    function syncUrlState() {
+      if (!parsed || !selected) return;
+      const params = new URLSearchParams();
+      params.set('state', encodeUrlState({ json: input.value, sel: selected.path }));
+      history.replaceState(null, '', `${location.pathname}${location.search}#${params.toString()}`);
+    }
+    function expandSelection(node) {
+      const segments = [];
+      node.segments.forEach(seg => {
+        segments.push(seg);
+        expanded.add(toPath(segments));
+      });
+    }
 
     function buildNodes(value, segments = [], name = '$', depth = 0) {
       const node = { name, segments, path: toPath(segments), dotPath: toDotPath(segments), pointer: toPointer(segments), value, kind: value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value, depth, children: [] };
@@ -210,8 +253,10 @@
       copyJsonPathBtn.disabled = false;
       copyPointerBtn.disabled = false;
       copyDotPathBtn.disabled = false;
+      copyPermalinkBtn.disabled = false;
       document.querySelectorAll('.tree-node').forEach(el => el.classList.toggle('selected', el.dataset.path === node.path));
       setStatus(`Selected ${node.path}`, true);
+      syncUrlState();
     }
 
     function formatBundle(node) {
@@ -225,7 +270,26 @@
       ].join('\n');
     }
 
-    async function copyText(text, label) { await navigator.clipboard.writeText(text); setStatus(`${label} copied`, true); }
+    async function copyText(text, label) {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const fallback = document.createElement('textarea');
+          fallback.value = text;
+          fallback.setAttribute('readonly', 'readonly');
+          fallback.style.position = 'fixed';
+          fallback.style.left = '-9999px';
+          document.body.appendChild(fallback);
+          fallback.select();
+          document.execCommand('copy');
+          fallback.remove();
+        }
+        setStatus(`${label} copied`, true);
+      } catch (error) {
+        setStatus(`Copy failed: ${error.message}`, false);
+      }
+    }
     function renderNode(node) {
       const wrapper = document.createElement('div');
       wrapper.className = 'tree-node';
@@ -261,13 +325,18 @@
       if (selected) document.querySelectorAll('.tree-node').forEach(el => el.classList.toggle('selected', el.dataset.path === selected.path));
     }
 
-    function parseAndRender() {
+    function parseAndRender(preferredPath = null) {
       try {
         parsed = JSON.parse(input.value);
         flatNodes = [];
         buildNodes(parsed, [], '$', 0);
+        const targetPath = preferredPath || pendingSelectionPath;
+        const targetNode = targetPath ? flatNodes.find(node => node.path === targetPath) : flatNodes[0];
+        pendingSelectionPath = null;
+        expanded = new Set(['$']);
+        if (targetNode) expandSelection(targetNode);
         renderTree();
-        updateEcho(flatNodes[0]);
+        updateEcho(targetNode || flatNodes[0]);
         setStatus('JSON loaded. Pick a node.', true);
       } catch (error) {
         setStatus(`Invalid JSON: ${error.message}`, false);
@@ -278,12 +347,20 @@
     copyJsonPathBtn.addEventListener('click', () => selected && copyText(selected.path, 'JSONPath'));
     copyPointerBtn.addEventListener('click', () => selected && copyText(selected.pointer, 'JSON Pointer'));
     copyDotPathBtn.addEventListener('click', () => selected && copyText(selected.dotPath, 'Dot path'));
-    sampleBtn.addEventListener('click', () => { input.value = JSON.stringify(sample, null, 2); expanded = new Set(['$']); selected = null; parseAndRender(); });
+    copyPermalinkBtn.addEventListener('click', () => selected && copyText(location.href, 'Permalink'));
+    sampleBtn.addEventListener('click', () => { input.value = JSON.stringify(sample, null, 2); expanded = new Set(['$']); selected = null; pendingSelectionPath = null; parseAndRender(); });
     expandBtn.addEventListener('click', () => { if (!parsed) return; expanded = new Set(flatNodes.filter(node => node.children && node.children.length).map(node => node.path)); renderTree(); setStatus('Expanded all branch nodes.', true); });
     input.addEventListener('input', parseAndRender);
 
-    input.value = JSON.stringify(sample, null, 2);
-    parseAndRender();
+    const restoredState = readUrlState();
+    if (restoredState) {
+      input.value = restoredState.json;
+      pendingSelectionPath = restoredState.sel;
+      parseAndRender(restoredState.sel);
+    } else {
+      input.value = JSON.stringify(sample, null, 2);
+      parseAndRender();
+    }
   </script>
 </body>
 </html>
