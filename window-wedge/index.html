@@ -255,6 +255,10 @@ Q2 follow-up:
     let progressTimer = null;
     let startTime = 0;
 
+    function clampDelay(value) {
+      return Math.max(1, Math.min(120, Number(value) || 8));
+    }
+
     function setMode(mode){
       const d = disguises[mode] || disguises.inbox;
       modeChip.textContent = d.label;
@@ -266,6 +270,25 @@ Q2 follow-up:
 ${notesInput?.value || d.surface}`;
       timeChip.textContent = d.time;
       screenInput?.value = mode;
+    }
+
+    function buildShareLink(url) {
+      const shareUrl = new URL(location.href);
+      shareUrl.searchParams.set('url', url);
+      shareUrl.searchParams.set('mode', screenInput?.value || 'inbox');
+      shareUrl.searchParams.set('delay', String(clampDelay(delayInput.value)));
+      return shareUrl.toString();
+    }
+
+    function applyQueryState() {
+      const params = new URLSearchParams(location.search);
+      const incomingUrl = params.get('url');
+      const incomingMode = params.get('mode');
+      const incomingDelay = params.get('delay');
+      if (incomingUrl) urlInput.value = incomingUrl;
+      if (incomingMode && disguises[incomingMode]) screenInput.value = incomingMode;
+      if (incomingDelay) delayInput.value = incomingDelay;
+      setMode(screenInput?.value);
     }
 
     function resetTimers(){
@@ -310,7 +333,7 @@ ${notesInput?.value || d.surface}`;
       const url = sanitizeUrl(urlInput.value);
       if(!url) return;
       resetTimers();
-      const delay = Math.max(1, Math.min(120, Number(delayInput.value) || 8));
+      const delay = clampDelay(delayInput.value);
       const mode = screenInput?.value;
       setMode(mode);
       frameShell.classList.remove('cloak-revealed');
@@ -340,7 +363,7 @@ ${notesInput?.value || d.surface}`;
     copyLinkBtn.addEventListener('click', async () => {
       const url = sanitizeUrl(urlInput.value);
       if(!url) return;
-      const share = `${location.origin}${location.pathname}?url=${encodeURIComponent(url)}&mode=${encodeURIComponent(screenInput?.value)}&delay=${encodeURIComponent(delayInput.value)}`;
+      const share = buildShareLink(url);
       await navigator.clipboard.writeText(share);
       copyLinkBtn.textContent = 'Copied';
       setTimeout(() => copyLinkBtn.textContent = 'Copy reveal link', 1000);
@@ -349,17 +372,11 @@ ${notesInput?.value || d.surface}`;
       try { urlInput.value = await navigator.clipboard.readText(); } catch {}
     });
     document.querySelectorAll('.preset').forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.disguise)));
-    /* screenInput removed */
-    /* screenInput.addEventListener('change', () => setMode(screenInput?.value));
-    /* notesInput removed */
-    /* notesInput.addEventListener('input', () => setMode(screenInput?.value));
+    screenInput?.addEventListener('change', () => setMode(screenInput?.value));
+    notesInput?.addEventListener('input', () => setMode(screenInput?.value));
     document.addEventListener('keydown', (e) => { if(e.key === 'Escape') revealNow(); });
 
-    const params = new URLSearchParams(location.search);
-    if(params.get('url')) urlInput.value = params.get('url');
-    if(params.get('mode')) screenInput?.value = params.get('mode');
-    if(params.get('delay')) delayInput.value = params.get('delay');
-    setMode(screenInput?.value);
+    applyQueryState();
     setIdle();
   </script>
 </body>
