@@ -183,7 +183,7 @@
     function breadcrumbLabel(segments) { return ['root', ...segments.map(seg => String(seg))].join(' ▸ '); }
 
     function buildNodes(value, segments = [], name = '$', depth = 0) {
-      const node = { name, path: toPath(segments), dotPath: toDotPath(segments), pointer: toPointer(segments), value, kind: value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value, depth, children: [] };
+      const node = { name, segments, path: toPath(segments), dotPath: toDotPath(segments), pointer: toPointer(segments), value, kind: value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value, depth, children: [] };
       flatNodes.push(node);
       if (value && typeof value === 'object') {
         const entries = Array.isArray(value) ? value.map((child, index) => [index, child]) : Object.entries(value);
@@ -204,7 +204,7 @@
       selectedValue.textContent = describeValue(node.value);
       pointerLine.textContent = node.pointer;
       dotLine.textContent = node.dotPath;
-      crumbLine.textContent = breadcrumbLabel(node.path === '$' ? [] : node.path.slice(1).split(/\.(?![^\[]*\])/).filter(Boolean));
+      crumbLine.textContent = breadcrumbLabel(node.segments);
       bundleLine.textContent = `${node.path} -> ${describeValue(node.value)}`;
       copyBundleBtn.disabled = false;
       copyJsonPathBtn.disabled = false;
@@ -212,6 +212,17 @@
       copyDotPathBtn.disabled = false;
       document.querySelectorAll('.tree-node').forEach(el => el.classList.toggle('selected', el.dataset.path === node.path));
       setStatus(`Selected ${node.path}`, true);
+    }
+
+    function formatBundle(node) {
+      return [
+        `JSONPath: ${node.path}`,
+        `JSON Pointer: ${node.pointer}`,
+        `Dot path: ${node.dotPath}`,
+        `Breadcrumbs: ${breadcrumbLabel(node.segments)}`,
+        `Selected value: ${describeValue(node.value)}`,
+        `Bundle: ${node.path} -> ${describeValue(node.value)}`
+      ].join('\n');
     }
 
     async function copyText(text, label) { await navigator.clipboard.writeText(text); setStatus(`${label} copied`, true); }
@@ -263,7 +274,7 @@
       }
     }
 
-    copyBundleBtn.addEventListener('click', () => selected && copyText(`${selected.path} -> ${describeValue(selected.value)}\npointer: ${selected.pointer}\ndot: ${selected.dotPath}\nbreadcrumbs: ${breadcrumbLabel(selected.path === '$' ? [] : selected.path.slice(1).split(/\.(?![^\[]*\])/).filter(Boolean))}`, 'Echo bundle'));
+    copyBundleBtn.addEventListener('click', () => selected && copyText(formatBundle(selected), 'Echo bundle'));
     copyJsonPathBtn.addEventListener('click', () => selected && copyText(selected.path, 'JSONPath'));
     copyPointerBtn.addEventListener('click', () => selected && copyText(selected.pointer, 'JSON Pointer'));
     copyDotPathBtn.addEventListener('click', () => selected && copyText(selected.dotPath, 'Dot path'));
