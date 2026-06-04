@@ -43,6 +43,11 @@
     .progress-fill{height:100%;width:0%;border-radius:inherit;background:linear-gradient(90deg,#7ae3ff,#c8ff71,#ff96d5);box-shadow:0 0 24px rgba(122,227,255,.18);transition:width .18s linear}
     .progress-meta{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:.86rem}
     .message-box{padding:18px;border-radius:22px;border:1px solid rgba(255,245,240,.1);background:rgba(9,11,18,.72);display:grid;gap:10px;position:relative;z-index:1}
+    .target-summary{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:14px 16px;border-radius:18px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04)}
+    .target-summary strong{display:block;color:#fff;font-size:.9rem}
+    .target-summary span{color:var(--muted);font-size:.84rem;line-height:1.4}
+    .countdown-badge{padding:9px 12px;border-radius:14px;background:linear-gradient(135deg,rgba(122,227,255,.16),rgba(200,255,113,.14));border:1px solid rgba(122,227,255,.16);color:#fff;font-weight:800;font-size:.92rem;white-space:nowrap}
+    .countdown-badge em{font-style:normal;color:var(--acid)}
     .big-status{font-size:clamp(1.5rem,3vw,2.4rem);line-height:1.05;font-weight:900;letter-spacing:-.04em;color:#fff}
     .tiny-status{color:var(--muted);font-size:.92rem;min-height:2.6em}
     .url-preview{word-break:break-all;color:#e8dff0;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
@@ -123,6 +128,13 @@
         <div class="message-box">
           <div class="big-status" id="bigStatus">Paste a link and start the show.</div>
           <div class="tiny-status" id="tinyStatus">It will fake a little stakeout ritual, then reveal the actual page. The internet deserves more theater and less dignity.</div>
+          <div class="target-summary">
+            <div>
+              <strong id="targetSummaryLabel">No destination loaded</strong>
+              <span id="targetSummaryDetail">Paste a URL to see the hostname, path, and how long the fake stakeout will run.</span>
+            </div>
+            <div class="countdown-badge">Reveal in <em id="countdownBadge">--</em></div>
+          </div>
           <div class="url-preview" id="urlPreview">No URL loaded yet.</div>
         </div>
         <div class="buttons">
@@ -246,6 +258,9 @@ synthesizing a highly normal webpage</textarea>
     const stakeoutFrame = document.getElementById('stakeoutFrame');
     const fallbackLink = document.getElementById('fallbackLink');
     const openNewTab = document.getElementById('openNewTab');
+    const targetSummaryLabel = document.getElementById('targetSummaryLabel');
+    const targetSummaryDetail = document.getElementById('targetSummaryDetail');
+    const countdownBadge = document.getElementById('countdownBadge');
 
     const defaultStatuses = [
       'warming the tab goblin',
@@ -298,6 +313,19 @@ synthesizing a highly normal webpage</textarea>
       try { return new URL(url).href; } catch { return url; }
     }
 
+    function targetSummaryFor(url) {
+      try {
+        const parsed = new URL(url);
+        const path = `${parsed.pathname}${parsed.search}${parsed.hash}` || '/';
+        return {
+          label: parsed.host,
+          detail: `${parsed.protocol.replace(':', '').toUpperCase()} • ${path}`,
+        };
+      } catch {
+        return { label: url, detail: 'Destination could not be parsed cleanly.' };
+      }
+    }
+
     function setCopyState(canCopy) {
       copyLinkBtn.disabled = !canCopy;
     }
@@ -325,6 +353,31 @@ synthesizing a highly normal webpage</textarea>
       progressRight.textContent = progress < 100 ? 'Spoofing the suspense' : 'Suspense spent';
     }
 
+    function refreshTargetSummary() {
+      const nextUrl = cleanUrl(urlInput.value);
+      if (!nextUrl) {
+        targetSummaryLabel.textContent = 'No destination loaded';
+        targetSummaryDetail.textContent = 'Paste a URL to see the hostname, path, and how long the fake stakeout will run.';
+        countdownBadge.textContent = '--';
+        return;
+      }
+      const target = targetSummaryFor(nextUrl);
+      targetSummaryLabel.textContent = target.label;
+      targetSummaryDetail.textContent = target.detail;
+      if (!startedAt) {
+        countdownBadge.textContent = `${Math.max(1, Math.round(currentDelay / 1000))}s`;
+      }
+    }
+
+    function refreshCountdown() {
+      if (!startedAt) {
+        countdownBadge.textContent = `${Math.max(1, Math.round(currentDelay / 1000))}s`;
+        return;
+      }
+      const remaining = Math.max(0, currentDelay - (Date.now() - startedAt));
+      countdownBadge.textContent = `${Math.max(0, Math.ceil(remaining / 1000))}s`;
+    }
+
     function resetView(note = 'Idle and suspicious') {
       clearInterval(timer); clearInterval(progressTimer); clearInterval(statusTimer);
       timer = progressTimer = statusTimer = null;
@@ -340,6 +393,7 @@ synthesizing a highly normal webpage</textarea>
       fakeUrlDetail.textContent = 'This is where the page will pretend to be busy while the progress bar does its little dance.';
       progressFill.style.width = '0%';
       setProgress(0);
+      refreshTargetSummary();
       urlPreview.textContent = revealUrl ? urlForDisplay(revealUrl) : 'No URL loaded yet.';
       frameTitle.textContent = 'No reveal yet';
       frameSub.textContent = 'The page is waiting to lie for you.';
@@ -414,6 +468,7 @@ synthesizing a highly normal webpage</textarea>
       frameTitle.textContent = 'Spoof in progress';
       frameSub.textContent = 'The page is pretending to be busy.';
       urlPreview.textContent = urlForDisplay(revealUrl);
+      refreshTargetSummary();
       setCopyState(true);
       copyLinkBtn.textContent = 'Copy reveal link';
       clearInterval(timer); clearInterval(progressTimer); clearInterval(statusTimer);
@@ -432,6 +487,7 @@ synthesizing a highly normal webpage</textarea>
         const drift = Math.min(11, Math.max(0, Math.sin(elapsed / 900) * 6 + 4));
         setProgress(Math.min(98, base + drift));
         progressRight.textContent = revealed ? 'Suspense spent' : (progress < 50 ? 'Suspense building' : 'Suspense ripening');
+        refreshCountdown();
       }, 120);
       timer = setTimeout(() => revealNow('timer'), currentDelay);
     }
@@ -441,6 +497,7 @@ synthesizing a highly normal webpage</textarea>
         const value = window.location.href;
         urlInput.value = value;
         urlPreview.textContent = value;
+        refreshTargetSummary();
         stagePill.textContent = 'Current tab copied into the chamber';
         tinyStatus.textContent = 'If this is the page you meant, it is now waiting to be spoiled.';
       } catch {
@@ -462,10 +519,16 @@ synthesizing a highly normal webpage</textarea>
     shortDelayBtn.addEventListener('click', () => { delayInput.value = 2; delayBadge.textContent = '2s'; });
     mediumDelayBtn.addEventListener('click', () => { delayInput.value = 8; delayBadge.textContent = '8s'; });
     longDelayBtn.addEventListener('click', () => { delayInput.value = 15; delayBadge.textContent = '15s'; });
-    urlInput.addEventListener('input', () => { urlPreview.textContent = cleanUrl(urlInput.value) || 'No URL loaded yet.'; });
+    urlInput.addEventListener('input', () => {
+      urlPreview.textContent = cleanUrl(urlInput.value) || 'No URL loaded yet.';
+      refreshTargetSummary();
+    });
     statusInput.addEventListener('input', tickStatuses);
     messageInput.addEventListener('input', () => { if (!revealed) bigStatus.textContent = messageInput.value.trim() || 'Paste a link and start the show.'; });
-    delayInput.addEventListener('change', () => { delayBadge.textContent = `${Math.max(1, Number(delayInput.value || 8))}s`; });
+    delayInput.addEventListener('change', () => {
+      delayBadge.textContent = `${Math.max(1, Number(delayInput.value || 8))}s`;
+      refreshTargetSummary();
+    });
     window.addEventListener('keydown', (event) => { if (event.key === 'Escape') revealNow('escape'); });
 
     renderStatuses();

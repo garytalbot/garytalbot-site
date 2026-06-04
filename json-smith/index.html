@@ -19,6 +19,47 @@
   <meta name="twitter:description" content="Format, minify, copy, and generate sample JSON in a neon workshop built for quick inspection.">
   <meta name="twitter:image" content="https://garytalbot.github.io/assets/social-card.svg">
   <link rel="stylesheet" href="../assets/styles.css">
+  <style>
+    .json-smith .json-live {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .json-smith .json-live div {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255, 245, 240, 0.07);
+      border: 1px solid rgba(255, 245, 240, 0.1);
+      backdrop-filter: blur(10px);
+    }
+    .json-smith .json-live strong {
+      display: block;
+      font-size: 0.76rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #fff2bf;
+      margin-bottom: 6px;
+    }
+    .json-smith .json-live span {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .json-smith textarea[data-invalid="true"] {
+      border-color: rgba(255, 122, 162, 0.5);
+      box-shadow: 0 0 0 4px rgba(255, 122, 162, 0.12);
+    }
+    .json-smith textarea::placeholder {
+      color: rgba(246, 255, 217, 0.45);
+    }
+    @media (max-width: 700px) {
+      .json-smith .json-live {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
   <main class="wrap json-smith">
@@ -42,6 +83,11 @@
           <button class="btn" id="minifyBtn" type="button">Smash it flat</button>
           <button class="btn" id="sampleBtn" type="button">Load sample</button>
           <button class="btn" id="copyBtn" type="button" disabled>Copy output</button>
+        </div>
+        <div class="json-live" aria-label="Live JSON stats">
+          <div><strong>Input</strong><span id="inputStats">0 chars · 0 lines</span></div>
+          <div><strong>Output</strong><span id="outputStats">0 chars · 0 lines</span></div>
+          <div><strong>Parse</strong><span id="parseState">Awaiting input</span></div>
         </div>
         <div class="hero-meta hero-meta-wide json-meta">
           <div class="signal"><strong>Instant</strong><span>No sign-in, no tracking, no ceremonial nonsense</span></div>
@@ -103,6 +149,9 @@
     const statusLabel = document.getElementById('statusLabel');
     const modeLabel = document.getElementById('modeLabel');
     const countLabel = document.getElementById('countLabel');
+    const inputStats = document.getElementById('inputStats');
+    const outputStats = document.getElementById('outputStats');
+    const parseState = document.getElementById('parseState');
     const sample = {
       project: 'JSON Smith',
       owner: 'Gary Talbot',
@@ -111,9 +160,19 @@
       meta: { public: true, weird: true, useful: true }
     };
 
+    function lineCount(value) {
+      return value ? value.split(/\r\n|\r|\n/).length : 0;
+    }
+
+    function updateStats() {
+      inputStats.textContent = `${input.value.length} chars · ${lineCount(input.value)} lines`;
+      outputStats.textContent = `${output.value.length} chars · ${lineCount(output.value)} lines`;
+    }
+
     function setStatus(message, good = true) {
       statusLabel.textContent = message;
       statusLabel.style.color = good ? '#f6ffd9' : '#ffd2e5';
+      parseState.textContent = good ? 'Ready' : 'Needs attention';
     }
 
     function updateCount() {
@@ -125,14 +184,17 @@
         const parsed = JSON.parse(input.value);
         output.value = JSON.stringify(parsed, null, 2);
         modeLabel.textContent = 'Pretty';
+        input.dataset.invalid = 'false';
         setStatus('Valid JSON. It has been ironed.', true);
       } catch (error) {
         output.value = '';
         modeLabel.textContent = 'Pretty';
-        setStatus('Not valid JSON yet. The braces are fighting back.', false);
+        input.dataset.invalid = 'true';
+        setStatus(`Not valid JSON yet. ${error.message}`, false);
       }
       syncCopyState();
       updateCount();
+      updateStats();
     }
 
     function renderMinified() {
@@ -140,13 +202,16 @@
         const parsed = JSON.parse(input.value);
         output.value = JSON.stringify(parsed);
         modeLabel.textContent = 'Minified';
+        input.dataset.invalid = 'false';
         setStatus('Flattened and ready.', true);
       } catch (error) {
         output.value = '';
         modeLabel.textContent = 'Minified';
-        setStatus('Still invalid. The tiny format cannon refuses bad cargo.', false);
+        input.dataset.invalid = 'true';
+        setStatus(`Still invalid. ${error.message}`, false);
       }
       updateCount();
+      updateStats();
     }
 
     const copyBtn = document.getElementById('copyBtn');
@@ -173,6 +238,15 @@
     });
     copyBtn.addEventListener('click', copyOutput);
     input.addEventListener('input', renderPretty);
+    input.addEventListener('keydown', (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key === 'Enter') {
+        event.preventDefault();
+        renderMinified();
+      } else if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+        event.preventDefault();
+        renderPretty();
+      }
+    });
     input.value = JSON.stringify(sample, null, 2);
     renderPretty();
   </script>

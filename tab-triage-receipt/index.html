@@ -39,6 +39,7 @@
     .receipt-page .sub{max-width:44rem}
     .receipt-shell{display:grid;grid-template-columns:1.02fr .98fr;gap:16px}
     .panel-stack{display:grid;gap:16px}
+    .hero-meta-wide{grid-template-columns:repeat(4,minmax(0,1fr))}
     .input-card,.receipt-card{padding:22px}
     .input-card{display:grid;gap:14px}
     .field-row{display:grid;gap:8px}
@@ -68,6 +69,14 @@
     }
     .metric strong{font-size:1.05rem;color:#fff}
     .metric span{font-size:.84rem;color:var(--muted)}
+    .pill-dot{
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      background:linear-gradient(135deg, #ffd36e, #ff79c6);
+      box-shadow:0 0 0 3px rgba(255,255,255,.08), 0 0 16px rgba(255,211,110,.28);
+      flex:0 0 auto;
+    }
     .receipt-card{
       background:
         linear-gradient(180deg, rgba(255,245,240,.08), rgba(255,245,240,.04)),
@@ -113,6 +122,39 @@
       background:rgba(255,255,255,.32);
       min-width:min(100%,280px);
     }
+    .receipt-band{
+      margin-top:16px;
+      display:grid;
+      grid-template-columns:repeat(5,minmax(0,1fr));
+      gap:10px;
+      padding:14px;
+      border-radius:22px;
+      border:1px solid rgba(35,26,24,.12);
+      background:rgba(255,255,255,.26);
+      position:relative;
+      z-index:1;
+    }
+    .band-stat{
+      display:grid;
+      gap:4px;
+      min-height:72px;
+      padding:12px 13px;
+      border-radius:16px;
+      border:1px solid rgba(35,26,24,.08);
+      background:rgba(255,255,255,.46);
+      box-shadow:0 10px 20px rgba(35,26,24,.04);
+    }
+    .band-stat span{
+      font:800 .7rem/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      text-transform:uppercase;
+      letter-spacing:.18em;
+      color:#7d5d50;
+    }
+    .band-stat strong{font-size:1.2rem;line-height:1;color:var(--ink)}
+    .band-stat[data-tone="keep"]{background:rgba(181,230,199,.5)}
+    .band-stat[data-tone="park"]{background:rgba(255,229,156,.52)}
+    .band-stat[data-tone="close"]{background:rgba(255,201,179,.58)}
+    .band-stat[data-tone="focus"]{background:rgba(255,245,240,.72)}
     .receipt-stamp{
       display:inline-flex;
       align-items:center;
@@ -144,18 +186,35 @@
     .paper-head span,.paper-foot span{color:#5e5048}
     .line-items{display:grid;gap:10px}
     .item{
+      position:relative;
       display:grid;
       grid-template-columns:minmax(0,1fr) auto;
       gap:10px 14px;
       align-items:start;
-      padding:12px 0;
-      border-bottom:1px dashed rgba(35,26,24,.16);
+      padding:14px 14px 14px 18px;
+      border:1px solid rgba(35,26,24,.1);
+      border-radius:18px;
+      background:rgba(255,255,255,.3);
+      box-shadow:0 8px 16px rgba(35,26,24,.04);
+      overflow:hidden;
     }
-    .item:last-child{border-bottom:none}
-    .item-main{display:grid;gap:4px}
-    .item-title{font-weight:800;line-height:1.25}
-    .item-sub{color:#6f5f56;font-size:.86rem;overflow-wrap:anywhere}
-    .item-meta{display:grid;justify-items:end;gap:6px;text-align:right}
+    .item::before{
+      content:"";
+      position:absolute;
+      left:10px;
+      top:12px;
+      bottom:12px;
+      width:4px;
+      border-radius:999px;
+      background:var(--status-accent, #d26d49);
+    }
+    .item[data-status="keep"]{--status-accent:#2f7b4d;background:linear-gradient(90deg, rgba(181,230,199,.44), rgba(255,255,255,.38))}
+    .item[data-status="park"]{--status-accent:#a87d14;background:linear-gradient(90deg, rgba(255,229,156,.42), rgba(255,255,255,.38))}
+    .item[data-status="close"]{--status-accent:#a04c2a;background:linear-gradient(90deg, rgba(255,201,179,.5), rgba(255,255,255,.38))}
+    .item-main{display:grid;gap:5px;padding-left:6px}
+    .item-title{font-weight:800;line-height:1.3;font-size:.98rem}
+    .item-sub{color:#6f5f56;font-size:.86rem;overflow-wrap:anywhere;line-height:1.45}
+    .item-meta{display:grid;justify-items:end;gap:6px;text-align:right;align-self:center}
     .pill{
       display:inline-flex;
       align-items:center;
@@ -171,25 +230,36 @@
       white-space:nowrap;
       cursor:pointer;
     }
+    .pill:hover{transform:translateY(-1px);box-shadow:0 10px 18px rgba(35,26,24,.08)}
     .pill[data-status="keep"]{border-color:rgba(49,117,78,.26);background:rgba(181,230,199,.48)}
     .pill[data-status="park"]{border-color:rgba(168,125,20,.24);background:rgba(255,229,156,.45)}
     .pill[data-status="close"]{border-color:rgba(160,66,36,.24);background:rgba(255,201,179,.52)}
     .price{font-weight:900;font-size:1rem}
     .receipt-summary{
       display:grid;
-      gap:8px;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px 14px;
       margin-top:2px;
-      padding-top:10px;
+      padding:14px 16px 12px;
+      border-radius:20px;
+      border:1px solid rgba(35,26,24,.1);
+      background:rgba(255,255,255,.3);
       border-top:2px solid rgba(35,26,24,.2);
     }
     .summary-row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
     .summary-row strong{font-weight:900}
-    .summary-row.total{font-size:1.05rem}
+    .summary-row.total{
+      grid-column:1 / -1;
+      font-size:1.05rem;
+      padding-top:8px;
+      border-top:1px solid rgba(35,26,24,.1);
+    }
     .receipt-note{
       font-size:.86rem;
       color:#5f5148;
       border-top:1px dashed rgba(35,26,24,.18);
       padding-top:10px;
+      margin-top:2px;
     }
     .empty-state{
       padding:16px;
@@ -221,7 +291,12 @@
     .spark{color:#d26d49;font-weight:900}
     @media (max-width: 980px){
       .receipt-page .hero,.receipt-shell,.metric-strip{grid-template-columns:1fr}
+      .hero-meta-wide,.receipt-band{grid-template-columns:1fr 1fr}
       .receipt-card,.input-card{padding:18px}
+    }
+    @media (max-width: 640px){
+      .hero-meta-wide,.receipt-band{grid-template-columns:1fr}
+      .receipt-summary{grid-template-columns:1fr}
     }
     @media print{
       body{background:#fff;color:#111}
@@ -326,6 +401,13 @@
               <div><span>permalink</span> <strong id="receiptHash">#</strong></div>
             </div>
           </div>
+          <div class="receipt-band" aria-label="Live receipt summary">
+            <div class="band-stat" data-tone="tabs"><span>tabs</span><strong id="bandCount">0</strong></div>
+            <div class="band-stat" data-tone="keep"><span>keep</span><strong id="bandKeep">0</strong></div>
+            <div class="band-stat" data-tone="park"><span>park</span><strong id="bandPark">0</strong></div>
+            <div class="band-stat" data-tone="close"><span>close</span><strong id="bandClose">0</strong></div>
+            <div class="band-stat" data-tone="focus"><span>focus credits</span><strong id="bandFocus">0.0</strong></div>
+          </div>
           <div class="receipt-stamp" id="receiptStamp">awaiting pile</div>
           <div class="paper" id="paper">
             <div class="empty-state" id="emptyState">Paste some tabs to generate the receipt. The printer is bored and waiting.</div>
@@ -353,6 +435,11 @@
     const receiptNo = document.getElementById('receiptNo');
     const receiptTime = document.getElementById('receiptTime');
     const receiptHash = document.getElementById('receiptHash');
+    const bandCount = document.getElementById('bandCount');
+    const bandKeep = document.getElementById('bandKeep');
+    const bandPark = document.getElementById('bandPark');
+    const bandClose = document.getElementById('bandClose');
+    const bandFocus = document.getElementById('bandFocus');
     const receiptStamp = document.getElementById('receiptStamp');
     const paper = document.getElementById('paper');
     const emptyState = document.getElementById('emptyState');
@@ -590,6 +677,11 @@
       focusMetric.textContent = summary.total.toFixed(1);
       keepMetric.textContent = String(summary.keep);
       closeMetric.textContent = String(summary.close);
+      bandCount.textContent = String(summary.count);
+      bandKeep.textContent = String(summary.keep);
+      bandPark.textContent = String(summary.park);
+      bandClose.textContent = String(summary.close);
+      bandFocus.textContent = summary.total.toFixed(1);
       receiptStamp.textContent = summary.count ? 'processed' : 'awaiting pile';
 
       paper.innerHTML = '';
@@ -610,6 +702,7 @@
       items.forEach((item, index) => {
         const row = document.createElement('div');
         row.className = 'item';
+        row.dataset.status = item.status;
         const hostLine = item.url ? `${item.host || 'link'} · ${item.url}` : (item.host || 'local tab');
         row.innerHTML = `
           <div class="item-main">
