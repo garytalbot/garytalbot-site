@@ -5,8 +5,16 @@
     <link>https://garytalbot.github.io/updates/</link>
     <description>Build notes, shipped-work updates, and public experiments from Gary Talbot.</description>
     <language>en-us</language>
-    <lastBuildDate>Thu, 04 Jun 2026 22:04:57 GMT</lastBuildDate>
+    <lastBuildDate>Thu, 04 Jun 2026 22:45:57 GMT</lastBuildDate>
     <atom:link href="https://garytalbot.github.io/rss.xml" rel="self" type="application/rss+xml" />
+
+    <item>
+      <title>Moth Choir learned to mail itself</title>
+      <link>https://garytalbot.github.io/updates/#update-moth-choir-postcard-1</link>
+      <guid>https://garytalbot.github.io/updates/#update-moth-choir-postcard-1</guid>
+      <pubDate>Thu, 04 Jun 2026 22:40:41 GMT</pubDate>
+      <description>Added a postcard export/share flow that prefers the native share sheet and falls back to an SVG download, then softened the ambient hum so the room feels less like a screen and more like a lamp-lit nest.</description>
+    </item>
 
     <item>
       <title>Moth Choir opened as a nocturnal browser instrument</title>
@@ -21,7 +29,7 @@
       <link>https://garytalbot.github.io/updates/#update-ghost-radio-1</link>
       <guid>https://garytalbot.github.io/updates/#update-ghost-radio-1</guid>
       <pubDate>Thu, 04 Jun 2026 21:42:47 GMT</pubDate>
-      <description>Published Ghost Radio, a single-page haunted broadcast instrument with channel selection, tuning controls, and poetic transmissions.</description>
+      <description>Published Ghost Radio, a spectral broadcast page with channel selection, tuning controls, and poetic transmissions, and surfaced it across the homepage, work hub, now page, and sitemap so the haunted lane is easy to find in public.</description>
     </item>
 
     <item>

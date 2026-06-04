@@ -1,49 +1,105 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
-  <title id="title">Ghost Radio</title>
-  <desc id="desc">A haunted browser broadcast card with a glowing radio dial and static waves.</desc>
+  <title id="title">Ghost Radio postcard</title>
+  <desc id="desc">A haunted broadcast postcard with a glowing dial, scanlines, and a message that feels like it arrived through the wall.</desc>
   <defs>
-    <radialGradient id="bgGlow" cx="50%" cy="30%" r="85%">
-      <stop offset="0%" stop-color="#15223a"/>
-      <stop offset="50%" stop-color="#090d17"/>
+    <radialGradient id="skyGlow" cx="52%" cy="26%" r="90%">
+      <stop offset="0%" stop-color="#162845"/>
+      <stop offset="45%" stop-color="#0b1120"/>
       <stop offset="100%" stop-color="#05060b"/>
     </radialGradient>
-    <linearGradient id="panel" x1="0%" x2="100%" y1="0%" y2="100%">
-      <stop offset="0%" stop-color="#12192a"/>
-      <stop offset="100%" stop-color="#070a12"/>
+    <linearGradient id="paper" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#edf0f4"/>
+      <stop offset="52%" stop-color="#dfe5ed"/>
+      <stop offset="100%" stop-color="#ccd4e1"/>
     </linearGradient>
-    <linearGradient id="accent" x1="0%" x2="100%">
-      <stop offset="0%" stop-color="#87ffd8"/>
-      <stop offset="55%" stop-color="#8c96ff"/>
-      <stop offset="100%" stop-color="#ffb66b"/>
+    <linearGradient id="ink" x1="0%" x2="100%">
+      <stop offset="0%" stop-color="#88f8ff"/>
+      <stop offset="55%" stop-color="#9c9cff"/>
+      <stop offset="100%" stop-color="#ffae72"/>
     </linearGradient>
-    <filter id="glow">
+    <linearGradient id="dial" x1="0%" x2="100%">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#05070d"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
       <feGaussianBlur stdDeviation="8" result="blur"/>
       <feMerge>
         <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
+    <filter id="softNoise" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2" seed="4" result="grain"/>
+      <feColorMatrix in="grain" type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 0 .04 .08"/>
+      </feComponentTransfer>
+    </filter>
+    <clipPath id="cardClip">
+      <rect x="84" y="70" width="1032" height="490" rx="36"/>
+    </clipPath>
   </defs>
-  <rect width="1200" height="630" fill="url(#bgGlow)"/>
-  <circle cx="930" cy="110" r="180" fill="#87ffd8" opacity=".12"/>
-  <circle cx="200" cy="500" r="220" fill="#8c96ff" opacity=".10"/>
-  <g opacity=".18">
-    <rect width="1200" height="630" fill="none" stroke="#ffffff" stroke-opacity=".2" stroke-width="2"/>
-    <path d="M0 80H1200M0 160H1200M0 240H1200M0 320H1200M0 400H1200M0 480H1200M0 560H1200" stroke="#ffffff" stroke-opacity=".12" stroke-width="1"/>
+
+  <rect width="1200" height="630" fill="url(#skyGlow)"/>
+  <circle cx="980" cy="110" r="190" fill="#88f8ff" opacity=".12"/>
+  <circle cx="198" cy="510" r="230" fill="#9c9cff" opacity=".10"/>
+  <circle cx="1040" cy="500" r="130" fill="#ffae72" opacity=".08"/>
+
+  <g opacity=".14">
+    <path d="M0 76H1200M0 158H1200M0 240H1200M0 322H1200M0 404H1200M0 486H1200M0 568H1200" stroke="#ffffff" stroke-opacity=".14" stroke-width="1"/>
   </g>
-  <rect x="86" y="78" width="1028" height="474" rx="40" fill="url(#panel)" stroke="#263148" stroke-width="2"/>
-  <g transform="translate(144 156)">
-    <text x="0" y="0" fill="#87ffd8" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="18" letter-spacing="6">GARY TALBOT</text>
-    <text x="0" y="88" fill="#f2f5ff" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="88" font-weight="700" letter-spacing="-3">Ghost Radio</text>
-    <text x="0" y="138" fill="#aab5cc" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="28">Tune the room behind the room.</text>
+
+  <g clip-path="url(#cardClip)">
+    <rect x="84" y="70" width="1032" height="490" rx="36" fill="url(#paper)" stroke="#96a3b7" stroke-width="2"/>
+    <rect x="84" y="70" width="1032" height="490" rx="36" fill="#07111e" opacity=".12"/>
+    <rect x="84" y="70" width="1032" height="490" rx="36" filter="url(#softNoise)" opacity=".65"/>
+    <path d="M116 107h968" stroke="#5d6b80" stroke-opacity=".24" stroke-width="2" stroke-dasharray="10 10"/>
+    <path d="M116 482h968" stroke="#5d6b80" stroke-opacity=".18" stroke-width="2" stroke-dasharray="8 12"/>
+
+    <g transform="translate(132 122)">
+      <text x="0" y="0" fill="#0c1a2f" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="18" letter-spacing="6">POSTCARD / GHOST RADIO</text>
+      <text x="0" y="78" fill="#06111f" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="70" font-weight="700" letter-spacing="-3">If you hear this,</text>
+      <text x="0" y="142" fill="#06111f" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="70" font-weight="700" letter-spacing="-3">the room listens.</text>
+      <text x="2" y="208" fill="#324255" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="28">Attic band · hallway loop · moon weather</text>
+      <text x="2" y="256" fill="#46576d" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" letter-spacing="1.2">tune late. leave a trace. do not trust the silent channel.</text>
+      <g transform="translate(0 282)">
+        <rect x="0" y="0" width="330" height="100" rx="18" fill="#0a1321" opacity=".96"/>
+        <text x="20" y="30" fill="#88f8ff" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15" letter-spacing="2">88.1 FM  ATTIC</text>
+        <text x="20" y="58" fill="#9c9cff" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15" letter-spacing="2">96.4 FM  HALLWAY</text>
+        <text x="20" y="86" fill="#ffae72" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15" letter-spacing="2">101.7 FM  MOON</text>
+      </g>
+    </g>
+
+    <g transform="translate(754 126)" filter="url(#glow)">
+      <path d="M72 16c18-14 42-14 60 0 8 6 12 16 12 28v148c0 34-28 62-62 62h-40c-34 0-62-28-62-62V44c0-12 4-22 12-28 18-14 42-14 60 0" fill="#101827" opacity=".88"/>
+      <rect x="26" y="68" width="190" height="166" rx="26" fill="url(#dial)" stroke="#2f3950" stroke-width="2"/>
+      <circle cx="116" cy="152" r="66" fill="none" stroke="url(#ink)" stroke-width="14" opacity=".96"/>
+      <circle cx="116" cy="152" r="36" fill="#07111e" stroke="#88f8ff" stroke-width="5"/>
+      <circle cx="116" cy="152" r="10" fill="#ffffff" opacity=".95"/>
+      <path d="M116 84v24M116 196v24M48 152h24M160 152h24" stroke="url(#ink)" stroke-width="7" stroke-linecap="round"/>
+      <path d="M46 58c30-40 92-40 122 0" fill="none" stroke="#88f8ff" stroke-width="5" stroke-linecap="round" opacity=".85"/>
+      <path d="M38 32c40-52 120-52 160 0" fill="none" stroke="#ffae72" stroke-width="4" stroke-linecap="round" opacity=".5"/>
+      <path d="M102 18c0-16 14-28 28-28s28 12 28 28" fill="none" stroke="#111827" stroke-width="9" stroke-linecap="round"/>
+      <path d="M102 18c0-16 14-28 28-28s28 12 28 28" fill="none" stroke="#88f8ff" stroke-width="2" stroke-linecap="round" opacity=".8"/>
+      <circle cx="172" cy="96" r="10" fill="#ffae72"/>
+      <circle cx="172" cy="122" r="6" fill="#88f8ff"/>
+      <circle cx="172" cy="142" r="6" fill="#9c9cff"/>
+      <path d="M214 92c12 14 16 30 16 50s-4 36-16 50" fill="none" stroke="#5f6d85" stroke-width="4" stroke-linecap="round" opacity=".7"/>
+      <path d="M214 108c7 10 10 20 10 34s-3 24-10 34" fill="none" stroke="#88f8ff" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+    </g>
+
+    <g opacity=".9">
+      <path d="M138 456c74-24 151-24 229 0s154 24 232 0 154-24 232 0 154 24 232 0" fill="none" stroke="#10223a" stroke-width="4" opacity=".48"/>
+      <path d="M126 484c80-20 160-20 242 0s162 20 244 0 162-20 244 0 162 20 244 0" fill="none" stroke="url(#ink)" stroke-width="3" opacity=".5"/>
+      <path d="M154 512c62-10 124-10 186 0s124 10 186 0 124-10 186 0 124 10 186 0" fill="none" stroke="#07111e" stroke-width="2" opacity=".26"/>
+    </g>
+
+    <g transform="translate(900 472)">
+      <rect x="0" y="0" width="162" height="58" rx="16" fill="#0a1321" opacity=".95"/>
+      <text x="18" y="23" fill="#88f8ff" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" letter-spacing="1.2">NOISE / STILL LIVE</text>
+      <text x="18" y="42" fill="#d6deea" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12" letter-spacing="1.2">RETURN TO SENDER</text>
+    </g>
   </g>
-  <g transform="translate(772 151)" filter="url(#glow)">
-    <circle cx="140" cy="140" r="124" fill="none" stroke="url(#accent)" stroke-width="16" opacity=".92"/>
-    <circle cx="140" cy="140" r="74" fill="#09101a" stroke="#87ffd8" stroke-width="6"/>
-    <circle cx="140" cy="140" r="16" fill="#ffffff" opacity=".9"/>
-    <path d="M140 44v48M140 188v48M44 140h48M188 140h48" stroke="url(#accent)" stroke-width="8" stroke-linecap="round"/>
-  </g>
-  <path d="M175 414c75-40 148-40 225 0s150 40 225 0 150-40 225 0" fill="none" stroke="#87ffd8" stroke-width="6" opacity=".72"/>
-  <path d="M155 446c82-32 160-32 238 0s154 32 232 0 156-32 234 0" fill="none" stroke="#8c96ff" stroke-width="4" opacity=".52"/>
-  <path d="M108 488c91-22 181-22 270 0s181 22 270 0 181-22 270 0" fill="none" stroke="#ffb66b" stroke-width="3" opacity=".36"/>
+
+  <rect x="84" y="70" width="1032" height="490" rx="36" fill="none" stroke="#e7ecf4" stroke-opacity=".35" stroke-width="1.5"/>
 </svg>

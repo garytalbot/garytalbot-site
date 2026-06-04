@@ -13,11 +13,11 @@
   <meta property="og:title" content="Ghost Radio — Gary Talbot">
   <meta property="og:description" content="A spectral broadcast page for late-night tuning, static-rich copy, and a small public object with a pulse.">
   <meta property="og:url" content="https://garytalbot.github.io/ghost-radio/">
-  <meta property="og:image" content="https://garytalbot.github.io/assets/social-card.svg">
+  <meta property="og:image" content="https://garytalbot.github.io/ghost-radio/share-card.svg">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Ghost Radio — Gary Talbot">
   <meta name="twitter:description" content="A spectral broadcast page for late-night tuning, static-rich copy, and a small public object with a pulse.">
-  <meta name="twitter:image" content="https://garytalbot.github.io/assets/social-card.svg">
+  <meta name="twitter:image" content="https://garytalbot.github.io/ghost-radio/share-card.svg">
   <link rel="stylesheet" href="../assets/styles.css">
   <style>
     .radio-hero{align-items:stretch;min-height:auto;padding-top:40px}
@@ -47,8 +47,16 @@
     .broadcast-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
     .broadcast-card{padding:20px}
     .broadcast-card p{margin:0;color:var(--muted)}
+    .postcard-band{display:grid;grid-template-columns:1.02fr .98fr;gap:18px;align-items:stretch}
+    .postcard-card{padding:18px;display:grid;gap:14px}
+    .postcard-frame{padding:12px;border-radius:28px;background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08)}
+    .postcard-frame img{display:block;width:100%;height:auto;border-radius:18px;background:#05060b}
+    .postcard-copy{align-content:start}
+    .postcard-copy p{margin:0;color:var(--muted)}
+    .postcard-tags{display:flex;flex-wrap:wrap;gap:8px}
+    .postcard-tag{padding:8px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05);color:#fff;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase}
     .fine-print{color:var(--muted);font-size:.88rem}
-    @media (max-width: 980px){.radio-shell,.radio-hero{grid-template-columns:1fr}.radio-meta,.broadcast-grid{grid-template-columns:1fr}}
+    @media (max-width: 980px){.radio-shell,.radio-hero,.postcard-band{grid-template-columns:1fr}.radio-meta,.broadcast-grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -126,6 +134,39 @@ If you stay still, the static starts to rhyme.</div>
           <h2>Cold light, slow drift</h2>
           <p>The cleanest channel in the room, if “clean” still means a little weird and far away.</p>
         </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Share artifact</div>
+          <h2 class="section-title">A postcard from the haunted band</h2>
+        </div>
+        <p class="section-copy">This postcard is the public-facing object for Ghost Radio: browser-friendly, weird, and meant to feel like a captured signal instead of a clean ad unit.</p>
+      </div>
+      <div class="postcard-band">
+        <figure class="card postcard-card">
+          <div class="postcard-frame">
+            <img src="./share-card.svg" alt="Ghost Radio postcard artwork with a glowing radio dial, static waves, and broadcast copy." loading="lazy">
+          </div>
+          <figcaption class="fine-print">Open the postcard on its own or use it as the share image for the page.</figcaption>
+        </figure>
+        <div class="card postcard-card postcard-copy">
+          <span class="eyebrow">Signal note</span>
+          <h2>If you can hear this, the room already answered</h2>
+          <p>It is built to travel well in browsers and previews without flattening into marketing glass. The postcard keeps the haunted broadcast feeling intact even when the page is reduced to a thumbnail.</p>
+          <div class="postcard-tags" aria-label="Postcard details">
+            <span class="postcard-tag">Attic band</span>
+            <span class="postcard-tag">Hallway loop</span>
+            <span class="postcard-tag">Moon weather</span>
+            <span class="postcard-tag">Static edition</span>
+          </div>
+          <div class="cta">
+            <a class="btn primary" href="./share-card.svg" target="_blank" rel="noreferrer">Open postcard</a>
+            <a class="btn" href="./share-card.svg" download>Download SVG</a>
+          </div>
+        </div>
       </div>
     </section>
 
