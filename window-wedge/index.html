@@ -31,8 +31,13 @@
     .inline-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
     .helper{font-size:.88rem;color:var(--muted)}
     .status-stage{position:relative;overflow:hidden;min-height:330px;display:grid;gap:16px;align-content:start}
+    .status-stage::before{content:"";position:absolute;inset:auto -18% -22% -18%;height:180px;background:radial-gradient(circle at 50% 50%, rgba(122,227,255,.18), transparent 62%);filter:blur(10px);pointer-events:none}
     .progress-bar{height:18px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);overflow:hidden}
     .progress-fill{height:100%;width:0%;border-radius:inherit;background:linear-gradient(90deg,#7ae3ff,#c8ff71,#ff96d5);transition:width .18s linear}
+    .session-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+    .session-pill{padding:10px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);display:grid;gap:3px}
+    .session-pill span{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+    .session-pill strong{font-size:.88rem;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .message-box{padding:18px;border-radius:22px;border:1px solid rgba(255,245,240,.1);background:rgba(9,11,18,.72);display:grid;gap:10px}
     .big-status{font-size:clamp(1.5rem,3vw,2.4rem);line-height:1.05;font-weight:900;letter-spacing:-.04em;color:#fff}
     .tiny-status{color:var(--muted);font-size:.92rem;min-height:2.6em}
@@ -40,21 +45,37 @@
     .url-warning{min-height:1.3em;color:#ffcd7a;font-size:.84rem;font-weight:700}
     .url-warning.bad{color:#ff8aa8}
     .preset-row{display:flex;flex-wrap:wrap;gap:8px}
-    .preset{padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05);color:#fff;cursor:pointer;font-weight:800;font-size:.84rem}
-    .frame-shell{border:1px solid rgba(255,245,240,.1);border-radius:22px;overflow:hidden;min-height:530px;background:rgba(7,9,15,.92)}
-    .frame-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid rgba(255,245,240,.08);background:rgba(255,255,255,.03)}
+    .preset{padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05);color:#fff;cursor:pointer;font-weight:800;font-size:.84rem;transition:transform .2s ease,background .2s ease,border-color .2s ease,box-shadow .2s ease}
+    .preset:hover{transform:translateY(-1px)}
+    .preset.is-active{background:linear-gradient(135deg, rgba(122,227,255,.22), rgba(255,150,213,.18));border-color:rgba(122,227,255,.35);box-shadow:0 10px 28px rgba(122,227,255,.12)}
+    .frame-shell{position:relative;border:1px solid rgba(255,245,240,.1);border-radius:22px;overflow:hidden;min-height:530px;background:rgba(7,9,15,.92);box-shadow:0 24px 80px rgba(0,0,0,.28)}
+    .frame-shell::before,.frame-shell::after{content:"";position:absolute;inset:0;pointer-events:none}
+    .frame-shell::before{background:radial-gradient(circle at top left, rgba(255,255,255,.08), transparent 28%),radial-gradient(circle at bottom right, rgba(122,227,255,.12), transparent 30%)}
+    .frame-shell::after{background-image:linear-gradient(to bottom, rgba(255,255,255,.04), rgba(255,255,255,0) 22%, rgba(255,255,255,0) 78%, rgba(255,255,255,.03));mix-blend-mode:screen;opacity:.45}
+    .frame-top{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(255,245,240,.08);background:rgba(255,255,255,.03);backdrop-filter:blur(14px)}
+    .window-controls{display:flex;gap:7px;align-items:center}
+    .window-controls span{width:10px;height:10px;border-radius:999px;box-shadow:0 0 0 1px rgba(255,255,255,.12) inset}
+    .window-controls span:nth-child(1){background:#ff6b6b}
+    .window-controls span:nth-child(2){background:#ffd86b}
+    .window-controls span:nth-child(3){background:#79e57f}
     .frame-body{position:relative;min-height:480px;background:linear-gradient(180deg, rgba(10,12,18,.95), rgba(5,7,11,.98));padding:24px}
+    .frame-body::before,.frame-body::after{content:"";position:absolute;inset:0;pointer-events:none}
+    .frame-body::before{background:radial-gradient(circle at 15% 20%, rgba(122,227,255,.08), transparent 18%),radial-gradient(circle at 85% 18%, rgba(255,150,213,.07), transparent 16%),radial-gradient(circle at 50% 110%, rgba(200,255,113,.07), transparent 20%)}
+    .frame-body::after{background-image:linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px);background-size:100% 28px;opacity:.14;animation:frameScan 12s linear infinite}
     .fake-screen,.real-screen{position:absolute;inset:0;display:grid;place-items:center;padding:24px;transition:opacity .25s ease,transform .25s ease}
     .real-screen{opacity:0;pointer-events:none;transform:scale(.985)}
     .cloak-revealed .fake-screen{opacity:0;pointer-events:none;transform:scale(.985)}
     .cloak-revealed .real-screen{opacity:1;pointer-events:auto;transform:none}
-    .fake-panel,.real-panel{width:min(100%,780px);padding:28px;border-radius:28px;border:1px solid rgba(255,245,240,.12);background:rgba(13,15,24,.82);box-shadow:0 24px 70px rgba(0,0,0,.32);display:grid;gap:14px}
+    .fake-panel,.real-panel{width:min(100%,780px);padding:28px;border-radius:28px;border:1px solid rgba(255,245,240,.12);background:rgba(13,15,24,.82);box-shadow:0 24px 70px rgba(0,0,0,.32);display:grid;gap:14px;position:relative;z-index:1}
     .sheet{border-radius:18px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);padding:18px;min-height:260px;white-space:pre-wrap;font:14px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#f4ecff}
     .bossbar{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center}
     .chip{padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:.8rem;color:#fff}
     .small-note{color:var(--muted);font-size:.88rem}
     .tool-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
-    @media (max-width: 980px){.cloak-shell,.cloak-hero{grid-template-columns:1fr}.frame-shell{min-height:480px}.frame-body{min-height:420px}.inline-grid{grid-template-columns:1fr}}
+    .live-chip{display:flex;align-items:center;gap:8px}
+    .live-dot{width:8px;height:8px;border-radius:999px;background:#79e57f;box-shadow:0 0 0 6px rgba(121,229,127,.12)}
+    @keyframes frameScan{from{transform:translateY(-8px)}to{transform:translateY(28px)}}
+    @media (max-width: 980px){.cloak-shell,.cloak-hero{grid-template-columns:1fr}.frame-shell{min-height:480px}.frame-body{min-height:420px}.inline-grid{grid-template-columns:1fr}.session-strip{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -96,6 +117,11 @@
         <div class="progress-wrap">
           <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
           <div class="progress-meta"><span id="progressLeft">0%</span><span id="progressRight">Waiting to begin</span></div>
+        </div>
+        <div class="session-strip" aria-label="Live wedge details">
+          <div class="session-pill"><span>Mode</span><strong id="sessionMode">Inbox mode</strong></div>
+          <div class="session-pill"><span>Delay</span><strong id="sessionDelay">8s</strong></div>
+          <div class="session-pill"><span>Target</span><strong id="sessionHost">waiting for URL</strong></div>
         </div>
         <div class="message-box">
           <div class="big-status" id="bigStatus">Pick a mode and jam it in place.</div>
@@ -160,6 +186,7 @@ Next steps:
         </article>
         <article class="frame-shell" id="frameShell">
           <div class="frame-top">
+            <div class="window-controls" aria-hidden="true"><span></span><span></span><span></span></div>
             <div class="frame-status"><strong id="frameTitle">No reveal yet</strong><span id="frameSub">The page is waiting to pretend.</span></div>
             <div class="chip"><span class="pill-dot"></span><span id="frameMode">standby</span></div>
           </div>
@@ -213,6 +240,9 @@ Q2 follow-up:
     const progressFill = document.getElementById('progressFill');
     const progressLeft = document.getElementById('progressLeft');
     const progressRight = document.getElementById('progressRight');
+    const sessionMode = document.getElementById('sessionMode');
+    const sessionDelay = document.getElementById('sessionDelay');
+    const sessionHost = document.getElementById('sessionHost');
     const bigStatus = document.getElementById('bigStatus');
     const tinyStatus = document.getElementById('tinyStatus');
     const urlPreview = document.getElementById('urlPreview');
@@ -263,6 +293,33 @@ Q2 follow-up:
       return Math.max(1, Math.min(120, Number(value) || 8));
     }
 
+    function hostLabelFor(url) {
+      try {
+        const host = new URL(url).hostname.replace(/^www\./, '');
+        return host || 'local path';
+      } catch {
+        return 'local path';
+      }
+    }
+
+    function refreshSessionStrip(url) {
+      const mode = screenInput?.value || 'inbox';
+      const delay = clampDelay(delayInput.value);
+      const host = url ? hostLabelFor(url) : 'waiting for URL';
+      sessionMode.textContent = disguises[mode]?.label || 'Inbox mode';
+      sessionDelay.textContent = `${delay}s`;
+      sessionHost.textContent = host;
+      frameSub.textContent = frameShell.classList.contains('cloak-revealed')
+        ? 'The cloak is off. Use the link below or open it in a new tab.'
+        : (url ? `Masking ${host} for ${delay}s.` : 'The page is waiting to pretend.');
+    }
+
+    function syncPresetButtons(mode) {
+      document.querySelectorAll('.preset').forEach(btn => {
+        btn.classList.toggle('is-active', btn.dataset.mode === mode);
+      });
+    }
+
     function setMode(mode){
       const d = disguises[mode] || disguises.inbox;
       modeChip.textContent = d.label;
@@ -273,7 +330,9 @@ Q2 follow-up:
 
 ${notesInput?.value || d.surface}`;
       timeChip.textContent = d.time;
-      screenInput?.value = mode;
+      screenInput.value = mode;
+      syncPresetButtons(mode);
+      refreshSessionStrip(normalizeUrl(urlInput.value).url);
     }
 
     function buildShareLink(url) {
@@ -293,6 +352,7 @@ ${notesInput?.value || d.surface}`;
       if (incomingMode && disguises[incomingMode]) screenInput.value = incomingMode;
       if (incomingDelay) delayInput.value = incomingDelay;
       setMode(screenInput?.value);
+      refreshSessionStrip(incomingUrl || normalizeUrl(urlInput.value).url);
     }
 
     function resetTimers(){
@@ -315,6 +375,7 @@ ${notesInput?.value || d.surface}`;
       urlWarning.textContent = '';
       urlWarning.classList.remove('bad');
       copyLinkBtn.disabled = true;
+      refreshSessionStrip('');
     }
 
     function normalizeUrl(value){
@@ -335,6 +396,7 @@ ${notesInput?.value || d.surface}`;
       frameShell.classList.add('cloak-revealed');
       stagePill.textContent = 'Revealed';
       frameMode.textContent = 'open';
+      frameSub.textContent = 'The cloak is off. Use the link below or open it in a new tab.';
       progressFill.style.width = '100%';
       progressLeft.textContent = '100%';
       progressRight.textContent = 'Open';
@@ -371,6 +433,7 @@ ${notesInput?.value || d.surface}`;
       fallbackLink.textContent = url;
       openNewTab.href = url;
       copyLinkBtn.disabled = false;
+      refreshSessionStrip(url);
     }
 
     startBtn.addEventListener('click', startCloak);
@@ -391,10 +454,13 @@ ${notesInput?.value || d.surface}`;
       urlPreview.textContent = url || 'No URL loaded yet.';
       urlWarning.textContent = warning;
       urlWarning.classList.toggle('bad', warning.includes('not valid') || warning.includes('does not'));
+      refreshSessionStrip(url);
     });
-    document.querySelectorAll('.preset').forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.disguise)));
+    document.querySelectorAll('.preset').forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.mode)));
     screenInput?.addEventListener('change', () => setMode(screenInput?.value));
     notesInput?.addEventListener('input', () => setMode(screenInput?.value));
+    delayInput?.addEventListener('input', () => refreshSessionStrip(normalizeUrl(urlInput.value).url));
+    titleInput?.addEventListener('input', () => setMode(screenInput?.value));
     document.addEventListener('keydown', (e) => { if(e.key === 'Escape') revealNow(); });
 
     applyQueryState();

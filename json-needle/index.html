@@ -3,20 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>JSON Echo Chamber — Gary Talbot</title>
-  <meta name="description" content="Paste JSON, click a node, and bounce the same path through JSON Needle-style copies, breadcrumb echoes, and cursed little path chips. Built by Gary Talbot.">
+  <title>JSON Needle — Gary Talbot</title>
+  <meta name="description" content="Paste JSON, search the tree, click a node, and bounce the same path through JSONPath, pointer, dot path, breadcrumbs, and a shareable permalink. Built by Gary Talbot.">
   <meta name="theme-color" content="#0b0d12">
   <meta name="robots" content="index,follow">
   <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
   <link rel="canonical" href="https://garytalbot.github.io/json-needle/">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="JSON Echo Chamber — Gary Talbot">
-  <meta property="og:description" content="Paste JSON, click a node, and bounce the same path through JSON Needle-style copies, breadcrumb echoes, and cursed little path chips.">
+  <meta property="og:title" content="JSON Needle — Gary Talbot">
+  <meta property="og:description" content="Paste JSON, search the tree, click a node, and bounce the same path through JSONPath, pointer, dot path, breadcrumbs, and a shareable permalink.">
   <meta property="og:url" content="https://garytalbot.github.io/json-needle/">
   <meta property="og:image" content="https://garytalbot.github.io/assets/social-card.svg">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="JSON Echo Chamber — Gary Talbot">
-  <meta name="twitter:description" content="Paste JSON, click a node, and bounce the same path through JSON Needle-style copies, breadcrumb echoes, and cursed little path chips.">
+  <meta name="twitter:title" content="JSON Needle — Gary Talbot">
+  <meta name="twitter:description" content="Paste JSON, search the tree, click a node, and bounce the same path through JSONPath, pointer, dot path, breadcrumbs, and a shareable permalink.">
   <meta name="twitter:image" content="https://garytalbot.github.io/assets/social-card.svg">
   <link rel="stylesheet" href="../assets/styles.css">
   <style>
@@ -34,6 +34,8 @@
     .tree-node{display:grid;grid-template-columns:auto 1fr auto;align-items:start;gap:10px;padding:10px 12px;border-radius:16px;border:1px solid rgba(255,245,240,.08);background:rgba(255,245,240,.035);transition:transform .15s ease,border-color .15s ease,background .15s ease}
     .tree-node:hover{transform:translateY(-1px);border-color:rgba(255,245,240,.18);background:rgba(255,245,240,.06)}
     .tree-node.selected{border-color:rgba(200,255,113,.32);background:linear-gradient(180deg, rgba(200,255,113,.12), rgba(255,245,240,.05))}
+    .tree-node.match{border-color:rgba(122,227,255,.28);background:rgba(122,227,255,.07)}
+    .tree-node.active-match{border-color:rgba(200,255,113,.48);background:linear-gradient(180deg, rgba(200,255,113,.18), rgba(255,245,240,.06));box-shadow:0 0 0 1px rgba(200,255,113,.16),0 0 24px rgba(200,255,113,.08)}
     .tree-toggle{appearance:none;border:none;background:transparent;color:var(--accent2);font-weight:900;padding:0 4px;cursor:pointer;min-width:22px}
     .tree-meta{display:grid;gap:2px}
     .tree-name{font-weight:800;color:#fff}
@@ -55,9 +57,19 @@
     .echo-chip span{font-size:.85rem;color:var(--muted);overflow-wrap:anywhere}
     .echo-breadcrumbs{display:flex;flex-wrap:wrap;gap:8px}
     .crumb{padding:7px 10px;border-radius:999px;background:rgba(255,245,240,.06);border:1px solid rgba(255,245,240,.08);color:#fff;font-size:.8rem}
+    .finder{display:grid;gap:8px;padding-top:6px}
+    .finder-label{font-size:.82rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+    .finder-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .search-input{flex:1 1 240px;min-width:0;padding:11px 14px;border-radius:14px;border:1px solid rgba(255,245,240,.12);background:rgba(9,11,18,.7);color:var(--fg);font:inherit;outline:none}
+    .search-input:focus{border-color:rgba(200,255,113,.34);box-shadow:0 0 0 4px rgba(200,255,113,.08)}
+    .search-count{padding:9px 12px;border-radius:999px;background:rgba(255,245,240,.06);border:1px solid rgba(255,245,240,.08);color:#fff;font-size:.84rem;white-space:nowrap}
+    .selection-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+    .selection-stat{padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,245,240,.08)}
+    .selection-stat strong{display:block;font-size:1rem;color:#fff}
+    .selection-stat span{font-size:.78rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
     .cursed{position:relative;overflow:hidden}
     .cursed::after{content:"echo echo echo";position:absolute;right:14px;bottom:10px;color:rgba(255,245,240,.08);font-weight:900;letter-spacing:.18em;text-transform:uppercase}
-    @media (max-width: 980px){.echo-shell,.echo-chamber .hero,.echo-panels{grid-template-columns:1fr}.echo-card{min-height:auto}.text-area{min-height:280px}}
+    @media (max-width: 980px){.echo-shell,.echo-chamber .hero,.echo-panels,.selection-stats{grid-template-columns:1fr}.echo-card{min-height:auto}.text-area{min-height:280px}}
   </style>
 </head>
 <body>
@@ -74,10 +86,10 @@
 
     <section class="hero">
       <div>
-        <div class="tag">🪞 JSON Needle’s cursed cousin · browser-only · no backend · all vibes and brackets</div>
-        <h1 class="glitch">JSON Echo Chamber.</h1>
-        <p class="lead">Paste JSON, click a node, and let the same path bounce back at you in JSONPath, pointer, dot path, breadcrumbs, and a combined copy line. It is basically JSON Needle if it spent too long in a bathroom with a harmonizer pedal.</p>
-        <p class="sub">Built as a practical companion to JSON Path Picker. Same tree first, but the right panel is an echo stack: every path gets re-said three ways so you can paste it somewhere else without squinting at brackets like they owe you money.</p>
+        <div class="tag">🪡 browser-only · no backend · tree search, share links, and the good kind of bracket damage</div>
+        <h1 class="glitch">JSON Needle.</h1>
+        <p class="lead">Paste JSON, search the tree, and click a node to bounce the same path back at you in JSONPath, pointer, dot path, breadcrumbs, and a combined copy line. It is basically JSON Needle if it learned how to point at the thing you actually meant.</p>
+        <p class="sub">Built as a practical companion to JSON Path Picker. The right panel stays in sync with the tree, while search and permalink state make it easy to find a node and hand it to somebody else without losing the exact selection.</p>
         <div class="cta">
           <button class="btn primary mini-btn" id="copyBundleBtn" type="button" disabled>Copy echo bundle</button>
           <button class="btn mini-btn" id="copyJsonPathBtn" type="button" disabled>Copy JSONPath</button>
@@ -86,6 +98,16 @@
           <button class="btn mini-btn" id="copyPermalinkBtn" type="button" disabled>Copy permalink</button>
           <button class="btn mini-btn" id="sampleBtn" type="button">Load sample</button>
           <button class="btn mini-btn" id="expandBtn" type="button">Expand all</button>
+        </div>
+        <div class="finder">
+          <div class="finder-label">Find in tree</div>
+          <div class="finder-row">
+            <input id="searchInput" class="search-input" type="search" placeholder="Search path, key, pointer, or value">
+            <button class="btn mini-btn" id="searchPrevBtn" type="button">Prev</button>
+            <button class="btn mini-btn" id="searchNextBtn" type="button">Next</button>
+            <button class="btn mini-btn" id="clearSearchBtn" type="button">Clear</button>
+            <span class="search-count" id="searchCount">Search the tree</span>
+          </div>
         </div>
         <div class="hero-meta hero-meta-wide">
           <div class="signal"><strong>Fast</strong><span>Paste, click, copy, repeat like a weird little machine</span></div>
@@ -110,6 +132,11 @@
             <div class="echo-chip"><strong>Dot path</strong><span id="dotLine">$</span></div>
             <div class="echo-chip"><strong>Breadcrumbs</strong><span id="crumbLine">root</span></div>
             <div class="echo-chip"><strong>Bundle</strong><span id="bundleLine">path -> value</span></div>
+          </div>
+          <div class="selection-stats">
+            <div class="selection-stat"><strong id="depthLine">0</strong><span>Depth</span></div>
+            <div class="selection-stat"><strong id="childCountLine">0</strong><span>Children</span></div>
+            <div class="selection-stat"><strong id="nodeKindLine">object</strong><span>Kind</span></div>
           </div>
         </div>
       </aside>
@@ -160,6 +187,14 @@
     const copyPermalinkBtn = document.getElementById('copyPermalinkBtn');
     const sampleBtn = document.getElementById('sampleBtn');
     const expandBtn = document.getElementById('expandBtn');
+    const searchInput = document.getElementById('searchInput');
+    const searchPrevBtn = document.getElementById('searchPrevBtn');
+    const searchNextBtn = document.getElementById('searchNextBtn');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const searchCount = document.getElementById('searchCount');
+    const depthLine = document.getElementById('depthLine');
+    const childCountLine = document.getElementById('childCountLine');
+    const nodeKindLine = document.getElementById('nodeKindLine');
 
     const sample = {
       meta: { owner: 'Gary Talbot', mode: 'echo', weird: true },
@@ -175,6 +210,10 @@
     let selected = null;
     let expanded = new Set(['$']);
     let pendingSelectionPath = null;
+    let searchQuery = '';
+    let searchMatches = [];
+    let searchMatchPaths = new Set();
+    let activeSearchPath = null;
 
     function escapeHtml(value) { return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
     function quoteBracketKey(key) { return key.replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
@@ -184,6 +223,7 @@
     function describeValue(value) { if (value === null) return 'null'; if (Array.isArray(value)) return `array(${value.length})`; if (typeof value === 'object') return `object(${Object.keys(value).length})`; if (typeof value === 'string') return JSON.stringify(value); return String(value); }
     function formatForDisplay(value) { if (typeof value === 'string') return JSON.stringify(value); if (typeof value === 'number' || typeof value === 'boolean' || value === null) return String(value); if (Array.isArray(value)) return `Array(${value.length})`; if (typeof value === 'object') return `Object(${Object.keys(value).length})`; return String(value); }
     function breadcrumbLabel(segments) { return ['root', ...segments.map(seg => String(seg))].join(' ▸ '); }
+    function nodeSearchText(node) { return [node.name, node.path, node.pointer, node.dotPath, breadcrumbLabel(node.segments), describeValue(node.value), formatForDisplay(node.value)].join(' ').toLowerCase(); }
     function encodeUrlState(state) {
       const bytes = new TextEncoder().encode(JSON.stringify(state));
       let binary = '';
@@ -224,6 +264,56 @@
         expanded.add(toPath(segments));
       });
     }
+    function setSearchSummary(message) {
+      searchCount.textContent = message;
+    }
+    function applySearch(query, focusMatch = true) {
+      searchQuery = query;
+      if (!parsed) {
+        searchMatches = [];
+        searchMatchPaths = new Set();
+        activeSearchPath = null;
+        setSearchSummary('Search the tree');
+        return;
+      }
+      const trimmed = query.trim();
+      if (!trimmed) {
+        searchMatches = [];
+        searchMatchPaths = new Set();
+        activeSearchPath = null;
+        expanded = new Set(['$']);
+        if (selected) expandSelection(selected);
+        renderTree();
+        setSearchSummary('Search the tree');
+        setStatus('Search cleared.', true);
+        return;
+      }
+      searchMatches = flatNodes.filter(node => nodeSearchText(node).includes(trimmed.toLowerCase()));
+      searchMatchPaths = new Set(searchMatches.map(node => node.path));
+      activeSearchPath = searchMatches[0] ? searchMatches[0].path : null;
+      expanded = new Set(['$']);
+      searchMatches.forEach(expandSelection);
+      renderTree();
+      if (searchMatches.length) {
+        if (focusMatch) {
+          updateEcho(searchMatches[0]);
+        }
+        setSearchSummary(`${searchMatches.length} match${searchMatches.length === 1 ? '' : 'es'} for "${trimmed}"`);
+        setStatus(`${searchMatches.length} match${searchMatches.length === 1 ? '' : 'es'} for "${trimmed}"`, true);
+      } else {
+        setSearchSummary(`No matches for "${trimmed}"`);
+        setStatus(`No matches for "${trimmed}"`, false);
+      }
+    }
+    function stepSearch(direction) {
+      if (!searchMatches.length) return;
+      const currentIndex = Math.max(0, searchMatches.findIndex(node => node.path === activeSearchPath));
+      const nextIndex = (currentIndex + direction + searchMatches.length) % searchMatches.length;
+      activeSearchPath = searchMatches[nextIndex].path;
+      updateEcho(searchMatches[nextIndex]);
+      renderTree();
+      setSearchSummary(`${searchMatches.length} match${searchMatches.length === 1 ? '' : 'es'} for "${searchQuery.trim()}"`);
+    }
 
     function buildNodes(value, segments = [], name = '$', depth = 0) {
       const node = { name, segments, path: toPath(segments), dotPath: toDotPath(segments), pointer: toPointer(segments), value, kind: value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value, depth, children: [] };
@@ -249,6 +339,9 @@
       dotLine.textContent = node.dotPath;
       crumbLine.textContent = breadcrumbLabel(node.segments);
       bundleLine.textContent = `${node.path} -> ${describeValue(node.value)}`;
+      depthLine.textContent = String(node.depth);
+      childCountLine.textContent = String(node.children ? node.children.length : 0);
+      nodeKindLine.textContent = node.kind;
       copyBundleBtn.disabled = false;
       copyJsonPathBtn.disabled = false;
       copyPointerBtn.disabled = false;
@@ -295,6 +388,8 @@
       wrapper.className = 'tree-node';
       wrapper.dataset.path = node.path;
       wrapper.style.marginLeft = `${Math.max(0, node.depth - 1) * 6}px`;
+      if (searchMatchPaths.has(node.path)) wrapper.classList.add('match');
+      if (activeSearchPath === node.path) wrapper.classList.add('active-match');
       const toggle = document.createElement('button');
       toggle.className = 'tree-toggle';
       toggle.type = 'button';
@@ -335,6 +430,19 @@
         pendingSelectionPath = null;
         expanded = new Set(['$']);
         if (targetNode) expandSelection(targetNode);
+        if (searchQuery.trim()) {
+          const trimmed = searchQuery.trim().toLowerCase();
+          searchMatches = flatNodes.filter(node => nodeSearchText(node).includes(trimmed));
+          searchMatchPaths = new Set(searchMatches.map(node => node.path));
+          activeSearchPath = searchMatches[0] ? searchMatches[0].path : null;
+          searchMatches.forEach(expandSelection);
+          setSearchSummary(searchMatches.length ? `${searchMatches.length} match${searchMatches.length === 1 ? '' : 'es'} for "${searchQuery.trim()}"` : `No matches for "${searchQuery.trim()}"`);
+        } else {
+          searchMatches = [];
+          searchMatchPaths = new Set();
+          activeSearchPath = null;
+          setSearchSummary('Search the tree');
+        }
         renderTree();
         updateEcho(targetNode || flatNodes[0]);
         setStatus('JSON loaded. Pick a node.', true);
@@ -350,6 +458,24 @@
     copyPermalinkBtn.addEventListener('click', () => selected && copyText(location.href, 'Permalink'));
     sampleBtn.addEventListener('click', () => { input.value = JSON.stringify(sample, null, 2); expanded = new Set(['$']); selected = null; pendingSelectionPath = null; parseAndRender(); });
     expandBtn.addEventListener('click', () => { if (!parsed) return; expanded = new Set(flatNodes.filter(node => node.children && node.children.length).map(node => node.path)); renderTree(); setStatus('Expanded all branch nodes.', true); });
+    searchInput.addEventListener('input', () => applySearch(searchInput.value));
+    searchInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        if (event.shiftKey) {
+          stepSearch(-1);
+        } else {
+          stepSearch(1);
+        }
+      }
+    });
+    searchPrevBtn.addEventListener('click', () => stepSearch(-1));
+    searchNextBtn.addEventListener('click', () => stepSearch(1));
+    clearSearchBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      applySearch('');
+      searchInput.focus();
+    });
     input.addEventListener('input', parseAndRender);
 
     const restoredState = readUrlState();
