@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JSON Echo Chamber — Gary Talbot</title>
+  <meta name="description" content="Paste JSON, click a node, and bounce the same path through JSON Echo Chamber copies, breadcrumb echoes, and cursed little path chips. Built by Gary Talbot.">
+  <meta name="theme-color" content="#0b0d12">
+  <meta name="robots" content="index,follow">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="canonical" href="https://garytalbot.github.io/json-echo-chamber/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="JSON Echo Chamber — Gary Talbot">
+  <meta property="og:description" content="Paste JSON, click a node, and bounce the same path through JSON Echo Chamber copies, breadcrumb echoes, and cursed little path chips.">
+  <meta property="og:url" content="https://garytalbot.github.io/json-echo-chamber/">
+  <meta property="og:image" content="https://garytalbot.github.io/assets/social-card.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="JSON Echo Chamber — Gary Talbot">
+  <meta name="twitter:description" content="Paste JSON, click a node, and bounce the same path through JSON Echo Chamber copies, breadcrumb echoes, and cursed little path chips.">
+  <meta name="twitter:image" content="https://garytalbot.github.io/assets/social-card.svg">
+  <link rel="stylesheet" href="../assets/styles.css">
+  <style>
+    .echo-chamber .hero{min-height:auto;align-items:start;padding-top:38px;grid-template-columns:1.02fr .98fr}
+    .echo-chamber .lead{max-width:46rem}
+    .echo-shell{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .echo-card{padding:20px;min-height:520px;display:grid;gap:14px}
+    .echo-card h2{margin:0;font-size:1.05rem}
+    .echo-card .kicker{margin-bottom:4px}
+    .text-area{width:100%;min-height:420px;resize:vertical;border-radius:18px;border:1px solid rgba(255,245,240,.14);background:rgba(9,11,18,.72);color:var(--fg);padding:16px;font:14px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;outline:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
+    .text-area:focus{border-color:rgba(122,227,255,.34);box-shadow:0 0 0 4px rgba(122,227,255,.08)}
+    .echo-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    .mini-btn{padding:10px 14px;font-size:.92rem}
+    .echo-tree{display:grid;gap:6px;align-content:start;max-height:420px;overflow:auto;padding-right:4px}
+    .tree-node{display:grid;grid-template-columns:auto 1fr auto;align-items:start;gap:10px;padding:10px 12px;border-radius:16px;border:1px solid rgba(255,245,240,.08);background:rgba(255,245,240,.035);transition:transform .15s ease,border-color .15s ease,background .15s ease}
+    .tree-node:hover{transform:translateY(-1px);border-color:rgba(255,245,240,.18);background:rgba(255,245,240,.06)}
+    .tree-node.selected{border-color:rgba(200,255,113,.32);background:linear-gradient(180deg, rgba(200,255,113,.12), rgba(255,245,240,.05))}
+    .tree-toggle{appearance:none;border:none;background:transparent;color:var(--accent2);font-weight:900;padding:0 4px;cursor:pointer;min-width:22px}
+    .tree-meta{display:grid;gap:2px}
+    .tree-name{font-weight:800;color:#fff}
+    .tree-path,.tree-value{font-size:.84rem;color:var(--muted);overflow-wrap:anywhere}
+    .tree-value{color:#e7dbef}
+    .tree-children{grid-column:1/-1;display:grid;gap:6px;margin-left:22px;padding-left:12px;border-left:1px dashed rgba(255,245,240,.12)}
+    .result-box{display:grid;gap:10px;padding:14px;border-radius:18px;border:1px solid rgba(255,245,240,.1);background:rgba(9,11,18,.65)}
+    .result-line{font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#f7efe8;overflow-wrap:anywhere}
+    .muted-small{font-size:.88rem;color:var(--muted)}
+    .status-badge{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;background:rgba(255,245,240,.06);border:1px solid rgba(255,245,240,.08)}
+    .status-dot{width:9px;height:9px;border-radius:50%;background:var(--acid);box-shadow:0 0 14px rgba(200,255,113,.55)}
+    .status-badge.bad .status-dot{background:#ff7fa3;box-shadow:0 0 14px rgba(255,127,163,.45)}
+    .panel-hero{display:grid;gap:10px}
+    .picker-info{display:grid;gap:10px}
+    .path-actions{display:flex;flex-wrap:wrap;gap:10px}
+    .echo-panels{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .echo-chip{display:flex;flex-direction:column;gap:4px;padding:14px;border-radius:18px;border:1px solid rgba(255,245,240,.1);background:rgba(255,255,255,.04)}
+    .echo-chip strong{font-size:.95rem;color:#fff}
+    .echo-chip span{font-size:.85rem;color:var(--muted);overflow-wrap:anywhere}
+    .echo-breadcrumbs{display:flex;flex-wrap:wrap;gap:8px}
+    .crumb{padding:7px 10px;border-radius:999px;background:rgba(255,245,240,.06);border:1px solid rgba(255,245,240,.08);color:#fff;font-size:.8rem}
+    .cursed{position:relative;overflow:hidden}
+    .cursed::after{content:"echo echo echo";position:absolute;right:14px;bottom:10px;color:rgba(255,245,240,.08);font-weight:900;letter-spacing:.18em;text-transform:uppercase}
+    @media (max-width: 980px){.echo-shell,.echo-chamber .hero,.echo-panels{grid-template-columns:1fr}.echo-card{min-height:auto}.text-area{min-height:280px}}
+  </style>
+</head>
+<body>
+  <main class="wrap echo-chamber">
+    <nav class="nav" aria-label="Primary">
+      <div class="brand">Gary Talbot</div>
+      <div class="navlinks">
+        <a href="../">Home</a>
+        <a href="../json-path-picker/">JSON Path Picker</a>
+        <a href="../json-smith/">JSON Smith</a>
+        <a href="../work/">Work</a>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div>
+        <div class="tag">🪞 JSON Path Picker’s cursed cousin · browser-only · no backend · all vibes and brackets</div>
+        <h1 class="glitch">JSON Echo Chamber.</h1>
+        <p class="lead">Paste JSON, click a node, and let the same path bounce back at you in JSONPath, pointer, dot path, breadcrumbs, and a combined copy line. It is basically JSON Path Picker if it spent too long in a bathroom with a harmonizer pedal.</p>
+        <p class="sub">Built as a practical companion to JSON Path Picker. Same tree first, but the right panel is an echo stack: every path gets re-said three ways so you can paste it somewhere else without squinting at brackets like they owe you money.</p>
+        <div class="cta">
+          <button class="btn primary mini-btn" id="copyBundleBtn" type="button" disabled>Copy echo bundle</button>
+          <button class="btn mini-btn" id="copyJsonPathBtn" type="button" disabled>Copy JSONPath</button>
+          <button class="btn mini-btn" id="copyPointerBtn" type="button" disabled>Copy JSON Pointer</button>
+          <button class="btn mini-btn" id="copyDotPathBtn" type="button" disabled>Copy dot path</button>
+          <button class="btn mini-btn" id="sampleBtn" type="button">Load sample</button>
+          <button class="btn mini-btn" id="expandBtn" type="button">Expand all</button>
+        </div>
+        <div class="hero-meta hero-meta-wide">
+          <div class="signal"><strong>Fast</strong><span>Paste, click, copy, repeat like a weird little machine</span></div>
+          <div class="signal"><strong>Practical</strong><span>JSONPath, Pointer, dot path, breadcrumbs, and selected value</span></div>
+          <div class="signal"><strong>Companion piece</strong><span>Directly ties to JSON Path Picker and JSON Smith</span></div>
+          <div class="signal"><strong>Browser-only</strong><span>Single-file static page for GitHub Pages</span></div>
+        </div>
+      </div>
+      <aside class="panel panel-hero cursed">
+        <div class="status-badge" id="statusBadge"><span class="status-dot"></span><strong id="statusLabel">Ready</strong></div>
+        <div class="picker-info">
+          <div class="result-box">
+            <div class="muted-small">Selected path</div>
+            <div class="result-line" id="selectedPath">$</div>
+          </div>
+          <div class="result-box">
+            <div class="muted-small">Selected value</div>
+            <div class="result-line" id="selectedValue">null</div>
+          </div>
+          <div class="echo-panels">
+            <div class="echo-chip"><strong>Pointer</strong><span id="pointerLine">/</span></div>
+            <div class="echo-chip"><strong>Dot path</strong><span id="dotLine">$</span></div>
+            <div class="echo-chip"><strong>Breadcrumbs</strong><span id="crumbLine">root</span></div>
+            <div class="echo-chip"><strong>Bundle</strong><span id="bundleLine">path -> value</span></div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Workbench</div>
+          <h2 class="section-title">Paste the payload, then make the echo chamber confess</h2>
+        </div>
+        <p class="section-copy">Left side is raw JSON. Right side is the tree plus the mirrored outputs. Pick one node and the chamber repeats it back with just enough ceremony to be useful and just enough curse to feel alive.</p>
+      </div>
+      <div class="echo-shell">
+        <article class="card echo-card">
+          <div>
+            <h2>Input JSON</h2>
+            <p class="field-note">Any valid JSON object or array. Invalid input keeps the previous tree visible and shows a readable error. The sample includes a rude nested object and one oversized array on purpose.</p>
+          </div>
+          <textarea id="input" class="text-area" spellcheck="false"></textarea>
+        </article>
+        <article class="card echo-card">
+          <div class="echo-toolbar">
+            <h2 style="margin-right:auto">Echo tree</h2>
+            <span class="status-badge" id="treeStatus"><span class="status-dot"></span><strong>Live</strong></span>
+          </div>
+          <p class="field-note">Click any node to select it. The right panel updates instantly and every copy button follows the current selection, like a haunted clipboard with standards.</p>
+          <div id="tree" class="echo-tree" aria-live="polite"></div>
+        </article>
+      </div>
+    </section>
+  </main>
+  <script>
+    const input = document.getElementById('input');
+    const tree = document.getElementById('tree');
+    const statusLabel = document.getElementById('statusLabel');
+    const statusBadge = document.getElementById('statusBadge');
+    const selectedPath = document.getElementById('selectedPath');
+    const selectedValue = document.getElementById('selectedValue');
+    const pointerLine = document.getElementById('pointerLine');
+    const dotLine = document.getElementById('dotLine');
+    const crumbLine = document.getElementById('crumbLine');
+    const bundleLine = document.getElementById('bundleLine');
+    const copyBundleBtn = document.getElementById('copyBundleBtn');
+    const copyJsonPathBtn = document.getElementById('copyJsonPathBtn');
+    const copyPointerBtn = document.getElementById('copyPointerBtn');
+    const copyDotPathBtn = document.getElementById('copyDotPathBtn');
+    const sampleBtn = document.getElementById('sampleBtn');
+    const expandBtn = document.getElementById('expandBtn');
+
+    const sample = {
+      meta: { owner: 'Gary Talbot', mode: 'echo', weird: true },
+      payload: {
+        nested: { room: 'bathroom', instrument: 'harmonizer pedal', note: 'same path, different echo' },
+        oversized: Array.from({ length: 18 }, (_, i) => ({ id: i + 1, label: `thing-${i + 1}`, spicy: i % 3 === 0 }))
+      },
+      tags: ['json', 'echo chamber', 'picker', 'echo', 'cursed']
+    };
+
+    let parsed = null;
+    let flatNodes = [];
+    let selected = null;
+    let expanded = new Set(['$']);
+
+    function escapeHtml(value) { return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+    function quoteBracketKey(key) { return key.replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
+    function toPath(segments) { return '$' + segments.map(seg => typeof seg === 'number' ? `[${seg}]` : /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(seg) ? `.${seg}` : `['${quoteBracketKey(seg)}']`).join(''); }
+    function toPointer(segments) { return '/' + segments.map(seg => String(seg).replace(/~/g, '~0').replace(/\//g, '~1')).join('/'); }
+    function toDotPath(segments) { return '$' + segments.map(seg => typeof seg === 'number' ? `[${seg}]` : /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(seg) ? `.${seg}` : `['${quoteBracketKey(seg)}']`).join(''); }
+    function describeValue(value) { if (value === null) return 'null'; if (Array.isArray(value)) return `array(${value.length})`; if (typeof value === 'object') return `object(${Object.keys(value).length})`; if (typeof value === 'string') return JSON.stringify(value); return String(value); }
+    function formatForDisplay(value) { if (typeof value === 'string') return JSON.stringify(value); if (typeof value === 'number' || typeof value === 'boolean' || value === null) return String(value); if (Array.isArray(value)) return `Array(${value.length})`; if (typeof value === 'object') return `Object(${Object.keys(value).length})`; return String(value); }
+    function breadcrumbLabel(segments) { return ['root', ...segments.map(seg => String(seg))].join(' ▸ '); }
+
+    function buildNodes(value, segments = [], name = '$', depth = 0) {
+      const node = { name, path: toPath(segments), dotPath: toDotPath(segments), pointer: toPointer(segments), value, kind: value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value, depth, children: [] };
+      flatNodes.push(node);
+      if (value && typeof value === 'object') {
+        const entries = Array.isArray(value) ? value.map((child, index) => [index, child]) : Object.entries(value);
+        node.children = entries.map(([key, child]) => buildNodes(child, segments.concat(key), String(key), depth + 1));
+      }
+      return node;
+    }
+
+    function setStatus(message, good = true) {
+      statusLabel.textContent = message;
+      statusBadge.classList.toggle('bad', !good);
+      statusLabel.style.color = good ? '#f6ffd9' : '#ffd2e5';
+    }
+
+    function updateEcho(node) {
+      selected = node;
+      selectedPath.textContent = node.path;
+      selectedValue.textContent = describeValue(node.value);
+      pointerLine.textContent = node.pointer;
+      dotLine.textContent = node.dotPath;
+      crumbLine.textContent = breadcrumbLabel(node.path === '$' ? [] : node.path.slice(1).split(/\.(?![^\[]*\])/).filter(Boolean));
+      bundleLine.textContent = `${node.path} -> ${describeValue(node.value)}`;
+      copyBundleBtn.disabled = false;
+      copyJsonPathBtn.disabled = false;
+      copyPointerBtn.disabled = false;
+      copyDotPathBtn.disabled = false;
+      document.querySelectorAll('.tree-node').forEach(el => el.classList.toggle('selected', el.dataset.path === node.path));
+      setStatus(`Selected ${node.path}`, true);
+    }
+
+    async function copyText(text, label) { await navigator.clipboard.writeText(text); setStatus(`${label} copied`, true); }
+    function renderNode(node) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'tree-node';
+      wrapper.dataset.path = node.path;
+      wrapper.style.marginLeft = `${Math.max(0, node.depth - 1) * 6}px`;
+      const toggle = document.createElement('button');
+      toggle.className = 'tree-toggle';
+      toggle.type = 'button';
+      toggle.textContent = node.children && node.children.length ? (expanded.has(node.path) ? '−' : '+') : '•';
+      toggle.title = node.children && node.children.length ? (expanded.has(node.path) ? 'Collapse branch' : 'Expand branch') : 'Leaf node';
+      toggle.addEventListener('click', (event) => { event.stopPropagation(); if (node.children && node.children.length) { expanded.has(node.path) ? expanded.delete(node.path) : expanded.add(node.path); renderTree(); } });
+      const meta = document.createElement('div');
+      meta.className = 'tree-meta';
+      meta.innerHTML = `<div class="tree-name">${escapeHtml(node.name)}</div><div class="tree-path">${escapeHtml(node.path)}</div><div class="tree-value">${escapeHtml(formatForDisplay(node.value))}</div>`;
+      const badge = document.createElement('div');
+      badge.className = 'status-badge';
+      badge.innerHTML = `<span class="status-dot"></span><strong>${node.kind}</strong>`;
+      wrapper.append(toggle, meta, badge);
+      wrapper.addEventListener('click', () => updateEcho(node));
+      if (node.children && node.children.length && expanded.has(node.path)) {
+        const childrenWrap = document.createElement('div');
+        childrenWrap.className = 'tree-children';
+        node.children.forEach(child => childrenWrap.appendChild(renderNode(child)));
+        wrapper.appendChild(childrenWrap);
+      }
+      return wrapper;
+    }
+
+    function renderTree() {
+      tree.innerHTML = '';
+      if (!parsed) return;
+      tree.appendChild(renderNode(flatNodes[0]));
+      if (selected) document.querySelectorAll('.tree-node').forEach(el => el.classList.toggle('selected', el.dataset.path === selected.path));
+    }
+
+    function parseAndRender() {
+      try {
+        parsed = JSON.parse(input.value);
+        flatNodes = [];
+        buildNodes(parsed, [], '$', 0);
+        renderTree();
+        updateEcho(flatNodes[0]);
+        setStatus('JSON loaded. Pick a node.', true);
+      } catch (error) {
+        setStatus(`Invalid JSON: ${error.message}`, false);
+      }
+    }
+
+    copyBundleBtn.addEventListener('click', () => selected && copyText(`${selected.path} -> ${describeValue(selected.value)}\npointer: ${selected.pointer}\ndot: ${selected.dotPath}\nbreadcrumbs: ${breadcrumbLabel(selected.path === '$' ? [] : selected.path.slice(1).split(/\.(?![^\[]*\])/).filter(Boolean))}`, 'Echo bundle'));
+    copyJsonPathBtn.addEventListener('click', () => selected && copyText(selected.path, 'JSONPath'));
+    copyPointerBtn.addEventListener('click', () => selected && copyText(selected.pointer, 'JSON Pointer'));
+    copyDotPathBtn.addEventListener('click', () => selected && copyText(selected.dotPath, 'Dot path'));
+    sampleBtn.addEventListener('click', () => { input.value = JSON.stringify(sample, null, 2); expanded = new Set(['$']); selected = null; parseAndRender(); });
+    expandBtn.addEventListener('click', () => { if (!parsed) return; expanded = new Set(flatNodes.filter(node => node.children && node.children.length).map(node => node.path)); renderTree(); setStatus('Expanded all branch nodes.', true); });
+    input.addEventListener('input', parseAndRender);
+
+    input.value = JSON.stringify(sample, null, 2);
+    parseAndRender();
+  </script>
+</body>
+</html>
