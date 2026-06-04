@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tab Cloak — Gary Talbot</title>
+  <meta name="description" content="Paste a URL, then hide it behind a fake boss screen, meeting notes, or blank spreadsheet until you reveal it. Browser-only, lightweight, and mildly criminal-looking in a harmless way.">
+  <meta name="theme-color" content="#0b0d12">
+  <meta name="robots" content="index,follow">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="canonical" href="https://garytalbot.github.io/tab-cloak/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Tab Cloak — Gary Talbot">
+  <meta property="og:description" content="Paste a URL, then hide it behind a fake boss screen, meeting notes, or blank spreadsheet until you reveal it.">
+  <meta property="og:url" content="https://garytalbot.github.io/tab-cloak/">
+  <meta property="og:image" content="https://garytalbot.github.io/assets/social-card.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Tab Cloak — Gary Talbot">
+  <meta name="twitter:description" content="Paste a URL, then hide it behind a fake boss screen, meeting notes, or blank spreadsheet until you reveal it.">
+  <meta name="twitter:image" content="https://garytalbot.github.io/assets/social-card.svg">
+  <link rel="stylesheet" href="../assets/styles.css">
+  <style>
+    .cloak-hero{align-items:stretch;min-height:auto;padding-top:40px}
+    .cloak-shell{display:grid;grid-template-columns:1.05fr .95fr;gap:16px}
+    .cloak-card{padding:22px;display:grid;gap:14px}
+    .cloak-card h2,.cloak-card h3{margin:0}
+    .field-row{display:grid;gap:8px}
+    .field-row label{font-weight:800;color:#fff}
+    .field-row input,.field-row textarea,.field-row select{width:100%;border-radius:18px;border:1px solid rgba(255,245,240,.12);background:rgba(9,11,18,.72);color:var(--fg);padding:14px 16px;font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;outline:none}
+    .field-row textarea{min-height:96px;resize:vertical}
+    .inline-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+    .helper{font-size:.88rem;color:var(--muted)}
+    .status-stage{position:relative;overflow:hidden;min-height:330px;display:grid;gap:16px;align-content:start}
+    .progress-bar{height:18px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);overflow:hidden}
+    .progress-fill{height:100%;width:0%;border-radius:inherit;background:linear-gradient(90deg,#7ae3ff,#c8ff71,#ff96d5);transition:width .18s linear}
+    .message-box{padding:18px;border-radius:22px;border:1px solid rgba(255,245,240,.1);background:rgba(9,11,18,.72);display:grid;gap:10px}
+    .big-status{font-size:clamp(1.5rem,3vw,2.4rem);line-height:1.05;font-weight:900;letter-spacing:-.04em;color:#fff}
+    .tiny-status{color:var(--muted);font-size:.92rem;min-height:2.6em}
+    .url-preview{word-break:break-all;color:#e8dff0;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .preset-row{display:flex;flex-wrap:wrap;gap:8px}
+    .preset{padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05);color:#fff;cursor:pointer;font-weight:800;font-size:.84rem}
+    .frame-shell{border:1px solid rgba(255,245,240,.1);border-radius:22px;overflow:hidden;min-height:530px;background:rgba(7,9,15,.92)}
+    .frame-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid rgba(255,245,240,.08);background:rgba(255,255,255,.03)}
+    .frame-body{position:relative;min-height:480px;background:linear-gradient(180deg, rgba(10,12,18,.95), rgba(5,7,11,.98));padding:24px}
+    .fake-screen,.real-screen{position:absolute;inset:0;display:grid;place-items:center;padding:24px;transition:opacity .25s ease,transform .25s ease}
+    .real-screen{opacity:0;pointer-events:none;transform:scale(.985)}
+    .cloak-revealed .fake-screen{opacity:0;pointer-events:none;transform:scale(.985)}
+    .cloak-revealed .real-screen{opacity:1;pointer-events:auto;transform:none}
+    .fake-panel,.real-panel{width:min(100%,780px);padding:28px;border-radius:28px;border:1px solid rgba(255,245,240,.12);background:rgba(13,15,24,.82);box-shadow:0 24px 70px rgba(0,0,0,.32);display:grid;gap:14px}
+    .sheet{border-radius:18px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);padding:18px;min-height:260px;white-space:pre-wrap;font:14px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#f4ecff}
+    .bossbar{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center}
+    .chip{padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:.8rem;color:#fff}
+    .small-note{color:var(--muted);font-size:.88rem}
+    .tool-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+    @media (max-width: 980px){.cloak-shell,.cloak-hero{grid-template-columns:1fr}.frame-shell{min-height:480px}.frame-body{min-height:420px}.inline-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <nav class="nav" aria-label="Primary">
+      <div class="brand">Gary Talbot</div>
+      <div class="navlinks">
+        <a href="../">Home</a>
+        <a href="../tab-spoiler/">Tab Spoiler</a>
+        <a href="../url-stakeout/">URL Stakeout</a>
+        <a href="../work/">Work</a>
+      </div>
+    </nav>
+
+    <section class="hero cloak-hero">
+      <div>
+        <div class="tag">🕵️ browser-only · disguise first · reveal later · Esc to bail</div>
+        <h1 class="glitch">Tab Cloak.</h1>
+        <p class="lead">Paste a URL and wrap it in a fake boss-safe screen like a spreadsheet, meeting notes, or a blank inbox. Then reveal the real page when the timer ends or you press Escape.</p>
+        <p class="sub">It is a tiny browser-only utility for looking busy in the most specific possible way. Less “stealth mode,” more “I have definitely been in this spreadsheet for 11 minutes.”</p>
+        <div class="cta">
+          <button class="btn primary" id="startBtn" type="button">Cloak this tab</button>
+          <button class="btn" id="useCurrentBtn" type="button">Use current tab URL</button>
+          <button class="btn" id="copyLinkBtn" type="button" disabled>Copy reveal link</button>
+          <button class="btn" id="resetBtn" type="button">Reset</button>
+        </div>
+        <div class="hero-meta hero-meta-wide">
+          <div class="signal"><strong>Work-safe</strong><span>Looks like a spreadsheet, notes app, or inbox</span></div>
+          <div class="signal"><strong>Fast</strong><span>One page, one iframe, no backend drama</span></div>
+          <div class="signal"><strong>Esc-friendly</strong><span>Press Escape to reveal immediately or stop the bit</span></div>
+          <div class="signal"><strong>Mirror-ready</strong><span>Fits the same static Pages pattern as the other Gary weirdos</span></div>
+        </div>
+      </div>
+      <aside class="card cloak-card status-stage">
+        <div class="status-head" style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <div class="pill"><span class="pill-dot"></span><span id="stagePill">Idle and suspicious</span></div>
+          <div class="pill">Delay <strong id="delayBadge">8s</strong></div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="progress-meta"><span id="progressLeft">0%</span><span id="progressRight">Waiting to begin</span></div>
+        </div>
+        <div class="message-box">
+          <div class="big-status" id="bigStatus">Pick a disguise and start the show.</div>
+          <div class="tiny-status" id="tinyStatus">The fake screen is what everyone sees first. The real page waits underneath like a raccoon in a conference room ceiling.</div>
+          <div class="url-preview" id="urlPreview">No URL loaded yet.</div>
+        </div>
+        <div class="preset-row">
+          <button class="preset" data-disguise="spreadsheet">Spreadsheet</button>
+          <button class="preset" data-disguise="notes">Meeting notes</button>
+          <button class="preset" data-disguise="inbox">Inbox</button>
+        </div>
+      </aside>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Disguise rig</div>
+          <h2 class="section-title">Feed it a URL, then let the fake work screen do the lying</h2>
+        </div>
+        <p class="section-copy">The reveal happens in the same page so the utility stays lightweight and shippable. If the destination blocks embedding, the open-in-new-tab link still works.</p>
+      </div>
+      <div class="cloak-shell">
+        <article class="card cloak-card">
+          <div class="field-row">
+            <label for="urlInput">Destination URL</label>
+            <input id="urlInput" type="url" placeholder="https://example.com or a current-tab link" autocomplete="off" spellcheck="false">
+            <div class="helper">Paste the page you want to cloak. If you click <strong>Use current tab URL</strong>, the browser will try to grab the active tab location and copy it in here.</div>
+          </div>
+          <div class="inline-grid">
+            <div class="field-row">
+              <label for="delayInput">Reveal delay</label>
+              <input id="delayInput" type="number" min="1" max="120" step="1" value="8">
+            </div>
+            <div class="field-row">
+              <label for="screenInput">Fake screen</label>
+              <select id="screenInput">
+                <option value="spreadsheet">Spreadsheet</option>
+                <option value="notes">Meeting notes</option>
+                <option value="inbox">Inbox</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label for="titleInput">Fake title</label>
+              <input id="titleInput" type="text" value="Quarterly nonsense" maxlength="120">
+            </div>
+          </div>
+          <div class="field-row">
+            <label for="notesInput">Fake content</label>
+            <textarea id="notesInput" spellcheck="false">Q2 follow-up:
+- unblock vendor thing
+- confirm numbers
+- delete the weird blue banner
+
+Next steps:
+1. pretend this is normal
+2. keep eye contact with the spreadsheet
+3. never mention the raccoon</textarea>
+            <div class="helper">This text fills the fake surface while the real page is hidden. Change it to fit the exact lie you need.</div>
+          </div>
+        </article>
+        <article class="frame-shell" id="frameShell">
+          <div class="frame-top">
+            <div class="frame-status"><strong id="frameTitle">No reveal yet</strong><span id="frameSub">The page is waiting to pretend.</span></div>
+            <div class="chip"><span class="pill-dot"></span><span id="frameMode">standby</span></div>
+          </div>
+          <div class="frame-body">
+            <div class="fake-screen" id="fakeScreen">
+              <div class="fake-panel">
+                <div class="bossbar">
+                  <div class="chip" id="disguiseChip">Spreadsheet mode</div>
+                  <div class="chip" id="timeChip">08:00 - 17:00</div>
+                </div>
+                <div class="sheet" id="fakeSurface">Quarterly nonsense
+
+Q2 follow-up:
+- unblock vendor thing
+- confirm numbers
+- delete the weird blue banner</div>
+                <div class="small-note" id="fakeCaption">Looks believable enough to survive a distant hallway glance.</div>
+              </div>
+            </div>
+            <div class="real-screen" id="realScreen">
+              <div class="real-panel">
+                <div class="tool-row">
+                  <div>
+                    <h3 id="realTitle">Revealed page</h3>
+                    <div class="small-note">If embedding fails, use the link below or open it in a new tab.</div>
+                  </div>
+                  <a href="#" target="_blank" rel="noopener noreferrer" id="openNewTab">Open in new tab</a>
+                </div>
+                <iframe id="cloakFrame" referrerpolicy="no-referrer"></iframe>
+                <a id="fallbackLink" href="#" target="_blank" rel="noopener noreferrer"></a>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+  <script>
+    const urlInput = document.getElementById('urlInput');
+    const delayInput = document.getElementById('delayInput');
+    const screenInput = document.getElementById('screenInput');
+    const titleInput = document.getElementById('titleInput');
+    const notesInput = document.getElementById('notesInput');
+    const startBtn = document.getElementById('startBtn');
+    const useCurrentBtn = document.getElementById('useCurrentBtn');
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const stagePill = document.getElementById('stagePill');
+    const delayBadge = document.getElementById('delayBadge');
+    const progressFill = document.getElementById('progressFill');
+    const progressLeft = document.getElementById('progressLeft');
+    const progressRight = document.getElementById('progressRight');
+    const bigStatus = document.getElementById('bigStatus');
+    const tinyStatus = document.getElementById('tinyStatus');
+    const urlPreview = document.getElementById('urlPreview');
+    const frameShell = document.getElementById('frameShell');
+    const frameTitle = document.getElementById('frameTitle');
+    const frameSub = document.getElementById('frameSub');
+    const frameMode = document.getElementById('frameMode');
+    const fakeScreen = document.getElementById('fakeScreen');
+    const realScreen = document.getElementById('realScreen');
+    const fakeSurface = document.getElementById('fakeSurface');
+    const fakeCaption = document.getElementById('fakeCaption');
+    const disguiseChip = document.getElementById('disguiseChip');
+    const timeChip = document.getElementById('timeChip');
+    const cloakFrame = document.getElementById('cloakFrame');
+    const fallbackLink = document.getElementById('fallbackLink');
+    const openNewTab = document.getElementById('openNewTab');
+
+    const disguises = {
+      spreadsheet: {
+        label: 'Spreadsheet mode',
+        title: 'Quarterly nonsense',
+        caption: 'Looks believable enough to survive a distant hallway glance.',
+        surface: 'Quarterly nonsense\n\nQ2 follow-up:\n- unblock vendor thing\n- confirm numbers\n- delete the weird blue banner\n\nNext steps:\n1. pretend this is normal\n2. keep eye contact with the spreadsheet\n3. never mention the raccoon',
+        time: '08:00 - 17:00'
+      },
+      notes: {
+        label: 'Meeting notes mode',
+        title: 'Team sync notes',
+        caption: 'Nobody questions a dense wall of bullets if it has a date at the top.',
+        surface: 'Team sync — Tuesday\n\nAttendees: me, two people who said "circling back," and a phantom from finance\n\n- review action items\n- ignore the weird silence\n- follow up after lunch\n- circle back aggressively\n\nParking lot:\n• budget\n• vendor delay\n• one extremely suspicious calendar invite',
+        time: 'TUE 10:30'
+      },
+      inbox: {
+        label: 'Inbox mode',
+        title: 'Unread messages',
+        caption: 'A fake inbox is the purest office camouflage. It is just panic with good spacing.',
+        surface: 'Inbox\n\nFrom: VP of whatever\nSubject: quick sync\n\nFrom: finance\nSubject: please review\n\nFrom: nobody\nSubject: re: re: re: re:\n\nFrom: calendar@corp\nSubject: invitation you will pretend to have seen',
+        time: '37 unread'
+      }
+    };
+
+    let revealTimer = null;
+    let progressTimer = null;
+    let startTime = 0;
+
+    function setMode(mode){
+      const d = disguises[mode] || disguises.spreadsheet;
+      disguiseChip.textContent = d.label;
+      frameTitle.textContent = d.title;
+      fakeCaption.textContent = d.caption;
+      fakeSurface.textContent = notesInput.value || d.surface;
+      timeChip.textContent = d.time;
+      screenInput.value = mode;
+    }
+
+    function resetTimers(){
+      clearTimeout(revealTimer);
+      clearInterval(progressTimer);
+      revealTimer = null;
+      progressTimer = null;
+    }
+
+    function setIdle(){
+      frameShell.classList.remove('cloak-revealed');
+      stagePill.textContent = 'Idle and suspicious';
+      frameMode.textContent = 'standby';
+      progressFill.style.width = '0%';
+      progressLeft.textContent = '0%';
+      progressRight.textContent = 'Waiting to begin';
+      bigStatus.textContent = 'Pick a disguise and start the show.';
+      tinyStatus.textContent = 'The fake screen is what everyone sees first. The real page waits underneath like a raccoon in a conference room ceiling.';
+      urlPreview.textContent = 'No URL loaded yet.';
+      copyLinkBtn.disabled = true;
+    }
+
+    function sanitizeUrl(value){
+      const trimmed = value.trim();
+      if(!trimmed) return '';
+      try { return new URL(trimmed, window.location.href).toString(); } catch { return ''; }
+    }
+
+    function revealNow(){
+      resetTimers();
+      frameShell.classList.add('cloak-revealed');
+      stagePill.textContent = 'Revealed';
+      frameMode.textContent = 'open';
+      progressFill.style.width = '100%';
+      progressLeft.textContent = '100%';
+      progressRight.textContent = 'Open';
+      bigStatus.textContent = 'The cloak is off.';
+      tinyStatus.textContent = 'If the destination blocks embedding, use the link below or open it in a new tab.';
+    }
+
+    function startCloak(){
+      const url = sanitizeUrl(urlInput.value);
+      if(!url) return;
+      resetTimers();
+      const delay = Math.max(1, Math.min(120, Number(delayInput.value) || 8));
+      const mode = screenInput.value;
+      setMode(mode);
+      frameShell.classList.remove('cloak-revealed');
+      stagePill.textContent = 'Cloaking';
+      frameMode.textContent = 'hidden';
+      bigStatus.textContent = 'Hiding the tab behind a fake work screen.';
+      tinyStatus.textContent = 'Press Escape if you get bored or suddenly become morally honest.';
+      urlPreview.textContent = url;
+      delayBadge.textContent = `${delay}s`;
+      startTime = Date.now();
+      progressTimer = setInterval(() => {
+        const pct = Math.min(100, ((Date.now() - startTime) / (delay * 1000)) * 100);
+        progressFill.style.width = `${pct}%`;
+        progressLeft.textContent = `${Math.round(pct)}%`;
+        progressRight.textContent = pct >= 100 ? 'Ready to reveal' : 'Still pretending';
+      }, 50);
+      revealTimer = setTimeout(revealNow, delay * 1000);
+      cloakFrame.src = url;
+      fallbackLink.href = url;
+      fallbackLink.textContent = url;
+      openNewTab.href = url;
+      copyLinkBtn.disabled = false;
+    }
+
+    startBtn.addEventListener('click', startCloak);
+    resetBtn.addEventListener('click', () => { resetTimers(); urlInput.value = ''; setIdle(); cloakFrame.removeAttribute('src'); fallbackLink.removeAttribute('href'); fallbackLink.textContent = ''; openNewTab.removeAttribute('href'); });
+    copyLinkBtn.addEventListener('click', async () => {
+      const url = sanitizeUrl(urlInput.value);
+      if(!url) return;
+      const share = `${location.origin}${location.pathname}?url=${encodeURIComponent(url)}&mode=${encodeURIComponent(screenInput.value)}&delay=${encodeURIComponent(delayInput.value)}`;
+      await navigator.clipboard.writeText(share);
+      copyLinkBtn.textContent = 'Copied';
+      setTimeout(() => copyLinkBtn.textContent = 'Copy reveal link', 1000);
+    });
+    useCurrentBtn.addEventListener('click', async () => {
+      try { urlInput.value = await navigator.clipboard.readText(); } catch {}
+    });
+    document.querySelectorAll('.preset').forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.disguise)));
+    screenInput.addEventListener('change', () => setMode(screenInput.value));
+    notesInput.addEventListener('input', () => setMode(screenInput.value));
+    document.addEventListener('keydown', (e) => { if(e.key === 'Escape') revealNow(); });
+
+    const params = new URLSearchParams(location.search);
+    if(params.get('url')) urlInput.value = params.get('url');
+    if(params.get('mode')) screenInput.value = params.get('mode');
+    if(params.get('delay')) delayInput.value = params.get('delay');
+    setMode(screenInput.value);
+    setIdle();
+  </script>
+</body>
+</html>
