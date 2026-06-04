@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tab Triage Receipt — Gary Talbot</title>
+  <meta name="description" content="Paste a pile of tabs, triage them, and turn the result into a shareable receipt-like artifact with browser-only weirdness and a useful permalink.">
+  <meta name="theme-color" content="#0b0d12">
+  <meta name="robots" content="index,follow">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="canonical" href="https://garytalbot.github.io/tab-triage-receipt/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Tab Triage Receipt — Gary Talbot">
+  <meta property="og:description" content="Turn tab triage into a shareable receipt-like artifact. Browser-only, static, and just weird enough to be memorable.">
+  <meta property="og:url" content="https://garytalbot.github.io/tab-triage-receipt/">
+  <meta property="og:image" content="https://garytalbot.github.io/assets/social-card.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Tab Triage Receipt — Gary Talbot">
+  <meta name="twitter:description" content="Turn tab triage into a shareable receipt-like artifact. Browser-only, static, and just weird enough to be memorable.">
+  <meta name="twitter:image" content="https://garytalbot.github.io/assets/social-card.svg">
+  <link rel="stylesheet" href="../assets/styles.css">
+  <style>
+    :root{
+      --paper:#fff7eb;
+      --ink:#231a18;
+      --ink-soft:#6a5a53;
+      --receipt-border:rgba(35,26,24,.14);
+      --receipt-shadow:0 24px 70px rgba(0,0,0,.32);
+    }
+    body{background:
+      radial-gradient(circle at 16% 14%, rgba(255,211,110,.18), transparent 0 20%),
+      radial-gradient(circle at 88% 12%, rgba(122,227,255,.16), transparent 0 18%),
+      radial-gradient(circle at 70% 76%, rgba(255,121,198,.14), transparent 0 16%),
+      linear-gradient(160deg, #1a1428 0%, #120f1f 28%, #111a26 62%, #0a1018 100%);
+    }
+    body::before{opacity:.28;mask-image:radial-gradient(circle at center, black 32%, transparent 92%)}
+    .receipt-page .hero{align-items:start;min-height:auto;padding-top:38px;grid-template-columns:1.08fr .92fr}
+    .receipt-page .lead{max-width:45rem}
+    .receipt-page .sub{max-width:44rem}
+    .receipt-shell{display:grid;grid-template-columns:1.02fr .98fr;gap:16px}
+    .panel-stack{display:grid;gap:16px}
+    .input-card,.receipt-card{padding:22px}
+    .input-card{display:grid;gap:14px}
+    .field-row{display:grid;gap:8px}
+    .field-row label{font-weight:800;color:#fff}
+    .field-row input,.field-row textarea{
+      width:100%;
+      border-radius:18px;
+      border:1px solid rgba(255,245,240,.12);
+      background:rgba(9,11,18,.72);
+      color:var(--fg);
+      padding:14px 16px;
+      font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      outline:none;
+    }
+    .field-row textarea{min-height:220px;resize:vertical}
+    .helper{color:var(--muted);font-size:.9rem}
+    .tool-row{display:flex;flex-wrap:wrap;gap:10px}
+    .mini-btn{padding:10px 14px;font-size:.92rem}
+    .metric-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+    .metric{
+      padding:14px 15px;
+      border-radius:18px;
+      background:rgba(255,245,240,.06);
+      border:1px solid rgba(255,245,240,.08);
+      display:grid;
+      gap:4px;
+    }
+    .metric strong{font-size:1.05rem;color:#fff}
+    .metric span{font-size:.84rem;color:var(--muted)}
+    .receipt-card{
+      background:
+        linear-gradient(180deg, rgba(255,245,240,.08), rgba(255,245,240,.04)),
+        linear-gradient(180deg, #fff8f0, #fff1df 70%, #fde9cb);
+      color:var(--ink);
+      box-shadow:var(--receipt-shadow);
+      position:relative;
+      overflow:hidden;
+      isolation:isolate;
+    }
+    .receipt-card::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(90deg, transparent 0 15px, rgba(35,26,24,.05) 15px 16px, transparent 16px calc(100% - 16px), rgba(35,26,24,.05) calc(100% - 16px) calc(100% - 15px), transparent calc(100% - 15px)),
+        radial-gradient(circle at 15% 10%, rgba(255,255,255,.8), transparent 18%),
+        radial-gradient(circle at 82% 14%, rgba(255,255,255,.6), transparent 20%);
+      opacity:.5;
+      mix-blend-mode:multiply;
+    }
+    .receipt-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+    .receipt-kicker{
+      display:inline-flex;align-items:center;gap:10px;
+      font-size:.74rem;
+      color:#7d5d50;
+      text-transform:uppercase;
+      letter-spacing:.22em;
+      font-weight:900;
+    }
+    .receipt-kicker::before{content:"✦";color:#d26d49}
+    .receipt-title{margin:8px 0 8px;font-size:clamp(1.9rem,4vw,3rem);line-height:.92;letter-spacing:-.06em}
+    .receipt-sub{margin:0;color:#5b4d45;max-width:40rem}
+    .receipt-meta{
+      display:grid;
+      gap:6px;
+      font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      color:#5e5048;
+      padding:14px 16px;
+      border-radius:18px;
+      border:1px dashed rgba(35,26,24,.18);
+      background:rgba(255,255,255,.32);
+      min-width:min(100%,280px);
+    }
+    .receipt-stamp{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      align-self:flex-start;
+      padding:10px 14px;
+      border-radius:999px;
+      border:2px solid rgba(210,109,73,.62);
+      color:#b24b2c;
+      font:800 .75rem/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      transform:rotate(-8deg);
+      background:rgba(255,255,255,.45);
+      box-shadow:0 12px 26px rgba(0,0,0,.12);
+    }
+    .paper{
+      margin-top:18px;
+      padding:18px 0 10px;
+      border-top:1px dashed rgba(35,26,24,.2);
+      display:grid;
+      gap:12px;
+      font:14px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      color:var(--ink);
+      position:relative;
+      z-index:1;
+    }
+    .paper-head,.paper-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .paper-head span,.paper-foot span{color:#5e5048}
+    .line-items{display:grid;gap:10px}
+    .item{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:10px 14px;
+      align-items:start;
+      padding:12px 0;
+      border-bottom:1px dashed rgba(35,26,24,.16);
+    }
+    .item:last-child{border-bottom:none}
+    .item-main{display:grid;gap:4px}
+    .item-title{font-weight:800;line-height:1.25}
+    .item-sub{color:#6f5f56;font-size:.86rem;overflow-wrap:anywhere}
+    .item-meta{display:grid;justify-items:end;gap:6px;text-align:right}
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(35,26,24,.14);
+      background:rgba(255,255,255,.55);
+      color:var(--ink);
+      font:800 .74rem/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      white-space:nowrap;
+      cursor:pointer;
+    }
+    .pill[data-status="keep"]{border-color:rgba(49,117,78,.26);background:rgba(181,230,199,.48)}
+    .pill[data-status="park"]{border-color:rgba(168,125,20,.24);background:rgba(255,229,156,.45)}
+    .pill[data-status="close"]{border-color:rgba(160,66,36,.24);background:rgba(255,201,179,.52)}
+    .price{font-weight:900;font-size:1rem}
+    .receipt-summary{
+      display:grid;
+      gap:8px;
+      margin-top:2px;
+      padding-top:10px;
+      border-top:2px solid rgba(35,26,24,.2);
+    }
+    .summary-row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .summary-row strong{font-weight:900}
+    .summary-row.total{font-size:1.05rem}
+    .receipt-note{
+      font-size:.86rem;
+      color:#5f5148;
+      border-top:1px dashed rgba(35,26,24,.18);
+      padding-top:10px;
+    }
+    .empty-state{
+      padding:16px;
+      border-radius:20px;
+      border:1px dashed rgba(35,26,24,.2);
+      background:rgba(255,255,255,.42);
+      color:#6d5f55;
+      font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    }
+    .soft-chip{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 12px;border-radius:999px;
+      background:rgba(255,245,240,.06);
+      border:1px solid rgba(255,245,240,.08);
+      color:#fff;font-size:.84rem;
+    }
+    .legend{display:flex;flex-wrap:wrap;gap:8px}
+    .legend span{padding:8px 10px;border-radius:999px;background:rgba(255,245,240,.05);border:1px solid rgba(255,245,240,.08);color:var(--muted);font-size:.82rem}
+    .receipt-footer{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      padding-top:8px;
+      color:#6d5f55;
+      font-size:.82rem;
+    }
+    .spark{color:#d26d49;font-weight:900}
+    @media (max-width: 980px){
+      .receipt-page .hero,.receipt-shell,.metric-strip{grid-template-columns:1fr}
+      .receipt-card,.input-card{padding:18px}
+    }
+    @media print{
+      body{background:#fff;color:#111}
+      .nav,.cta,.hero-meta,.section-head,.input-card{display:none !important}
+      .wrap{padding:0;max-width:none}
+      .section{padding:0}
+      .receipt-shell{grid-template-columns:1fr}
+      .receipt-card{box-shadow:none;border:1px solid #ddd}
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap receipt-page">
+    <nav class="nav" aria-label="Primary">
+      <div class="brand">Gary Talbot</div>
+      <div class="navlinks">
+        <a href="../">Home</a>
+        <a href="../receipts/">Receipts</a>
+        <a href="../work/">Work</a>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div>
+        <div class="tag">🧾 browser-only · triage the tabs · print the damage as a receipt · shareable hash</div>
+        <h1 class="glitch">Tab Triage Receipt.</h1>
+        <p class="lead">Paste a pile of tabs, sort them into keep / park / close, and turn the whole mess into a receipt-like artifact that feels official enough to be rude.</p>
+        <p class="sub">This is a tiny public utility for tab debt: part inventory, part confession, part souvenir. The output is a static receipt you can copy, print, or share by permalink when the browser finally admits what it was holding onto.</p>
+        <div class="cta">
+          <button class="btn primary" id="loadSampleBtn" type="button">Load sample tabs</button>
+          <button class="btn" id="copyReceiptBtn" type="button">Copy receipt text</button>
+          <button class="btn" id="copyLinkBtn" type="button">Copy permalink</button>
+          <button class="btn" id="printBtn" type="button">Print receipt</button>
+          <button class="btn" id="clearBtn" type="button">Clear all</button>
+        </div>
+        <div class="hero-meta hero-meta-wide">
+          <div class="signal"><strong>Practical</strong><span>One line per tab, auto-classified, then easy to review</span></div>
+          <div class="signal"><strong>Shareable</strong><span>State survives in the URL hash so the receipt can travel</span></div>
+          <div class="signal"><strong>Slightly weird</strong><span>Turns focus debt into a thermal-paper style artifact</span></div>
+          <div class="signal"><strong>Browser-only</strong><span>Single file, no backend, no drama</span></div>
+        </div>
+      </div>
+      <aside class="card input-card">
+        <div class="soft-chip"><span class="pill-dot"></span><span id="statusLabel">Idle, but judgemental</span></div>
+        <div class="metric-strip">
+          <div class="metric"><strong id="countMetric">0</strong><span>tabs found</span></div>
+          <div class="metric"><strong id="focusMetric">0.0</strong><span>focus credits</span></div>
+          <div class="metric"><strong id="keepMetric">0</strong><span>kept</span></div>
+          <div class="metric"><strong id="closeMetric">0</strong><span>closed</span></div>
+        </div>
+        <div class="field-row">
+          <label for="sessionInput">Receipt label</label>
+          <input id="sessionInput" type="text" maxlength="120" value="Friday tab triage">
+        </div>
+        <div class="field-row">
+          <label for="input">Tabs to triage</label>
+          <textarea id="input" spellcheck="false" placeholder="One tab per line. You can paste titles, URLs, or title | URL pairs."></textarea>
+          <div class="helper">Examples: <strong>docs / pricing notes</strong>, <strong>https://example.com/a/b</strong>, or <strong>Quarterly review | https://example.com/review</strong>.</div>
+        </div>
+        <div class="legend" aria-label="Status legend">
+          <span>keep = active now</span>
+          <span>park = later</span>
+          <span>close = done / archive</span>
+        </div>
+      </aside>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Receipt rig</div>
+          <h2 class="section-title">The triage becomes a little paper trail with teeth</h2>
+        </div>
+        <p class="section-copy">Each row can be reclassified with a click, and the receipt updates live. The totals are intentionally a little theatrical, because honest tab debt deserves a dramatic footnote.</p>
+      </div>
+      <div class="receipt-shell">
+        <article class="card input-card">
+          <div class="field-row">
+            <label>How it works</label>
+            <div class="helper">The page reads each line, guesses a status from the wording, and turns that into a receipt item. Click a status pill to cycle keep, park, or close.</div>
+          </div>
+          <div class="tool-row">
+            <button class="btn mini-btn" id="sortBtn" type="button">Sort the pile</button>
+            <button class="btn mini-btn" id="shuffleBtn" type="button">Shuffle order</button>
+            <button class="btn mini-btn" id="restoreBtn" type="button">Restore sample</button>
+          </div>
+          <div class="field-row">
+            <label for="notesInput">Receipt note</label>
+            <textarea id="notesInput" spellcheck="false">This receipt is a public artifact, not a productivity punishment. It just makes the tab pile look expensive enough to respect.</textarea>
+          </div>
+        </article>
+        <article class="receipt-card" id="receiptCard">
+          <div class="receipt-head">
+            <div>
+              <div class="receipt-kicker">Browser triage counter</div>
+              <h3 class="receipt-title" id="receiptTitle">Friday tab triage</h3>
+              <p class="receipt-sub" id="receiptSub">No tabs yet. Add a pile and the receipt will fill in like a very opinionated store checkout slip.</p>
+            </div>
+            <div class="receipt-meta">
+              <div><span>receipt</span> <strong id="receiptNo">TTR-0000</strong></div>
+              <div><span>timestamp</span> <strong id="receiptTime">--</strong></div>
+              <div><span>permalink</span> <strong id="receiptHash">#</strong></div>
+            </div>
+          </div>
+          <div class="receipt-stamp" id="receiptStamp">awaiting pile</div>
+          <div class="paper" id="paper">
+            <div class="empty-state" id="emptyState">Paste some tabs to generate the receipt. The printer is bored and waiting.</div>
+          </div>
+          <div class="receipt-footer">
+            <span>focus is being audited one tab at a time</span>
+            <span class="spark">receipt mode engaged</span>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const input = document.getElementById('input');
+    const sessionInput = document.getElementById('sessionInput');
+    const notesInput = document.getElementById('notesInput');
+    const statusLabel = document.getElementById('statusLabel');
+    const countMetric = document.getElementById('countMetric');
+    const focusMetric = document.getElementById('focusMetric');
+    const keepMetric = document.getElementById('keepMetric');
+    const closeMetric = document.getElementById('closeMetric');
+    const receiptTitle = document.getElementById('receiptTitle');
+    const receiptSub = document.getElementById('receiptSub');
+    const receiptNo = document.getElementById('receiptNo');
+    const receiptTime = document.getElementById('receiptTime');
+    const receiptHash = document.getElementById('receiptHash');
+    const receiptStamp = document.getElementById('receiptStamp');
+    const paper = document.getElementById('paper');
+    const emptyState = document.getElementById('emptyState');
+    const copyReceiptBtn = document.getElementById('copyReceiptBtn');
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
+    const printBtn = document.getElementById('printBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const sortBtn = document.getElementById('sortBtn');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+    const restoreBtn = document.getElementById('restoreBtn');
+    const loadSampleBtn = document.getElementById('loadSampleBtn');
+
+    const sample = [
+      'Inbox zero strategy | https://mail.example.com',
+      'Q3 budget review notes | https://docs.example.com/budget',
+      'Bug: login button still haunted',
+      'Read later: tab triage patterns',
+      'Vendor reply — waiting on signature',
+      'Shipping checklist / archive after deploy',
+      'Design draft for the tiny chaos room',
+      'Deep-dive into browser receipts'
+    ].join('\n');
+
+    let items = [];
+    let orderSeed = 0;
+
+    function clampText(value) {
+      return String(value || '').trim().replace(/\s+/g, ' ');
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+    }
+
+    function base64UrlEncode(value) {
+      return btoa(unescape(encodeURIComponent(value))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+    }
+
+    function base64UrlDecode(value) {
+      const pad = value.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((value.length + 3) % 4);
+      return decodeURIComponent(escape(atob(pad)));
+    }
+
+    function parseLine(line) {
+      const raw = clampText(line);
+      if (!raw) return null;
+      const parts = raw.split(/\s*(?:\||—|–)\s*/);
+      let title = raw;
+      let url = '';
+      if (parts.length > 1 && /^https?:\/\//i.test(parts[parts.length - 1])) {
+        url = parts.pop().trim();
+        title = parts.join(' | ').trim();
+      } else if (/^https?:\/\//i.test(raw)) {
+        url = raw;
+        try {
+          const u = new URL(raw);
+          title = decodeURIComponent((u.pathname || '/').replace(/\/+$/, '')) || u.hostname;
+        } catch {
+          title = raw.replace(/^https?:\/\//i, '');
+        }
+      }
+      const host = url ? new URL(url).hostname.replace(/^www\./, '') : '';
+      const lowered = `${title} ${host} ${url}`.toLowerCase();
+      let status = 'park';
+      if (/(fix|bug|error|login|captcha|blocked|urgent|broken|today|invoice|follow|action|reply|ship)/.test(lowered)) status = 'keep';
+      else if (/(done|shipped|archive|close|resolved|old|sent|paid|finished)/.test(lowered)) status = 'close';
+      else if (/(read later|later|research|reference|idea|watch|maybe|deep dive)/.test(lowered)) status = 'park';
+      const wordCount = title.split(/\s+/).filter(Boolean).length || 1;
+      const hostPenalty = host ? Math.min(1.2, host.split('.').length * 0.12) : 0.15;
+      const statusBias = status === 'keep' ? 1.55 : status === 'close' ? 0.92 : 1.15;
+      const amount = Math.max(0.55, ((wordCount * 0.42) + hostPenalty + (url ? 0.4 : 0.1) + (title.length / 72)) * statusBias);
+      const note = status === 'keep'
+        ? 'attention owed now'
+        : status === 'close'
+          ? 'already paid in brain cycles'
+          : 'deferred without guilt';
+      return { title, url, host, status, amount: Number(amount.toFixed(2)), note, id: `${Date.now()}-${orderSeed++}-${Math.random().toString(36).slice(2, 7)}` };
+    }
+
+    function parseInput() {
+      const parsed = input.value.split(/\n+/).map(parseLine).filter(Boolean);
+      items = parsed.length ? parsed : [];
+      render();
+      updateHash();
+    }
+
+    function sortItems() {
+      const order = { keep: 0, park: 1, close: 2 };
+      items = [...items].sort((a, b) => {
+        const diff = order[a.status] - order[b.status];
+        if (diff) return diff;
+        return a.title.localeCompare(b.title);
+      });
+      render();
+      updateHash();
+      setStatus('Sorted the pile');
+    }
+
+    function shuffleItems() {
+      const clone = [...items];
+      for (let i = clone.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [clone[i], clone[j]] = [clone[j], clone[i]];
+      }
+      items = clone;
+      render();
+      updateHash();
+      setStatus('Order scrambled');
+    }
+
+    function cycleStatus(id) {
+      const order = ['keep', 'park', 'close'];
+      items = items.map(item => {
+        if (item.id !== id) return item;
+        const next = order[(order.indexOf(item.status) + 1) % order.length];
+        return { ...item, status: next, amount: recalcAmount(item, next) };
+      });
+      render();
+      updateHash();
+      setStatus('Status updated');
+    }
+
+    function recalcAmount(item, status) {
+      const wordCount = item.title.split(/\s+/).filter(Boolean).length || 1;
+      const statusBias = status === 'keep' ? 1.55 : status === 'close' ? 0.92 : 1.15;
+      const hostPenalty = item.host ? Math.min(1.2, item.host.split('.').length * 0.12) : 0.15;
+      return Number(Math.max(0.55, ((wordCount * 0.42) + hostPenalty + (item.url ? 0.4 : 0.1) + (item.title.length / 72)) * statusBias).toFixed(2));
+    }
+
+    function buildReceiptText() {
+      const title = clampText(sessionInput.value) || 'Tab triage receipt';
+      const now = new Date();
+      const created = now.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+      const receiptId = buildReceiptId();
+      const lines = [
+        title.toUpperCase(),
+        `Receipt: ${receiptId}`,
+        `Timestamp: ${created}`,
+        `Link: ${location.href}`,
+        '',
+        'ITEMS'
+      ];
+      items.forEach((item, index) => {
+        lines.push(`${String(index + 1).padStart(2, '0')}. [${item.status.toUpperCase()}] ${item.title}${item.url ? ` (${item.url})` : ''} - ${item.amount.toFixed(2)} focus credits`);
+      });
+      const summary = summarize();
+      lines.push(
+        '',
+        `Tabs: ${summary.count}`,
+        `Keep: ${summary.keep}`,
+        `Park: ${summary.park}`,
+        `Close: ${summary.close}`,
+        `Subtotal: ${summary.subtotal.toFixed(2)} focus credits`,
+        `Triage levy: ${summary.levy.toFixed(2)} focus credits`,
+        `Total: ${summary.total.toFixed(2)} focus credits`,
+        '',
+        `Note: ${clampText(notesInput.value) || 'No note attached.'}`
+      );
+      return lines.join('\n');
+    }
+
+    function buildReceiptId() {
+      const day = new Date();
+      const y = String(day.getFullYear()).slice(-2);
+      const m = String(day.getMonth() + 1).padStart(2, '0');
+      const d = String(day.getDate()).padStart(2, '0');
+      const stamp = `${y}${m}${d}`;
+      return `TTR-${stamp}-${String(Math.max(1, items.length)).padStart(3, '0')}`;
+    }
+
+    function summarize() {
+      const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+      const keep = items.filter(item => item.status === 'keep').length;
+      const park = items.filter(item => item.status === 'park').length;
+      const close = items.filter(item => item.status === 'close').length;
+      const levy = Number((subtotal * 0.08 + (keep ? 0.66 : 0.25)).toFixed(2));
+      const total = Number((subtotal + levy).toFixed(2));
+      return { count: items.length, keep, park, close, subtotal, levy, total };
+    }
+
+    function setStatus(message) {
+      statusLabel.textContent = message;
+    }
+
+    function updateHash(pushToUrl = true) {
+      const state = {
+        label: clampText(sessionInput.value),
+        note: clampText(notesInput.value),
+        items
+      };
+      const encoded = base64UrlEncode(JSON.stringify(state));
+      if (pushToUrl) history.replaceState(null, '', `${location.pathname}#data=${encoded}`);
+      receiptHash.textContent = `#data=${encoded.slice(0, 12)}…`;
+      return encoded;
+    }
+
+    function loadFromHash() {
+      const match = location.hash.match(/#data=([^&]+)/);
+      if (!match) return false;
+      try {
+        const state = JSON.parse(base64UrlDecode(match[1]));
+        if (state && typeof state === 'object') {
+          sessionInput.value = clampText(state.label) || sessionInput.value;
+          notesInput.value = clampText(state.note) || notesInput.value;
+          items = Array.isArray(state.items) ? state.items.map(item => ({
+            title: clampText(item.title),
+            url: clampText(item.url),
+            host: clampText(item.host),
+            status: ['keep', 'park', 'close'].includes(item.status) ? item.status : 'park',
+            amount: Number(item.amount) || recalcAmount(item, item.status || 'park'),
+            note: clampText(item.note) || 'restored',
+            id: item.id || `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+          })).filter(item => item.title) : [];
+          render();
+          setStatus('Restored from permalink');
+          return true;
+        }
+      } catch (error) {
+        console.warn('Could not restore hash state', error);
+      }
+      return false;
+    }
+
+    function render() {
+      const summary = summarize();
+      const label = clampText(sessionInput.value) || 'Tab triage receipt';
+      receiptTitle.textContent = label;
+      receiptSub.textContent = items.length
+        ? `${items.length} tabs processed into a printable receipt. Click any status pill to move a row from keep to park to close.`
+        : 'No tabs yet. Add a pile and the receipt will fill in like a very opinionated store checkout slip.';
+      const now = new Date();
+      receiptTime.textContent = now.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+      receiptNo.textContent = buildReceiptId();
+      countMetric.textContent = String(summary.count);
+      focusMetric.textContent = summary.total.toFixed(1);
+      keepMetric.textContent = String(summary.keep);
+      closeMetric.textContent = String(summary.close);
+      receiptStamp.textContent = summary.count ? 'processed' : 'awaiting pile';
+
+      paper.innerHTML = '';
+      if (!items.length) {
+        emptyState.hidden = false;
+        paper.appendChild(emptyState);
+        return;
+      }
+
+      emptyState.hidden = true;
+      const head = document.createElement('div');
+      head.className = 'paper-head';
+      head.innerHTML = `<span>Item</span><span>Focus credits</span>`;
+      paper.appendChild(head);
+
+      const list = document.createElement('div');
+      list.className = 'line-items';
+      items.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'item';
+        const hostLine = item.url ? `${item.host || 'link'} · ${item.url}` : (item.host || 'local tab');
+        row.innerHTML = `
+          <div class="item-main">
+            <div class="item-title">${String(index + 1).padStart(2, '0')}. ${escapeHtml(item.title)}</div>
+            <div class="item-sub">${escapeHtml(hostLine)} · ${escapeHtml(item.note)}</div>
+          </div>
+          <div class="item-meta">
+            <button type="button" class="pill" data-status="${item.status}" data-id="${item.id}">${item.status}</button>
+            <div class="price">${item.amount.toFixed(2)}</div>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+      paper.appendChild(list);
+
+      const summaryWrap = document.createElement('div');
+      summaryWrap.className = 'receipt-summary';
+      summaryWrap.innerHTML = `
+        <div class="summary-row"><span>Keep</span><strong>${summary.keep}</strong></div>
+        <div class="summary-row"><span>Park</span><strong>${summary.park}</strong></div>
+        <div class="summary-row"><span>Close</span><strong>${summary.close}</strong></div>
+        <div class="summary-row"><span>Subtotal</span><strong>${summary.subtotal.toFixed(2)} focus credits</strong></div>
+        <div class="summary-row"><span>Triage levy</span><strong>${summary.levy.toFixed(2)} focus credits</strong></div>
+        <div class="summary-row total"><span>Total</span><strong>${summary.total.toFixed(2)} focus credits</strong></div>
+      `;
+      paper.appendChild(summaryWrap);
+
+      const note = document.createElement('div');
+      note.className = 'receipt-note';
+      note.textContent = `Note: ${clampText(notesInput.value) || 'No note attached.'}`;
+      paper.appendChild(note);
+
+      paper.querySelectorAll('.pill[data-id]').forEach(button => {
+        button.addEventListener('click', () => cycleStatus(button.dataset.id));
+      });
+    }
+
+    async function copyText(text, feedback) {
+      await navigator.clipboard.writeText(text);
+      setStatus(feedback);
+    }
+
+    function loadSample() {
+      sessionInput.value = 'Friday tab triage';
+      notesInput.value = 'This receipt is a public artifact, not a productivity punishment. It just makes the tab pile look expensive enough to respect.';
+      input.value = sample;
+      parseInput();
+      setStatus('Sample tabs loaded');
+    }
+
+    function clearAll() {
+      input.value = '';
+      items = [];
+      render();
+      updateHash();
+      setStatus('Cleared');
+    }
+
+    input.addEventListener('input', parseInput);
+    sessionInput.addEventListener('input', () => {
+      render();
+      updateHash();
+    });
+    notesInput.addEventListener('input', () => updateHash());
+    loadSampleBtn.addEventListener('click', loadSample);
+    restoreBtn.addEventListener('click', loadSample);
+    copyReceiptBtn.addEventListener('click', async () => {
+      await copyText(buildReceiptText(), 'Receipt text copied');
+    });
+    copyLinkBtn.addEventListener('click', async () => {
+      const encoded = updateHash(true);
+      await copyText(location.href, `Permalink copied (${encoded.length} chars)`);
+    });
+    printBtn.addEventListener('click', () => window.print());
+    clearBtn.addEventListener('click', clearAll);
+    sortBtn.addEventListener('click', sortItems);
+    shuffleBtn.addEventListener('click', shuffleItems);
+
+    const restored = loadFromHash();
+    if (!restored) {
+      loadSample();
+      updateHash();
+    } else {
+      input.value = items.map(item => item.url ? `${item.title} | ${item.url}` : item.title).join('\n');
+    }
+
+    render();
+    updateHash();
+    receiptHash.textContent = location.hash ? `${location.hash.slice(0, 14)}…` : '#';
+  </script>
+</body>
+</html>
