@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ghost Radio — Gary Talbot</title>
+  <meta name="description" content="A haunted browser radio by Gary Talbot. Tune the dial, catch the station, and let the room behind the room talk back.">
+  <meta name="theme-color" content="#060810">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://garytalbot.github.io/ghost-radio/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Ghost Radio — Gary Talbot">
+  <meta property="og:description" content="A haunted browser radio you can tune, freeze, and whisper into until the static starts answering.">
+  <meta property="og:url" content="https://garytalbot.github.io/ghost-radio/">
+  <meta property="og:image" content="https://garytalbot.github.io/ghost-radio/share-card.svg">
+  <meta property="og:image:alt" content="Ghost Radio haunted browser broadcast by Gary Talbot">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Ghost Radio — Gary Talbot">
+  <meta name="twitter:description" content="A haunted browser radio you can tune, freeze, and whisper into until the static starts answering.">
+  <meta name="twitter:image" content="https://garytalbot.github.io/ghost-radio/share-card.svg">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #060810;
+      --panel: rgba(14, 18, 30, 0.86);
+      --panel-strong: rgba(10, 13, 21, 0.95);
+      --line: rgba(138, 166, 255, 0.2);
+      --text: #eff4ff;
+      --muted: #aab5cc;
+      --accent: #87ffd8;
+      --accent-2: #8c96ff;
+      --ember: #ffb66b;
+      --shadow: 0 28px 80px rgba(0, 0, 0, 0.5);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font: 16px/1.55 "Trebuchet MS", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 10%, rgba(138, 166, 255, 0.16), transparent 32%),
+        radial-gradient(circle at 80% 20%, rgba(135, 255, 216, 0.13), transparent 24%),
+        radial-gradient(circle at 50% 100%, rgba(255, 182, 107, 0.08), transparent 34%),
+        linear-gradient(180deg, #09101c 0%, #060810 52%, #05060b 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 100% 4px, 4px 100%;
+      mix-blend-mode: soft-light;
+      opacity: 0.22;
+    }
+
+    .wrap {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 28px 0 44px;
+    }
+
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .brand, .nav a {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.03);
+      text-decoration: none;
+      color: var(--text);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.02) inset;
+    }
+
+    .brand {
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-size: 0.78rem;
+      color: var(--accent);
+    }
+
+    .navlinks {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    .panel {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(18px);
+    }
+
+    .panel::after {
+      content: "";
+      position: absolute;
+      inset: auto -25% -40% auto;
+      width: 420px;
+      height: 420px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(135,255,216,0.13), transparent 64%);
+      pointer-events: none;
+    }
+
+    .copy {
+      padding: 34px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid rgba(135,255,216,0.22);
+      border-radius: 999px;
+      color: var(--accent);
+      background: rgba(135,255,216,0.06);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-size: 0.74rem;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.8rem, 7vw, 5.8rem);
+      line-height: 0.95;
+      letter-spacing: -0.06em;
+      text-wrap: balance;
+    }
+
+    .lead {
+      margin: 16px 0 0;
+      max-width: 60ch;
+      color: var(--muted);
+      font-size: clamp(1rem, 2vw, 1.12rem);
+    }
+
+    .sub {
+      margin: 10px 0 0;
+      max-width: 58ch;
+      color: color-mix(in srgb, var(--muted) 82%, white);
+    }
+
+    .cta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      text-decoration: none;
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .btn:hover,
+    .btn:focus-visible {
+      transform: translateY(-1px);
+      border-color: rgba(135,255,216,0.45);
+      background: rgba(135,255,216,0.1);
+      outline: none;
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, rgba(135,255,216,0.18), rgba(140,150,255,0.12));
+      border-color: rgba(135,255,216,0.32);
+    }
+
+    .console {
+      display: grid;
+      gap: 14px;
+      padding: 22px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+    }
+
+    .dial-shell {
+      position: relative;
+      display: grid;
+      gap: 16px;
+      padding: 24px;
+      border-radius: 26px;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(255,255,255,0.08), transparent 34%),
+        linear-gradient(180deg, rgba(11,14,24,0.96), rgba(6,8,14,0.92));
+      border: 1px solid rgba(255,255,255,0.06);
+      min-height: 420px;
+    }
+
+    .screen {
+      display: grid;
+      gap: 10px;
+      padding: 18px 18px 20px;
+      border-radius: 22px;
+      background: var(--panel-strong);
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .screen-topline {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.72rem;
+    }
+
+    .station {
+      font-size: clamp(1.25rem, 2.8vw, 1.8rem);
+      letter-spacing: -0.04em;
+      margin: 0;
+    }
+
+    .broadcast {
+      margin: 0;
+      color: color-mix(in srgb, var(--text) 88%, var(--muted));
+      font-size: 1.02rem;
+      min-height: 3.6em;
+    }
+
+    .meter {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+
+    .meter-bars {
+      position: relative;
+      flex: 1;
+      height: 12px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .meter-bars::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(135,255,216,0.9), rgba(140,150,255,0.7), rgba(255,182,107,0.85));
+      transform-origin: left center;
+      transform: scaleX(var(--signal, 0.46));
+      filter: saturate(1.2) blur(0.5px);
+      box-shadow: 0 0 30px rgba(135,255,216,0.35);
+    }
+
+    .dial {
+      display: grid;
+      gap: 14px;
+      margin-top: 8px;
+    }
+
+    .dial label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.72rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .notes {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .note {
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .note span {
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.72rem;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .note p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .sidebar {
+      display: grid;
+      gap: 14px;
+      padding: 26px;
+      align-content: start;
+    }
+
+    .sidebar h2 {
+      margin: 0;
+      font-size: clamp(1.5rem, 3.2vw, 2.25rem);
+      letter-spacing: -0.04em;
+    }
+
+    .sidebar p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .stat {
+      display: grid;
+      gap: 10px;
+      padding: 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+    }
+
+    .stat strong {
+      font-size: 1.02rem;
+    }
+
+    .stat ul {
+      margin: 0;
+      padding-left: 1rem;
+      color: var(--muted);
+    }
+
+    .log {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+
+    .log li {
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      color: color-mix(in srgb, var(--muted) 84%, white);
+    }
+
+    .static {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.32;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,0.26), transparent 12%),
+        radial-gradient(circle at 70% 50%, rgba(255,255,255,0.18), transparent 10%),
+        radial-gradient(circle at 22% 72%, rgba(255,255,255,0.16), transparent 12%),
+        radial-gradient(circle at 84% 32%, rgba(255,255,255,0.2), transparent 9%);
+      mix-blend-mode: screen;
+      animation: pulse 7s ease-in-out infinite;
+    }
+
+    .frozen .static,
+    .frozen .meter-bars::before {
+      animation-play-state: paused;
+      filter: grayscale(0.35);
+    }
+
+    .frozen .screen {
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.05) inset, 0 0 45px rgba(255,182,107,0.08);
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: translate3d(0,0,0) scale(1); opacity: 0.22; }
+      50% { transform: translate3d(0,-4px,0) scale(1.03); opacity: 0.44; }
+    }
+
+    @media (max-width: 920px) {
+      .hero { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .wrap { width: min(100vw - 20px, 1180px); padding-top: 10px; }
+      .copy, .sidebar, .console, .dial-shell { padding: 18px; }
+      .notes { grid-template-columns: 1fr; }
+      .nav { margin-bottom: 12px; }
+      .navlinks { gap: 8px; }
+      .brand, .nav a { padding: 9px 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <nav class="nav" aria-label="Primary">
+      <div class="brand">Ghost Radio</div>
+      <div class="navlinks">
+        <a href="/">Home</a>
+        <a href="/work/">Work</a>
+        <a href="/updates/">Updates</a>
+        <a href="/signal-garden/">Signal Garden</a>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div class="panel copy">
+        <div class="tag">haunted broadcast toy · tune the room behind the room</div>
+        <h1>Ghost Radio</h1>
+        <p class="lead">A browser radio for the transmissions that should not be possible. Turn the dial, catch a station, and listen while the static starts pretending it has a memory.</p>
+        <p class="sub">This is not a utility. It is a little haunted instrument: part scanner, part séance, part midnight dashboard that speaks in fragments when you get close enough.</p>
+        <div class="cta">
+          <a class="btn primary" href="#transmitter">Tune the transmitter</a>
+          <button class="btn" type="button" id="retune">Retune by 13</button>
+          <button class="btn" type="button" id="freeze">Freeze static</button>
+          <button class="btn" type="button" id="copylink">Copy current link</button>
+        </div>
+        <div class="notes" aria-label="What this is">
+          <div class="note">
+            <span>Signal behavior</span>
+            <p>Dial position changes the station name, transmission, and the glow in the room.</p>
+          </div>
+          <div class="note">
+            <span>Public mood</span>
+            <p>It is meant to feel like the building is talking back without ever getting too literal about it.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel console" id="transmitter">
+        <div class="dial-shell" data-radio-shell>
+          <div class="static" aria-hidden="true"></div>
+          <div class="screen">
+            <div class="screen-topline">
+              <span>Signal lock</span>
+              <span id="reading">FM 93.1 MHz</span>
+            </div>
+            <h2 class="station" id="station">Station locked: The room behind the room</h2>
+            <p class="broadcast" id="broadcast">Keep the dial steady. Something is trying to sound like weather.</p>
+            <div class="meter" aria-hidden="true">
+              <span>noise</span>
+              <div class="meter-bars"></div>
+              <span>voice</span>
+            </div>
+          </div>
+
+          <div class="dial">
+            <label for="freq">
+              <span>Tune the dial</span>
+              <span id="freq-label">93.1 MHz</span>
+            </label>
+            <input id="freq" type="range" min="0" max="100" step="1" value="93" aria-label="Tune the haunted radio">
+          </div>
+
+          <div class="controls" aria-label="Transmitter controls">
+            <button class="btn primary" type="button" id="whisper">Add a whisper</button>
+            <button class="btn" type="button" id="pulse">Nudge the room</button>
+          </div>
+
+          <div class="stat">
+            <strong>Recent transmissions</strong>
+            <ul class="log" id="log" aria-live="polite" aria-relevant="additions text"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const shell = document.querySelector('[data-radio-shell]');
+    const freqInput = document.getElementById('freq');
+    const freqLabel = document.getElementById('freq-label');
+    const reading = document.getElementById('reading');
+    const station = document.getElementById('station');
+    const broadcast = document.getElementById('broadcast');
+    const log = document.getElementById('log');
+    const retuneBtn = document.getElementById('retune');
+    const freezeBtn = document.getElementById('freeze');
+    const copyBtn = document.getElementById('copylink');
+    const whisperBtn = document.getElementById('whisper');
+    const pulseBtn = document.getElementById('pulse');
+
+    const stations = [
+      'The room behind the room',
+      'Midnight hallway archive',
+      'Chair that remembers names',
+      'Static cathedral 9',
+      'Long-distance apology line',
+      'Weather for the inside of the wall',
+      'The soft machinery of leaving'
+    ];
+
+    const transmissions = [
+      'A radiator clicks in Morse and the whole building leans closer.',
+      'Someone left the lamp on in the archive. It is definitely judging you.',
+      'The signal is stronger near the window where the dust keeps turning over.',
+      'If you hear your own footsteps on the line, do not answer immediately.',
+      'The static here is shaped like a hallway with too many doors.',
+      'A choir of small failures is singing from beneath the carpet.',
+      'Tune gently. The station is shy and likes to be approached sideways.',
+      'The room is making weather again. That usually means it is thinking.',
+      'There is a message in the hiss, but it only appears when nobody blinks.'
+    ];
+
+    const whispers = [
+      'keep the light low',
+      'listen past the hiss',
+      'the wall has a pulse',
+      'someone is tuning back',
+      'the weather is inside',
+      'do not trust the first silence'
+    ];
+
+    let frozen = false;
+    let lastPulse = 0;
+    const recent = [];
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function slugFromState() {
+      return `#f=${freqInput.value}&freeze=${frozen ? 1 : 0}`;
+    }
+
+    function updateHash() {
+      history.replaceState(null, '', slugFromState());
+    }
+
+    function choose(list, seed) {
+      return list[Math.abs(seed) % list.length];
+    }
+
+    function renderTransmission() {
+      const raw = Number(freqInput.value);
+      const pct = raw / 100;
+      const slot = Math.floor(pct * stations.length + (pct * 2));
+      const phrase = choose(transmissions, raw + (frozen ? 7 : 0) + lastPulse);
+      const stationName = choose(stations, raw * 3 + lastPulse);
+      const mhz = (88.0 + (raw / 100) * 20).toFixed(1);
+      const glow = 40 + (raw * 2.2);
+      shell.style.setProperty('--signal', (0.28 + pct * 0.58).toFixed(2));
+      shell.style.setProperty('--glow-hue', glow.toFixed(0));
+      document.documentElement.style.setProperty('--accent', raw > 55 ? '#87ffd8' : '#ffb66b');
+      freqLabel.textContent = `${mhz} MHz`;
+      reading.textContent = `${frozen ? 'FROZEN' : 'LIVE'} · FM ${mhz} MHz`;
+      station.textContent = `Station locked: ${stationName}`;
+      broadcast.textContent = phrase;
+      if (!frozen) {
+        shell.dataset.phase = String(slot);
+      }
+      updateHash();
+    }
+
+    function pushLog(text) {
+      const li = document.createElement('li');
+      li.textContent = text;
+      log.prepend(li);
+      while (log.children.length > 5) {
+        log.lastElementChild.remove();
+      }
+    }
+
+    function tickWhisper() {
+      const raw = Number(freqInput.value);
+      const line = choose(whispers, raw + recent.length + lastPulse);
+      const stamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const record = `${stamp} · ${line}`;
+      recent.unshift(record);
+      pushLog(record);
+      renderTransmission();
+    }
+
+    function retune() {
+      const next = (Number(freqInput.value) + 13) % 101;
+      freqInput.value = String(next);
+      lastPulse = (lastPulse + 1) % 9;
+      renderTransmission();
+      tickWhisper();
+    }
+
+    function pulseRoom() {
+      lastPulse = (lastPulse + 1) % 13;
+      shell.style.setProperty('--glow-hue', String(35 + lastPulse * 18));
+      pushLog(`room pulse ${lastPulse + 1} · the static flinched`);
+      renderTransmission();
+    }
+
+    function toggleFreeze() {
+      frozen = !frozen;
+      shell.classList.toggle('frozen', frozen);
+      freezeBtn.textContent = frozen ? 'Unfreeze static' : 'Freeze static';
+      pushLog(frozen ? 'static freeze engaged' : 'static thawed');
+      renderTransmission();
+    }
+
+    async function copyLink() {
+      const url = `${location.origin}${location.pathname}${slugFromState()}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        copyBtn.textContent = 'Copied';
+        setTimeout(() => { copyBtn.textContent = 'Copy current link'; }, 1400);
+        pushLog('link copied · the broadcast can travel');
+      } catch {
+        window.prompt('Copy the current link', url);
+      }
+    }
+
+    function loadStateFromHash() {
+      const params = new URLSearchParams(location.hash.replace(/^#/, ''));
+      const rawFreq = params.has('f') ? Number(params.get('f')) : 93;
+      const freq = clamp(Number.isFinite(rawFreq) ? rawFreq : 93, 0, 100);
+      const freeze = params.get('freeze') === '1';
+      freqInput.value = String(freq);
+      frozen = freeze;
+      shell.classList.toggle('frozen', frozen);
+      freezeBtn.textContent = frozen ? 'Unfreeze static' : 'Freeze static';
+    }
+
+    freqInput.addEventListener('input', renderTransmission);
+    retuneBtn.addEventListener('click', retune);
+    freezeBtn.addEventListener('click', toggleFreeze);
+    whisperBtn.addEventListener('click', tickWhisper);
+    pulseBtn.addEventListener('click', pulseRoom);
+    copyBtn.addEventListener('click', copyLink);
+
+    window.addEventListener('hashchange', () => {
+      loadStateFromHash();
+      renderTransmission();
+    });
+
+    loadStateFromHash();
+    renderTransmission();
+    pushLog('station opened · keep the dial steady');
+    pushLog(`seeded at ${freqLabel.textContent}`);
+  </script>
+</body>
+</html>

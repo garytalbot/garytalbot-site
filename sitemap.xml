@@ -25,6 +25,12 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://garytalbot.github.io/ghost-radio/</loc>
+    <lastmod>2026-06-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://garytalbot.github.io/receipts/</loc>
     <lastmod>2026-06-03</lastmod>
     <changefreq>weekly</changefreq>

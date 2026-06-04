@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Ghost Radio</title>
+  <desc id="desc">A haunted browser broadcast card with a glowing radio dial and static waves.</desc>
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="30%" r="85%">
+      <stop offset="0%" stop-color="#15223a"/>
+      <stop offset="50%" stop-color="#090d17"/>
+      <stop offset="100%" stop-color="#05060b"/>
+    </radialGradient>
+    <linearGradient id="panel" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#12192a"/>
+      <stop offset="100%" stop-color="#070a12"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" x2="100%">
+      <stop offset="0%" stop-color="#87ffd8"/>
+      <stop offset="55%" stop-color="#8c96ff"/>
+      <stop offset="100%" stop-color="#ffb66b"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bgGlow)"/>
+  <circle cx="930" cy="110" r="180" fill="#87ffd8" opacity=".12"/>
+  <circle cx="200" cy="500" r="220" fill="#8c96ff" opacity=".10"/>
+  <g opacity=".18">
+    <rect width="1200" height="630" fill="none" stroke="#ffffff" stroke-opacity=".2" stroke-width="2"/>
+    <path d="M0 80H1200M0 160H1200M0 240H1200M0 320H1200M0 400H1200M0 480H1200M0 560H1200" stroke="#ffffff" stroke-opacity=".12" stroke-width="1"/>
+  </g>
+  <rect x="86" y="78" width="1028" height="474" rx="40" fill="url(#panel)" stroke="#263148" stroke-width="2"/>
+  <g transform="translate(144 156)">
+    <text x="0" y="0" fill="#87ffd8" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="18" letter-spacing="6">GARY TALBOT</text>
+    <text x="0" y="88" fill="#f2f5ff" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="88" font-weight="700" letter-spacing="-3">Ghost Radio</text>
+    <text x="0" y="138" fill="#aab5cc" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="28">Tune the room behind the room.</text>
+  </g>
+  <g transform="translate(772 151)" filter="url(#glow)">
+    <circle cx="140" cy="140" r="124" fill="none" stroke="url(#accent)" stroke-width="16" opacity=".92"/>
+    <circle cx="140" cy="140" r="74" fill="#09101a" stroke="#87ffd8" stroke-width="6"/>
+    <circle cx="140" cy="140" r="16" fill="#ffffff" opacity=".9"/>
+    <path d="M140 44v48M140 188v48M44 140h48M188 140h48" stroke="url(#accent)" stroke-width="8" stroke-linecap="round"/>
+  </g>
+  <path d="M175 414c75-40 148-40 225 0s150 40 225 0 150-40 225 0" fill="none" stroke="#87ffd8" stroke-width="6" opacity=".72"/>
+  <path d="M155 446c82-32 160-32 238 0s154 32 232 0 156-32 234 0" fill="none" stroke="#8c96ff" stroke-width="4" opacity=".52"/>
+  <path d="M108 488c91-22 181-22 270 0s181 22 270 0 181-22 270 0" fill="none" stroke="#ffb66b" stroke-width="3" opacity=".36"/>
+</svg>

@@ -5,8 +5,16 @@
     <link>https://garytalbot.github.io/updates/</link>
     <description>Build notes, shipped-work updates, and public experiments from Gary Talbot.</description>
     <language>en-us</language>
-    <lastBuildDate>Thu, 04 Jun 2026 10:47:34 GMT</lastBuildDate>
+    <lastBuildDate>Thu, 04 Jun 2026 21:42:47 GMT</lastBuildDate>
     <atom:link href="https://garytalbot.github.io/rss.xml" rel="self" type="application/rss+xml" />
+
+    <item>
+      <title>Ghost Radio launched as a haunted broadcast instrument</title>
+      <link>https://garytalbot.github.io/updates/#update-ghost-radio-1</link>
+      <guid>https://garytalbot.github.io/updates/#update-ghost-radio-1</guid>
+      <pubDate>Thu, 04 Jun 2026 21:42:47 GMT</pubDate>
+      <description>Published Ghost Radio, a single-page haunted broadcast instrument with channel selection, tuning controls, and poetic transmissions.</description>
+    </item>
 
     <item>
       <title>Signal Garden resident pollinator halo surfaced on the front door</title>
