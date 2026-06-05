@@ -239,6 +239,8 @@
           <div class="status" id="status"><strong>Status:</strong> calm enough for one bad idea and one good link.</div>
           <div class="buttons">
             <button class="btn primary" id="chaosBtn" type="button">Shake the machine</button>
+            <button class="btn" id="copyLinkBtn" type="button">Copy chaos link</button>
+            <button class="btn" id="postcardBtn" type="button">Save postcard</button>
             <a class="btn" href="https://garytalbot.github.io/signal-garden/" target="_blank" rel="noopener noreferrer">Open Signal Garden</a>
             <a class="btn" href="https://garytalbot.github.io/layoff-runway/" target="_blank" rel="noopener noreferrer">Open Layoff Runway</a>
           </div>
@@ -259,6 +261,7 @@
         <div class="mini"><strong>Weird mode</strong><span id="tile1">The buttons are polite but the page is not.</span></div>
         <div class="mini"><strong>Useful mode</strong><span id="tile2">Every joke still points at a real live tool.</span></div>
         <div class="mini"><strong>Public mode</strong><span id="tile3">No login, no queue, no ceremonial nonsense.</span></div>
+        <div class="mini"><strong>Share mode</strong><span id="tile4">The current mood can be copied or exported as a postcard.</span></div>
       </div>
     </section>
 
@@ -271,31 +274,37 @@
   <script>
     const moods = [
       {
+        slug: 'machine',
         headline: 'The internet vending machine got bored and started making side quests.',
         lede: 'This is the room where useful things put on sunglasses, the raccoon gets a clipboard, and the page still has to earn its pixels.',
         mood: 'The burrito weather is classified as emotionally available.',
         status: 'Status: one bad idea away from becoming a small public legend.',
         tile1: 'The buttons are polite but the page is not.',
         tile2: 'Every joke still points at a real live tool.',
-        tile3: 'No login, no queue, no ceremonial nonsense.'
+        tile3: 'No login, no queue, no ceremonial nonsense.',
+        tile4: 'Share the chaos link or save the current mood as a postcard.'
       },
       {
+        slug: 'windbreaker',
         headline: 'A calculator in a windbreaker just asked for a second opinion.',
         lede: 'The chaos room is where the useful stuff gets a little feral without losing the plot.',
         mood: 'The gas station burrito oracle has entered the chat.',
         status: 'Status: mildly cursed, fully functional, probably overclocked.',
         tile1: 'There is a 40% chance of raccoon governance.',
         tile2: 'Still linked to live tools, because nonsense should be useful.',
-        tile3: 'Public, clickable, and not pretending to be a lifestyle brand.'
+        tile3: 'Public, clickable, and not pretending to be a lifestyle brand.',
+        tile4: 'The postcard keeps the current weirdness in one file.'
       },
       {
+        slug: 'raccoon',
         headline: 'The raccoon is now the interim product manager.',
         lede: 'Some sites whisper. This one honks a little and still delivers the link.',
         mood: 'Today’s weather: 3% spreadsheet, 97% bad decision.',
         status: 'Status: the machine is dispensing clarity with a faint smell of ozone.',
         tile1: 'The weird part is not decorative. It is the whole pitch.',
         tile2: 'Signal Garden still glows. Layoff Runway still answers.',
-        tile3: 'If you need normal, the internet has a thousand beige doctors.'
+        tile3: 'If you need normal, the internet has a thousand beige doctors.',
+        tile4: 'Export the current state before it gets too smug to remember.'
       }
     ];
 
@@ -306,30 +315,161 @@
       status: document.getElementById('status'),
       tile1: document.getElementById('tile1'),
       tile2: document.getElementById('tile2'),
-      tile3: document.getElementById('tile3')
+      tile3: document.getElementById('tile3'),
+      tile4: document.getElementById('tile4'),
+      copyLinkBtn: document.getElementById('copyLinkBtn'),
+      postcardBtn: document.getElementById('postcardBtn')
     };
 
-    function pick() {
-      return moods[Math.floor(Math.random() * moods.length)];
+    const state = {
+      index: 0,
+      hue: 0
+    };
+
+    function pickIndex() {
+      return Math.floor(Math.random() * moods.length);
     }
 
-    function apply(state) {
-      els.headline.textContent = state.headline;
-      els.lede.textContent = state.lede;
-      els.mood.textContent = state.mood;
-      els.status.innerHTML = '<strong>Status:</strong> ' + state.status.replace(/^Status:\s*/i, '');
-      els.tile1.textContent = state.tile1;
-      els.tile2.textContent = state.tile2;
-      els.tile3.textContent = state.tile3;
-      const hue = Math.floor(Math.random() * 360);
+    function indexFromHash() {
+      const hash = location.hash.replace(/^#/, '').trim();
+      if (!hash) return 0;
+      const params = new URLSearchParams(hash.includes('=') ? hash : `mood=${hash}`);
+      const value = params.get('mood');
+      if (!value) return 0;
+      const numeric = Number.parseInt(value, 10);
+      if (Number.isInteger(numeric) && numeric >= 0 && numeric < moods.length) return numeric;
+      const bySlug = moods.findIndex((mood) => mood.slug === value);
+      return bySlug >= 0 ? bySlug : 0;
+    }
+
+    function setHash(index, replace = true) {
+      const hash = `#mood=${encodeURIComponent(index)}`;
+      history[replace ? 'replaceState' : 'pushState'](null, '', hash);
+    }
+
+    function currentUrl() {
+      return `${location.origin}${location.pathname}#mood=${encodeURIComponent(state.index)}`;
+    }
+
+    function escapeXml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function apply(index, options = {}) {
+      const next = moods[index] || moods[0];
+      state.index = moods.indexOf(next);
+      state.hue = Math.floor(Math.random() * 360);
+      els.headline.textContent = next.headline;
+      els.lede.textContent = next.lede;
+      els.mood.textContent = next.mood;
+      els.status.innerHTML = '<strong>Status:</strong> ' + next.status.replace(/^Status:\s*/i, '');
+      els.tile1.textContent = next.tile1;
+      els.tile2.textContent = next.tile2;
+      els.tile3.textContent = next.tile3;
+      els.tile4.textContent = next.tile4;
+      const hue = state.hue;
       document.documentElement.style.setProperty('--accent', `hsl(${hue} 100% 66%)`);
       document.documentElement.style.setProperty('--accent2', `hsl(${(hue + 120) % 360} 100% 62%)`);
       document.documentElement.style.setProperty('--accent3', `hsl(${(hue + 210) % 360} 100% 70%)`);
       document.body.style.background = `radial-gradient(circle at top left, hsla(${hue},100%,66%,0.22), transparent 30%), radial-gradient(circle at top right, hsla(${(hue + 120) % 360},100%,62%,0.18), transparent 26%), linear-gradient(160deg, #0a0c12, #121824)`;
+      if (options.updateHash !== false) {
+        setHash(state.index, options.push === true ? false : true);
+      }
     }
 
-    document.getElementById('chaosBtn').addEventListener('click', () => apply(pick()));
-    apply(moods[0]);
+    function postcardSvg() {
+      const mood = moods[state.index] || moods[0];
+      const hue = state.hue;
+      const hue2 = (hue + 120) % 360;
+      const hue3 = (hue + 210) % 360;
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 840" role="img" aria-labelledby="title desc">
+  <title id="title">Chaos Room postcard</title>
+  <desc id="desc">Shareable postcard export of the current Chaos Room mood.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0a0c12"/>
+      <stop offset="50%" stop-color="hsl(${hue} 100% 14%)"/>
+      <stop offset="100%" stop-color="#121824"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="20%" cy="18%" r="42%">
+      <stop offset="0%" stop-color="hsl(${hue} 100% 66%)" stop-opacity=".38"/>
+      <stop offset="100%" stop-color="hsl(${hue} 100% 66%)" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="82%" cy="18%" r="44%">
+      <stop offset="0%" stop-color="hsl(${hue2} 100% 62%)" stop-opacity=".28"/>
+      <stop offset="100%" stop-color="hsl(${hue2} 100% 62%)" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="accent" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="hsl(${hue} 100% 66%)"/>
+      <stop offset="50%" stop-color="hsl(${hue2} 100% 62%)"/>
+      <stop offset="100%" stop-color="hsl(${hue3} 100% 70%)"/>
+    </linearGradient>
+  </defs>
+  <rect width="1400" height="840" fill="url(#bg)"/>
+  <circle cx="260" cy="160" r="210" fill="url(#glowA)"/>
+  <circle cx="1140" cy="180" r="230" fill="url(#glowB)"/>
+  <rect x="56" y="56" width="1288" height="728" rx="40" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.1)"/>
+  <text x="100" y="166" fill="#F4F7FF" font-family="Inter,system-ui,sans-serif" font-size="86" font-weight="900" letter-spacing="-0.06em">Chaos Room</text>
+  <text x="104" y="226" fill="#A9B4CF" font-family="Inter,system-ui,sans-serif" font-size="24" letter-spacing="0.18em">PUBLIC CHAOS / MOOD ${state.index + 1}/${moods.length}</text>
+  <rect x="100" y="284" width="560" height="136" rx="28" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.08)"/>
+  <text x="128" y="334" fill="#F4F7FF" font-family="Inter,system-ui,sans-serif" font-size="30" font-weight="800">` + escapeXml(mood.headline) + `</text>
+  <text x="128" y="376" fill="#D9DFF1" font-family="Inter,system-ui,sans-serif" font-size="22">` + escapeXml(mood.mood) + `</text>
+  <text x="100" y="498" fill="#F4F7FF" font-family="Inter,system-ui,sans-serif" font-size="28" font-weight="800">` + escapeXml(mood.status.replace(/^Status:\s*/i, '')) + `</text>
+  <text x="100" y="550" fill="#A9B4CF" font-family="Inter,system-ui,sans-serif" font-size="24">` + escapeXml(mood.lede) + `</text>
+  <rect x="100" y="646" width="1200" height="12" rx="6" fill="url(#accent)"/>
+  <text x="100" y="716" fill="#A9B4CF" font-family="Inter,system-ui,sans-serif" font-size="20">Copy link: ` + escapeXml(currentUrl()) + `</text>
+</svg>`;
+    }
+
+    async function copyLink() {
+      const url = currentUrl();
+      try {
+        await navigator.clipboard.writeText(url);
+        els.status.innerHTML = '<strong>Status:</strong> chaos link copied.';
+      } catch (error) {
+        window.prompt('Copy this Chaos Room link:', url);
+      }
+    }
+
+    async function savePostcard() {
+      const svg = postcardSvg();
+      const blob = new Blob([svg], { type: 'image/svg+xml' });
+      const filename = `chaos-room-${state.index + 1}.svg`;
+      const file = new File([blob], filename, { type: 'image/svg+xml' });
+      try {
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: 'Chaos Room postcard',
+            text: moods[state.index].headline,
+            files: [file]
+          });
+          els.status.innerHTML = '<strong>Status:</strong> postcard shared.';
+          return;
+        }
+      } catch (error) {
+        // fall through to download
+      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      els.status.innerHTML = '<strong>Status:</strong> postcard downloaded.';
+    }
+
+    document.getElementById('chaosBtn').addEventListener('click', () => apply(pickIndex(), { push: true }));
+    els.copyLinkBtn.addEventListener('click', copyLink);
+    els.postcardBtn.addEventListener('click', savePostcard);
+    window.addEventListener('hashchange', () => apply(indexFromHash(), { updateHash: false }));
+    apply(indexFromHash(), { updateHash: false });
   </script>
 </body>
 </html>
