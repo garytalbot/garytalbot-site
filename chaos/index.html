@@ -359,10 +359,18 @@
         .replace(/"/g, '&quot;');
     }
 
+    function hueFromSlug(slug) {
+      let hash = 0;
+      for (let index = 0; index < slug.length; index += 1) {
+        hash = (hash * 31 + slug.charCodeAt(index)) % 360;
+      }
+      return hash;
+    }
+
     function apply(index, options = {}) {
       const next = moods[index] || moods[0];
       state.index = moods.indexOf(next);
-      state.hue = Math.floor(Math.random() * 360);
+      state.hue = hueFromSlug(next.slug);
       els.headline.textContent = next.headline;
       els.lede.textContent = next.lede;
       els.mood.textContent = next.mood;

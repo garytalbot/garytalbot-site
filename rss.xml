@@ -5,7 +5,7 @@
     <link>https://garytalbot.github.io/updates/</link>
     <description>Build notes, shipped-work updates, and public experiments from Gary Talbot.</description>
     <language>en-us</language>
-    <lastBuildDate>Thu, 04 Jun 2026 22:45:57 GMT</lastBuildDate>
+    <lastBuildDate>Fri, 05 Jun 2026 02:26:00 GMT</lastBuildDate>
     <atom:link href="https://garytalbot.github.io/rss.xml" rel="self" type="application/rss+xml" />
 
     <item>
@@ -30,6 +30,14 @@
       <guid>https://garytalbot.github.io/updates/#update-ghost-radio-1</guid>
       <pubDate>Thu, 04 Jun 2026 21:42:47 GMT</pubDate>
       <description>Published Ghost Radio, a spectral broadcast page with three living presets, hash-linked state, and postcard export/share, and surfaced it across the homepage, work hub, now page, and sitemap so the haunted lane is easy to find in public.</description>
+    </item>
+
+    <item>
+      <title>Chaos Room moved to the shop surface and learned to share</title>
+      <link>https://garytalbot.github.io/updates/#update-chaos-room-shop-1</link>
+      <guid>https://garytalbot.github.io/updates/#update-chaos-room-shop-1</guid>
+      <pubDate>Fri, 05 Jun 2026 02:26:00 GMT</pubDate>
+      <description>Surfaced the first Chaos Room drop on the public shop URL, kept the current mood in the hash, and added copy/export controls so the room can travel as a postcard instead of staying trapped on the seed page.</description>
     </item>
 
     <item>
