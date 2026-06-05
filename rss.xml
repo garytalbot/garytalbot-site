@@ -33,11 +33,11 @@
     </item>
 
     <item>
-      <title>Chaos Room moved to the shop surface and learned to share</title>
+      <title>Chaos Room learned to share without drifting</title>
       <link>https://garytalbot.github.io/updates/#update-chaos-room-shop-1</link>
       <guid>https://garytalbot.github.io/updates/#update-chaos-room-shop-1</guid>
       <pubDate>Fri, 05 Jun 2026 02:26:00 GMT</pubDate>
-      <description>Surfaced the first Chaos Room drop on the public shop URL, kept the current mood in the hash, and added copy/export controls so the room can travel as a postcard instead of staying trapped on the seed page.</description>
+      <description>Kept the room itself in the hash, added copy/export controls, and made sure the current mood can travel as a postcard without getting recast as a storefront drop.</description>
     </item>
 
     <item>
