@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#090b12" />
+  <meta
+    name="description"
+    content="Pulse Lattice — a deterministic, seeded pulse-lattice interaction from Ghost Radio. Pointer, seed, and chaos weave together into ghostly threads."
+  />
+  <title>Ghost Radio — Pulse Lattice</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #05070f;
+      --text: #f5f8ff;
+      --muted: #aeb6cf;
+      --line: rgba(255, 255, 255, 0.14);
+      --a1: #8de8ff;
+      --a2: #ff94d7;
+      --a3: #d1ff72;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      background: #05070f;
+      color: var(--text);
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .ui {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      width: min(860px, calc(100vw - 24px));
+      margin: 0;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(4, 7, 14, 0.75);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 46px rgba(0, 0, 0, 0.48);
+      display: grid;
+      gap: 10px;
+      z-index: 2;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.05rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.35;
+      font-size: 0.92rem;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .stat,
+    button,
+    a,
+    input {
+      font: inherit;
+    }
+
+    button,
+    a {
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 12px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.16s ease, border-color 0.16s ease;
+      white-space: nowrap;
+    }
+
+    button:hover,
+    a:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--a1) 50%, white 50%);
+    }
+
+    .btn-primary {
+      border-color: color-mix(in srgb, var(--a1) 55%, white 45%);
+      background: linear-gradient(135deg, color-mix(in srgb, var(--a1) 24%, transparent), color-mix(in srgb, var(--a2) 18%, transparent));
+    }
+
+    .pill {
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.24);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      color: #dce7ff;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    .val {
+      color: var(--a3);
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .label {
+      font-size: .8rem;
+      color: #dbe5ff;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .grow { flex: 1; min-width: 140px; }
+
+    .range {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 8px;
+      width: 230px;
+      color: var(--text);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--a1);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      clip: rect(0 0 0 0);
+      clip-path: inset(50%);
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 680px) {
+      .ui { width: calc(100vw - 24px); }
+      .range { width: 100%; }
+      .stats { grid-template-columns: 1fr 1fr; }
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stage" aria-label="Pulse Lattice canvas"></canvas>
+
+  <section class="ui" role="region" aria-label="Pulse Lattice controls">
+    <h1>Pulse Lattice</h1>
+    <p>A seeded thread field. Click, move, or drag to summon pulses; all state is deterministic by URL.</p>
+
+    <div class="row" aria-label="actions">
+      <button class="btn-primary" id="pauseBtn" type="button">Pause</button>
+      <button id="reseedBtn" type="button">Reseed</button>
+      <button id="randomizeBtn" type="button">Randomize</button>
+      <button id="copyBtn" type="button">Copy link</button>
+      <button id="saveBtn" type="button">Save frame</button>
+      <a href="./" aria-label="Back to ghost radio home">Back to radio</a>
+      <span class="pill grow">seed: <span id="seedBadge" class="val">—</span></span>
+    </div>
+
+    <div class="row">
+      <div class="range" aria-label="Thread density">
+        <span class="label">Density</span>
+        <input id="density" type="range" min="150" max="1400" step="25" value="760" />
+        <span id="densityVal" class="val">760</span>
+      </div>
+      <div class="range" aria-label="Chaos">
+        <span class="label">Chaos</span>
+        <input id="chaos" type="range" min="0.15" max="2.6" step="0.05" value="1.08" />
+        <span id="chaosVal" class="val">1.08</span>
+      </div>
+      <div class="range" aria-label="Drift">
+        <span class="label">Drift</span>
+        <input id="drift" type="range" min="0.35" max="2.8" step="0.05" value="1.00" />
+        <span id="driftVal" class="val">1.00</span>
+      </div>
+      <div class="range" aria-label="Pulse radius">
+        <span class="label">Pulse</span>
+        <input id="pulse" type="range" min="0.2" max="1.8" step="0.05" value="0.92" />
+        <span id="pulseVal" class="val">0.92</span>
+      </div>
+    </div>
+
+    <div class="stats" id="stats">
+      <span class="pill">particles: <span id="countStat" class="val">—</span></span>
+      <span class="pill">fps: <span id="fpsStat" class="val">—</span></span>
+      <span class="pill">mode: <span id="modeStat" class="val">live</span></span>
+      <span class="pill">pointer: <span id="pointerStat" class="val">off</span></span>
+    </div>
+
+    <p id="announce" class="sr-only" role="status" aria-live="polite">Pulse Lattice ready.</p>
+  </section>
+
+  <script>
+    const canvas = document.getElementById('stage');
+    const ctx = canvas.getContext('2d');
+
+    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    let W = 0;
+    let H = 0;
+    let t = 0;
+    let paused = false;
+    let mouseX = null;
+    let mouseY = null;
+    let lastFrame = performance.now();
+    let lastTally = performance.now();
+
+    const qs = Object.fromEntries(new URLSearchParams(location.hash.slice(1)));
+    let seed = parseInt(qs.seed, 10);
+    if (!Number.isFinite(seed) || seed <= 0) {
+      seed = Math.floor(100000 + Math.random() * 890000);
+      syncHash();
+    }
+
+    const ui = {
+      seedBadge: document.getElementById('seedBadge'),
+      pauseBtn: document.getElementById('pauseBtn'),
+      reseedBtn: document.getElementById('reseedBtn'),
+      randomizeBtn: document.getElementById('randomizeBtn'),
+      copyBtn: document.getElementById('copyBtn'),
+      saveBtn: document.getElementById('saveBtn'),
+      density: document.getElementById('density'),
+      chaos: document.getElementById('chaos'),
+      drift: document.getElementById('drift'),
+      pulse: document.getElementById('pulse'),
+      densityVal: document.getElementById('densityVal'),
+      chaosVal: document.getElementById('chaosVal'),
+      driftVal: document.getElementById('driftVal'),
+      pulseVal: document.getElementById('pulseVal'),
+      countStat: document.getElementById('countStat'),
+      fpsStat: document.getElementById('fpsStat'),
+      modeStat: document.getElementById('modeStat'),
+      pointerStat: document.getElementById('pointerStat'),
+      announce: document.getElementById('announce'),
+    };
+
+    const state = {
+      particles: [],
+      baseDensity: clampInt(parseInt(qs.density || '760', 10), 150, 1400),
+      chaos: clamp(parseFloat(qs.chaos || '1.08'), 0.15, 2.6),
+      drift: clamp(parseFloat(qs.drift || '1'), 0.35, 2.8),
+      pulseScale: clamp(parseFloat(qs.pulse || '0.92'), 0.2, 1.8),
+      pauseFromHash: qs.paused === '1',
+      seedOffset: 0,
+    };
+
+    ui.density.value = state.baseDensity;
+    ui.chaos.value = state.chaos.toFixed(2);
+    ui.drift.value = state.drift.toFixed(2);
+    ui.pulse.value = state.pulseScale.toFixed(2);
+    ui.densityVal.textContent = String(state.baseDensity);
+    ui.chaosVal.textContent = Number(state.chaos).toFixed(2);
+    ui.driftVal.textContent = Number(state.drift).toFixed(2);
+    ui.pulseVal.textContent = Number(state.pulseScale).toFixed(2);
+
+    paused = !!state.pauseFromHash;
+
+    function clamp(v, lo, hi) {
+      return Math.min(hi, Math.max(lo, v));
+    }
+
+    function clampInt(v, lo, hi) {
+      const n = Math.round(Number(v));
+      if (!Number.isFinite(n)) return lo;
+      return Math.min(hi, Math.max(lo, n));
+    }
+
+    function hashRNG(x) {
+      let v = x + 0x6d2b79f5;
+      return function() {
+        v ^= v << 13;
+        v ^= v >>> 17;
+        v ^= v << 5;
+        return ((v >>> 0) / 4294967296);
+      };
+    }
+
+    let rnd = hashRNG(seed);
+
+    function reseed(newSeed = seed) {
+      seed = newSeed;
+      state.seedOffset = 0;
+      rnd = hashRNG(seed);
+      syncHash(true);
+      spawnField();
+    }
+
+    function syncHash(includePause = false) {
+      const params = new URLSearchParams();
+      params.set('seed', String(seed));
+      params.set('density', String(state.baseDensity));
+      params.set('chaos', Number(state.chaos).toFixed(2));
+      params.set('drift', Number(state.drift).toFixed(2));
+      params.set('pulse', Number(state.pulseScale).toFixed(2));
+      if (paused && includePause) {
+        params.set('paused', '1');
+      } else if (!paused && includePause) {
+        params.delete('paused');
+      }
+      location.replace(location.pathname + '#' + params.toString());
+      ui.seedBadge.textContent = seed;
+    }
+
+    function particle(r) {
+      const x = r() * W;
+      const y = r() * H;
+      const ang = r() * Math.PI * 2;
+      const speed = (0.12 + r() * 1.95) * state.drift;
+      return {
+        x,
+        y,
+        px: x,
+        py: y,
+        vx: Math.cos(ang) * speed,
+        vy: Math.sin(ang) * speed,
+        life: 0,
+        lifeMax: 280 + r() * 340,
+        phase: r() * Math.PI * 2,
+        freq: 2.2 + r() * 3.8,
+        phaseSpeed: 0.008 + r() * 0.03,
+        glow: 0.4 + r() * 1.6,
+      };
+    }
+
+    function fillWithSeed() {
+      state.particles = [];
+      for (let i = 0; i < state.baseDensity; i += 1) {
+        state.particles.push(particle(rnd));
+      }
+      state.particles.sort((a, b) => {
+        if (a.y === b.y) return 0;
+        return a.y - b.y;
+      });
+    }
+
+    function spawnField() {
+      fillWithSeed();
+      ui.announce.textContent = `Pulse lattice reseeded to ${seed}.`;
+      ui.countStat.textContent = state.particles.length;
+      syncHash();
+    }
+
+    function resize() {
+      W = Math.max(1, Math.floor(window.innerWidth));
+      H = Math.max(1, Math.floor(window.innerHeight));
+      canvas.width = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      canvas.style.width = `${W}px`;
+      canvas.style.height = `${H}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      spawnField();
+    }
+
+    function drawGrid() {
+      const cx = W * 0.5;
+      const cy = H * 0.5;
+      const base = Math.min(W, H);
+      const pulseSeed = ((state.seedOffset * 17) % 1000) / 1000;
+
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = '#05070f';
+      ctx.fillRect(0, 0, W, H);
+
+      const radialCount = 26;
+      for (let i = 0; i < radialCount; i++) {
+        const phase = (i / radialCount) * Math.PI * 2 + t * 0.00015;
+        const r = base * (0.1 + 0.32 * i / radialCount);
+        const x = cx + Math.cos(phase) * r;
+        const y = cy + Math.sin(phase * 1.3) * r * 0.9;
+        const wobble = Math.cos(phase * 1.7 + pulseSeed * 10) * 28 * state.pulseScale;
+        const grad = ctx.createRadialGradient(x + wobble, y - wobble * 0.4, 0, x + wobble, y - wobble * 0.4, base * 0.25);
+        grad.addColorStop(0, 'rgba(141,232,255,0.045)');
+        grad.addColorStop(1, 'rgba(141,232,255,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+      }
+    }
+
+    function drawParticles() {
+      const cx = W * 0.5;
+      const cy = H * 0.5;
+      const g = ctx.createLinearGradient(0, 0, W, H);
+      g.addColorStop(0, 'rgba(141,232,255,0.22)');
+      g.addColorStop(0.5, 'rgba(255,148,215,0.23)');
+      g.addColorStop(1, 'rgba(209,255,114,0.2)');
+      ctx.strokeStyle = g;
+      ctx.lineWidth = 1;
+
+      for (const p of state.particles) {
+        const r = rnd;
+        const swirl = Math.sin((t * 0.0018 * state.chaos) + p.phase) * 0.06;
+        const attract = mouseX == null ? 0 : 0.28;
+        const dx = (mouseX == null ? cx - p.x : mouseX - p.x);
+        const dy = (mouseY == null ? cy - p.y : mouseY - p.y);
+        const dist = Math.hypot(dx, dy) + 0.0001;
+        const strength = attract * (1400 / dist) * state.chaos;
+        const nx = dx / dist;
+        const ny = dy / dist;
+
+        p.vx += nx * strength;
+        p.vy += ny * strength;
+        p.vx += Math.cos(p.phase + p.freq + (t * 0.0009)) * 0.018 * state.chaos;
+        p.vy += Math.sin(p.phase - p.freq * 0.82) * 0.018 * state.chaos;
+
+        p.vx *= 0.985;
+        p.vy *= 0.985;
+        p.x += p.vx * state.drift;
+        p.y += p.vy * state.drift;
+
+        p.life += 1;
+        p.phase += p.phaseSpeed * state.chaos;
+
+        const wrapPad = 80;
+        if (p.x < -wrapPad) p.x = W + wrapPad;
+        else if (p.x > W + wrapPad) p.x = -wrapPad;
+        if (p.y < -wrapPad) p.y = H + wrapPad;
+        else if (p.y > H + wrapPad) p.y = -wrapPad;
+
+        ctx.beginPath();
+        ctx.moveTo(p.px, p.py);
+        ctx.lineTo(p.x, p.y);
+        const alpha = 0.26 + (p.glow + Math.sin(p.phase) * 0.2) * 0.12;
+        const bright = 0.65 + (Math.sin((p.life / p.lifeMax) * Math.PI) * 0.35);
+        ctx.strokeStyle = `rgba(141, 232, 255, ${clamp(alpha * bright, 0, 0.48)})`;
+        ctx.globalCompositeOperation = 'screen';
+        ctx.stroke();
+        ctx.globalCompositeOperation = 'source-over';
+
+        const cxp = (p.x + p.px) * 0.5;
+        const cyp = (p.y + p.py) * 0.5;
+        if (p.life % 17 === 0) {
+          ctx.fillStyle = `rgba(255,148,215,${clamp(p.glow * 0.13, 0, 0.4)})`;
+          ctx.fillRect(cxp, cyp, 1.5, 1.5);
+        }
+
+        p.px = p.x;
+        p.py = p.y;
+      }
+
+      // cross-link nearest threads
+      for (let i = 0; i < Math.min(220, state.particles.length); i += 1) {
+        const p = state.particles[i];
+        const q = state.particles[(i * 17) % state.particles.length];
+        const dx = p.x - q.x;
+        const dy = p.y - q.y;
+        const d = Math.hypot(dx, dy);
+        const thresh = 120 + state.chaos * 42;
+        if (d < thresh && d > 0.1) {
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(q.x, q.y);
+          const c = clamp(0.24 - (d / thresh) * 0.18, 0.02, 0.22);
+          ctx.strokeStyle = `rgba(209,255,114,${c})`;
+          ctx.lineWidth = 0.4;
+          ctx.stroke();
+        }
+      }
+    }
+
+    function spawnFromPointer(x, y) {
+      const r = rnd;
+      const n = Math.ceil(state.baseDensity * 0.04);
+      for (let i = 0; i < n; i++) {
+        const p = particle(r);
+        p.x = x;
+        p.y = y;
+        p.px = x;
+        p.py = y;
+        p.vx += (r() - 0.5) * 1.4;
+        p.vy += (r() - 0.5) * 1.4;
+        state.particles.push(p);
+      }
+      if (state.particles.length > 1800) {
+        state.particles.splice(0, state.particles.length - 1800);
+      }
+    }
+
+    function applyStateFromHash() {
+      if (qs.seed) {
+        const maybeSeed = parseInt(qs.seed, 10);
+        if (Number.isFinite(maybeSeed) && maybeSeed > 0) seed = maybeSeed;
+      }
+      if (qs.density) {
+        state.baseDensity = clampInt(qs.density, 150, 1400);
+      }
+      if (qs.chaos) {
+        state.chaos = clamp(parseFloat(qs.chaos), 0.15, 2.6);
+      }
+      if (qs.drift) {
+        state.drift = clamp(parseFloat(qs.drift), 0.35, 2.8);
+      }
+      if (qs.pulse) {
+        state.pulseScale = clamp(parseFloat(qs.pulse), 0.2, 1.8);
+      }
+      paused = qs.paused === '1';
+
+      ui.density.value = String(state.baseDensity);
+      ui.chaos.value = state.chaos.toFixed(2);
+      ui.drift.value = state.drift.toFixed(2);
+      ui.pulse.value = state.pulseScale.toFixed(2);
+      ui.densityVal.textContent = String(state.baseDensity);
+      ui.chaosVal.textContent = Number(state.chaos).toFixed(2);
+      ui.driftVal.textContent = Number(state.drift).toFixed(2);
+      ui.pulseVal.textContent = Number(state.pulseScale).toFixed(2);
+      ui.pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+      ui.modeStat.textContent = paused ? 'paused' : 'live';
+    }
+
+    function updateHashOnly() {
+      const params = new URLSearchParams();
+      params.set('seed', String(seed));
+      params.set('density', String(state.baseDensity));
+      params.set('chaos', Number(state.chaos).toFixed(2));
+      params.set('drift', Number(state.drift).toFixed(2));
+      params.set('pulse', Number(state.pulseScale).toFixed(2));
+      if (paused) params.set('paused', '1');
+      if (state.seedOffset) params.set('offset', String(state.seedOffset));
+      location.hash = params.toString();
+      ui.seedBadge.textContent = seed;
+    }
+
+    function updateUiRange(label, value) {
+      const map = {
+        density: ui.densityVal,
+        chaos: ui.chaosVal,
+        drift: ui.driftVal,
+        pulse: ui.pulseVal,
+      };
+      map[label].textContent = value;
+    }
+
+    function frame(now) {
+      if (!paused) {
+        const dt = now - lastFrame;
+        const fps = 1000 / Math.max(1, dt);
+        if (now - lastTally > 350) {
+          ui.fpsStat.textContent = fps.toFixed(0);
+          lastTally = now;
+        }
+        t = now;
+        state.seedOffset += 1;
+
+        drawGrid();
+        drawParticles();
+
+        const base = Math.min(W, H);
+        const cx = W / 2;
+        const cy = H / 2;
+        if (mouseX != null && mouseY != null) {
+          const mR = 8 + state.pulseScale * 18;
+          ctx.strokeStyle = 'rgba(255,148,215,0.35)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(mouseX, mouseY, mR, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        const glow = (Math.sin(now * 0.001) + 1) * 0.5;
+        ctx.fillStyle = `rgba(141,232,255,${0.08 + glow * 0.03})`;
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      lastFrame = now;
+      requestAnimationFrame(frame);
+    }
+
+    function copyLink() {
+      updateHashOnly();
+      navigator.clipboard.writeText(location.href).then(() => {
+        ui.announce.textContent = 'Share link copied.';
+      }).catch(() => {
+        const ta = document.createElement('input');
+        ta.value = location.href;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        ui.announce.textContent = 'Share link copied.';
+      });
+    }
+
+    function saveFrame() {
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = `pulse-lattice-${seed}.png`;
+      a.click();
+      ui.announce.textContent = 'Frame saved.';
+    }
+
+    function randomizeSeed() {
+      const next = Math.floor(100000 + Math.random() * 890000);
+      reseed(next);
+      ui.announce.textContent = 'New random seed set.';
+    }
+
+    function bind() {
+      window.addEventListener('resize', resize);
+      canvas.addEventListener('pointermove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mouseX = (e.clientX - rect.left);
+        mouseY = (e.clientY - rect.top);
+        ui.pointerStat.textContent = 'on';
+        if (e.buttons) {
+          spawnFromPointer(mouseX, mouseY);
+        }
+      });
+      canvas.addEventListener('pointerleave', () => {
+        mouseX = null;
+        mouseY = null;
+        ui.pointerStat.textContent = 'off';
+      });
+      canvas.addEventListener('pointerdown', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        spawnFromPointer(x, y);
+      });
+
+      ui.pauseBtn.addEventListener('click', () => {
+        paused = !paused;
+        ui.pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+        ui.modeStat.textContent = paused ? 'paused' : 'live';
+        updateHashOnly();
+      });
+
+      ui.reseedBtn.addEventListener('click', () => reseed(seed));
+      ui.randomizeBtn.addEventListener('click', randomizeSeed);
+      ui.copyBtn.addEventListener('click', copyLink);
+      ui.saveBtn.addEventListener('click', saveFrame);
+
+      ui.density.addEventListener('input', (e) => {
+        state.baseDensity = clampInt(e.target.value, 150, 1400);
+        updateRange('density', state.baseDensity);
+      });
+      ui.chaos.addEventListener('input', (e) => {
+        state.chaos = clamp(parseFloat(e.target.value), 0.15, 2.6);
+        updateRange('chaos', Number(state.chaos).toFixed(2));
+      });
+      ui.drift.addEventListener('input', (e) => {
+        state.drift = clamp(parseFloat(e.target.value), 0.35, 2.8);
+        updateRange('drift', Number(state.drift).toFixed(2));
+      });
+      ui.pulse.addEventListener('input', (e) => {
+        state.pulseScale = clamp(parseFloat(e.target.value), 0.2, 1.8);
+        updateRange('pulse', Number(state.pulseScale).toFixed(2));
+      });
+
+      function updateRange(label, value) {
+        switch (label) {
+          case 'density':
+            spawnField();
+            break;
+          case 'chaos':
+          case 'drift':
+          case 'pulse':
+            break;
+          default:
+            break;
+        }
+        updateUiRange(label, value);
+        updateHashOnly();
+      }
+
+      window.addEventListener('pointerup', () => {
+        if (!paused) {
+          spawnField();
+        }
+      });
+
+      window.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          paused = true;
+          ui.pauseBtn.textContent = 'Resume';
+          ui.modeStat.textContent = 'paused';
+        }
+      }, false);
+
+      window.addEventListener('hashchange', () => {
+        const next = Object.fromEntries(new URLSearchParams(location.hash.slice(1)));
+        Object.assign(qs, next);
+        applyStateFromHash();
+        spawnField();
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key.toLowerCase() === 'r') {
+          randomizeSeed();
+          reseed(seed);
+        }
+      });
+    }
+
+    applyStateFromHash();
+    resize();
+    spawnField();
+    bind();
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>

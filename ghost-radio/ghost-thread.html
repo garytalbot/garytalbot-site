@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ghost Radio — Ghost Thread</title>
+  <meta
+    name="description"
+    content="Ghost Thread is a seeded generative side-chamber: a drifting thread field you can tug, reseed, and export as a frame."
+  />
+  <meta name="theme-color" content="#090b12" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070912;
+      --panel: rgba(12, 14, 22, 0.78);
+      --line: rgba(255, 255, 255, 0.1);
+      --text: #f4f7ff;
+      --muted: #aab4ce;
+      --accent: #8de8ff;
+      --accent2: #ff94d7;
+      --accent3: #d1ff72;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(141, 232, 255, 0.14), transparent 34%),
+        radial-gradient(circle at 85% 80%, rgba(255, 148, 215, 0.12), transparent 36%),
+        linear-gradient(180deg, #05070d 0%, #090b12 52%, #04050a 100%);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    .shell {
+      width: min(1040px, calc(100vw - 18px));
+      margin: 10px auto;
+      display: grid;
+      gap: 10px;
+      min-height: calc(100vh - 20px);
+    }
+
+    .toolbar {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      backdrop-filter: blur(8px);
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+    }
+
+    .copy {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    .lede {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      max-width: 56ch;
+      line-height: 1.35;
+    }
+
+    label,
+    button,
+    input[type="range"],
+    input[type="text"] {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--accent) 40%, white 60%);
+    }
+
+    .toolbar > div,
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-right: 8px;
+    }
+
+    .seed {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      white-space: nowrap;
+      grid-column: 1 / -1;
+    }
+
+    .seed input {
+      min-width: 190px;
+    }
+
+    .stage {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      min-height: calc(100vh - 230px);
+      background:
+        radial-gradient(circle at 50% 34%, rgba(255, 255, 255, 0.05), transparent 55%),
+        linear-gradient(130deg, rgba(141, 232, 255, 0.05), rgba(255, 148, 215, 0.05));
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .hud {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .hud .chip {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 0.78rem;
+      color: #d9e3f8;
+      backdrop-filter: blur(4px);
+    }
+
+    .back {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      z-index: 3;
+      text-decoration: none;
+      color: #d6e2ff;
+      background: rgba(0, 0, 0, 0.36);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .back:hover {
+      border-color: color-mix(in srgb, var(--accent) 42%, white 58%);
+    }
+
+    @media (max-width: 930px) {
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+      .copy {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="toolbar" aria-label="Ghost Thread controls">
+      <div>
+        <h1>Ghost Thread</h1>
+        <p class="lede">Pin a seed, touch the canvas, and let threads remember you for a moment before they fray into static.</p>
+      </div>
+      <div class="controls copy">
+        <label style="display:flex;align-items:center;gap:6px;white-space:nowrap">
+          Chaos
+          <input id="chaos" type="range" min="1" max="120" value="45" />
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;white-space:nowrap">
+          Density
+          <input id="density" type="range" min="10" max="180" value="90" />
+        </label>
+        <button id="regenBtn" type="button">Reseed</button>
+        <button id="pauseBtn" type="button">Pause</button>
+        <button id="copyBtn" type="button">Copy share link</button>
+        <button id="saveBtn" type="button">Save PNG</button>
+      </div>
+      <div class="seed">
+        <label for="seedInput" style="color:#c5d2eb;">Seed</label>
+        <input id="seedInput" type="text" />
+        <span style="color:#8f9cc2;font-size:0.78rem;">Reload keeps state if hash exists.</span>
+      </div>
+    </section>
+
+    <section class="stage" aria-label="Ghost Thread canvas">
+      <a class="back" href="./">Back to Ghost Radio</a>
+      <canvas id="canvas" aria-label="Ghost thread field"></canvas>
+      <div class="hud" aria-live="polite">
+        <span class="chip" id="stateChip">seed: none</span>
+        <span class="chip" id="threadsChip">threads: 0</span>
+        <span class="chip" id="timeChip">frame: 0</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const chaosInput = document.getElementById('chaos');
+    const densityInput = document.getElementById('density');
+    const regenBtn = document.getElementById('regenBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const seedInput = document.getElementById('seedInput');
+    const stateChip = document.getElementById('stateChip');
+    const threadsChip = document.getElementById('threadsChip');
+    const timeChip = document.getElementById('timeChip');
+
+    const dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+
+    const palette = ['#8de8ff', '#ff94d7', '#d1ff72', '#b9d4ff', '#ffdca6'];
+
+    let running = true;
+    let rafId = 0;
+    let frame = 0;
+    let pointer = { x: null, y: null };
+
+    const state = {
+      seed: parseSeed(readHash('seed')),
+      chaos: clamp(readHashNumber('chaos', 45), 1, 120),
+      density: clamp(readHashNumber('density', 90), 10, 180),
+      threads: [],
+      attractors: [],
+    };
+
+    function readHash(key) {
+      const frag = location.hash.slice(1);
+      if (!frag) return null;
+      return new URLSearchParams(frag).get(key);
+    }
+
+    function readHashNumber(key, fallback) {
+      const raw = readHash(key);
+      const n = Number(raw);
+      if (Number.isFinite(n)) {
+        return Math.floor(Math.abs(n));
+      }
+      return fallback;
+    }
+
+    function writeHash() {
+      const p = new URLSearchParams();
+      p.set('seed', String(state.seed));
+      p.set('chaos', String(state.chaos));
+      p.set('density', String(state.density));
+      const hash = p.toString();
+      history.replaceState({}, '', `${location.pathname}#${hash}`);
+    }
+
+    function parseSeed(raw) {
+      const n = Number(raw);
+      if (Number.isFinite(n)) {
+        const normalized = Math.abs(Math.floor(n)) % 2147483647;
+        return normalized === 0 ? 1 : normalized;
+      }
+      return Math.floor(Math.random() * 2147483647) || 1;
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function randFactory(seed) {
+      let s = seed || 1;
+      return function rnd() {
+        s ^= s << 13;
+        s ^= s >>> 17;
+        s ^= s << 5;
+        return (s >>> 0) / 0x100000000;
+      };
+    }
+
+    function resize() {
+      const { clientWidth, clientHeight } = canvas;
+      canvas.width = Math.floor(clientWidth * dpr);
+      canvas.height = Math.floor(clientHeight * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function createParticles(rng, count) {
+      const nodes = [];
+      for (let i = 0; i < count; i++) {
+        nodes.push(makeParticle(rng, Math.random() * canvas.clientWidth, Math.random() * canvas.clientHeight));
+      }
+      return nodes;
+    }
+
+    function makeParticle(rng, x, y) {
+      const angle = rng() * Math.PI * 2;
+      const speed = 0.15 + rng() * 1.2;
+      return {
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 300 + rng() * 700,
+        age: 0,
+        hue: Math.floor(rng() * palette.length),
+        width: 0.8 + rng() * 1.8,
+        phase: rng() * Math.PI * 2,
+      };
+    }
+
+    function seedFromInput() {
+      const parsed = parseSeed(seedInput.value);
+      state.seed = parsed;
+      buildField();
+      writeHash();
+    }
+
+    function buildField() {
+      state.seed = parseSeed(state.seed);
+      const rng = randFactory(state.seed);
+      state.threads = createParticles(rng, state.density);
+      state.attractors = [];
+      for (let i = 0; i < 3; i++) {
+        state.attractors.push({
+          x: rng() * canvas.clientWidth,
+          y: rng() * canvas.clientHeight,
+          weight: 0.45 + rng() * 0.55,
+          radius: 60 + rng() * 170,
+        });
+      }
+      seedInput.value = String(state.seed);
+      stateChip.textContent = `seed: ${state.seed}`;
+      chaosInput.value = String(state.chaos);
+      densityInput.value = String(state.density);
+      threadsChip.textContent = `threads: ${state.threads.length}`;
+      frame = 0;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      writeHash();
+    }
+
+    function hashToColor(v) {
+      return palette[v % palette.length];
+    }
+
+    function tick() {
+      if (!running) {
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+
+      const chaos = state.chaos / 90;
+      frame += 1;
+      timeChip.textContent = `frame: ${frame}`;
+
+      // slight background fade instead of clear for trailing ghost motion
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = 'rgba(8, 11, 18, 0.12)';
+      ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+      const wobbleX = Math.sin(frame * 0.002) * 24;
+      const wobbleY = Math.cos(frame * 0.0022) * 24;
+
+      for (let i = 0; i < state.threads.length; i++) {
+        const t = state.threads[i];
+        const prevX = t.x;
+        const prevY = t.y;
+        t.age += 1;
+
+        const attractor = state.attractors[Math.floor(t.age + i) % state.attractors.length];
+        let ax = attractor.x - t.x;
+        let ay = attractor.y - t.y;
+        const dist = Math.hypot(ax, ay) || 1;
+
+        const p = state.attractors[(i + 1) % state.attractors.length];
+        let gx = p.x - t.x;
+        let gy = p.y - t.y;
+
+        // if pointer is active, add a strong ghost pull
+        let px = 0;
+        let py = 0;
+        if (pointer.x !== null) {
+          const dx = pointer.x - t.x;
+          const dy = pointer.y - t.y;
+          const d = Math.hypot(dx, dy) || 1;
+          const pull = Math.min(120, (80 + state.chaos * 2) / d);
+          px += (dx / d) * pull;
+          py += (dy / d) * pull;
+        }
+
+        const wave = Math.sin((frame * 0.003) + t.phase + (dist * 0.002));
+        const driftX = Math.cos((frame * 0.0022) + t.phase * 2.3) * chaos * 0.8 + wobbleX * 0.002;
+        const driftY = Math.sin((frame * 0.0027) + t.phase * 1.8) * chaos * 0.8 + wobbleY * 0.002;
+
+        t.vx = t.vx * 0.985 + ((ax / dist) * attractor.weight * chaos * 0.06) + (gx / (Math.hypot(gx, gy) || 1)) * 0.02 + (wave * 0.12) + px * 0.001;
+        t.vy = t.vy * 0.985 + ((ay / dist) * attractor.weight * chaos * 0.06) + (gy / (Math.hypot(gx, gy) || 1)) * 0.02 + (wave * 0.1) + py * 0.001;
+        t.vx += driftX * 0.12;
+        t.vy += driftY * 0.12;
+
+        t.vx += (Math.random() - 0.5) * 0.02;
+        t.vy += (Math.random() - 0.5) * 0.02;
+
+        t.x += t.vx;
+        t.y += t.vy;
+
+        t.x = (t.x + canvas.clientWidth) % canvas.clientWidth;
+        t.y = (t.y + canvas.clientHeight) % canvas.clientHeight;
+
+        ctx.strokeStyle = hashToColor((t.hue + i + frame * 0.02) | 0);
+        ctx.lineWidth = t.width;
+        ctx.beginPath();
+        ctx.moveTo(prevX, prevY);
+        ctx.lineTo(t.x, t.y);
+        ctx.stroke();
+
+        if (t.age > t.life) {
+          state.threads[i] = makeParticle(randFactory(state.seed + frame + i + t.age), Math.random() * canvas.clientWidth, Math.random() * canvas.clientHeight);
+        }
+      }
+
+      if (Math.random() * 100 < (state.chaos * 0.25)) {
+        const rng = randFactory(state.seed + frame * 13 + 7);
+        state.threads.push(makeParticle(rng, Math.random() * canvas.clientWidth, Math.random() * canvas.clientHeight));
+        state.threads.shift();
+      }
+
+      rafId = requestAnimationFrame(tick);
+    }
+
+    function randomizeSeed() {
+      state.seed = Math.floor(Math.random() * 2147483647) || 1;
+      buildField();
+    }
+
+    function setPaused() {
+      running = !running;
+      pauseBtn.textContent = running ? 'Pause' : 'Resume';
+      if (running) {
+        rafId = requestAnimationFrame(tick);
+      }
+    }
+
+    function setChaos(e) {
+      state.chaos = Number(e.target.value);
+      writeHash();
+    }
+
+    function setDensity(e) {
+      state.density = Number(e.target.value);
+      const now = state.threads.length;
+      if (state.threads.length > state.density) {
+        state.threads = state.threads.slice(0, state.density);
+      } else {
+        const rng = randFactory(state.seed + now);
+        while (state.threads.length < state.density) {
+          state.threads.push(makeParticle(rng, Math.random() * canvas.clientWidth, Math.random() * canvas.clientHeight));
+        }
+      }
+      threadsChip.textContent = `threads: ${state.threads.length}`;
+      writeHash();
+    }
+
+    function addNeedle(x, y) {
+      for (let i = 0; i < 4; i++) {
+        state.threads.push({
+          ...makeParticle(randFactory(state.seed + frame * 31 + i), x, y),
+          age: 0,
+          life: 140 + (i * 40),
+        });
+      }
+      if (state.threads.length > state.density) {
+        state.threads.splice(0, state.threads.length - state.density);
+      }
+      threadsChip.textContent = `threads: ${state.threads.length}`;
+    }
+
+    function copyShareLink() {
+      writeHash();
+      const url = `${location.origin}${location.pathname}#${new URLSearchParams({ seed: String(state.seed), chaos: String(state.chaos), density: String(state.density) }).toString()}`;
+      navigator.clipboard
+        .writeText(url)
+        .catch(() => {
+          window.prompt('Copy this link:', url);
+        });
+      stateChip.textContent = `seed: ${state.seed} (copied)`;
+      setTimeout(() => {
+        stateChip.textContent = `seed: ${state.seed}`;
+      }, 1000);
+    }
+
+    function saveImage() {
+      const link = document.createElement('a');
+      link.download = `ghost-thread-${state.seed}.png`;
+      link.href = canvas.toDataURL('image/png');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+
+    function pointerEnter(event) {
+      const rect = canvas.getBoundingClientRect();
+      pointer.x = event.clientX - rect.left;
+      pointer.y = event.clientY - rect.top;
+      addNeedle(pointer.x, pointer.y);
+    }
+
+    function pointerMove(event) {
+      const rect = canvas.getBoundingClientRect();
+      pointer.x = event.clientX - rect.left;
+      pointer.y = event.clientY - rect.top;
+      if ((event.buttons & 1) === 1) {
+        addNeedle(pointer.x, pointer.y);
+      }
+    }
+
+    function pointerLeave() {
+      pointer.x = null;
+      pointer.y = null;
+    }
+
+    function readInitialHashInputs() {
+      const seed = readHash('seed');
+      const chaos = readHashNumber('chaos', state.chaos);
+      const density = readHashNumber('density', state.density);
+      if (seed !== null) state.seed = parseSeed(seed);
+      state.chaos = clamp(chaos, 1, 120);
+      state.density = clamp(density, 10, 180);
+      chaosInput.value = String(state.chaos);
+      densityInput.value = String(state.density);
+      seedInput.value = String(state.seed);
+    }
+
+    function init() {
+      resize();
+      readInitialHashInputs();
+      buildField();
+      writeHash();
+      chaosInput.addEventListener('input', setChaos);
+      densityInput.addEventListener('input', setDensity);
+      regenBtn.addEventListener('click', buildField);
+      pauseBtn.addEventListener('click', setPaused);
+      copyBtn.addEventListener('click', copyShareLink);
+      saveBtn.addEventListener('click', saveImage);
+      seedInput.addEventListener('change', seedFromInput);
+      window.addEventListener('resize', resize);
+      canvas.addEventListener('pointerdown', pointerEnter);
+      canvas.addEventListener('pointermove', pointerMove);
+      canvas.addEventListener('pointerleave', pointerLeave);
+      canvas.addEventListener('pointerup', pointerLeave);
+      rafId = requestAnimationFrame(tick);
+    }
+
+    init();
+  </script>
+</body>
+</html>

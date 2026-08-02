@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Echo Weft is a haunted ghost-radio chamber: seed-based drift threads that weave around your pointer and vanish into silence." />
+  <meta name="theme-color" content="#090b12" />
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  <title>Ghost Radio — Echo Weft</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080b12;
+      --text: #f4f7ff;
+      --muted: #aeb6d1;
+      --line: rgba(255, 255, 255, 0.12);
+      --accent: #8de8ff;
+      --accent2: #ff94d7;
+      --accent3: #d1ff72;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      font: 16px/1.45 "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 12%, rgba(141,232,255,.12), transparent 34%),
+        radial-gradient(circle at 78% 28%, rgba(255,148,215,.1), transparent 32%),
+        radial-gradient(circle at 50% 88%, rgba(209,255,114,.07), transparent 40%),
+        linear-gradient(180deg, #070a10 0%, #090b12 58%, #04050a 100%);
+      overflow: hidden;
+    }
+
+    .shell {
+      width: min(1100px, calc(100vw - 16px));
+      margin: 10px auto;
+      display: grid;
+      gap: 10px;
+      min-height: calc(100vh - 20px);
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px;
+      background: rgba(8, 10, 18, 0.58);
+      backdrop-filter: blur(10px);
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: 1.05rem;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+    }
+
+    .title p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: .83rem;
+      max-width: 60ch;
+    }
+
+    .control-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .pill {
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.04);
+      border-radius: 999px;
+      padding: 8px 10px;
+      color: var(--muted);
+      font-size: .75rem;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    label, button, input, select {
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 999px;
+      padding: 8px 10px;
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      font: inherit;
+    }
+
+    input[type="range"] {
+      width: 120px;
+      border-radius: 8px;
+      accent-color: var(--accent);
+      padding: 0;
+    }
+
+    button {
+      cursor: pointer;
+      transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--accent) 45%, white 55%);
+      box-shadow: 0 8px 24px rgba(0,0,0,.26);
+    }
+
+    .stage {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      min-height: calc(100vh - 190px);
+      background:
+        radial-gradient(circle at 50% 36%, rgba(255,255,255,.05), transparent 58%),
+        linear-gradient(140deg, rgba(141,232,255,.04), rgba(255,148,215,.04));
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .hud {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      z-index: 2;
+      display: flex;
+      gap: 8px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      pointer-events: none;
+      color: #d6deee;
+      font-size: .78rem;
+    }
+
+    .stat {
+      background: rgba(0,0,0,.44);
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 8px;
+      padding: 6px 9px;
+      backdrop-filter: blur(2px);
+      white-space: nowrap;
+    }
+
+    .links {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      z-index: 3;
+      display: grid;
+      gap: 8px;
+    }
+
+    .links a {
+      pointer-events: auto;
+      text-decoration: none;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 999px;
+      padding: 7px 10px;
+      color: #dbe6ff;
+      background: rgba(0,0,0,.42);
+      font-size: .75rem;
+    }
+
+    .seedline {
+      margin-top: 2px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .seedline input {
+      min-width: 160px;
+      width: 210px;
+      background: rgba(255,255,255,.04);
+    }
+
+    @media (max-width: 780px) {
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+      .control-row {
+        justify-content: flex-start;
+      }
+      input[type="range"] { width: 120px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="toolbar" aria-label="Echo Weft controls">
+      <div class="title">
+        <h1>Echo Weft</h1>
+        <p>Pointer-driven field threads warp around a deterministic seed. Leave with a link, return to haunt the same weave.</p>
+        <div class="seedline">
+          <span class="pill">Seed</span>
+          <input id="seedInput" type="text" />
+          <button id="seedBtn" type="button">Set seed</button>
+        </div>
+      </div>
+      <div class="control-row">
+        <label for="density" class="pill">Density</label>
+        <input id="density" type="range" min="130" max="460" value="260" step="1" />
+        <label for="spin" class="pill">Spin</label>
+        <input id="spin" type="range" min="20" max="140" value="74" step="1" />
+        <label for="chaos" class="pill">Chaos</label>
+        <input id="chaos" type="range" min="0.25" max="2.8" value="1.0" step="0.05" />
+        <button id="pauseBtn" type="button">Pause</button>
+        <button id="reseedBtn" type="button">Rerandomize</button>
+        <button id="copyBtn" type="button">Copy share link</button>
+        <button id="saveBtn" type="button">Save PNG</button>
+      </div>
+    </section>
+
+    <section class="stage" aria-label="Echo Weft chamber">
+      <div class="links">
+        <a href="./">← Back to Ghost Radio</a>
+        <a href="./frequency-veil.html" target="_blank" rel="noopener noreferrer">Frequency Veil</a>
+      </div>
+      <canvas id="weft"></canvas>
+      <div class="hud" aria-live="polite">
+        <span class="stat" id="seedLine">seed: loading</span>
+        <span class="stat" id="stateLine">state: waiting</span>
+        <span class="stat" id="countLine">particles: 0</span>
+        <span class="stat" id="fpsLine">fps: —</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('weft');
+    const ctx = canvas.getContext('2d');
+
+    const seedInput = document.getElementById('seedInput');
+    const seedBtn = document.getElementById('seedBtn');
+    const densityInput = document.getElementById('density');
+    const spinInput = document.getElementById('spin');
+    const chaosInput = document.getElementById('chaos');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const reseedBtn = document.getElementById('reseedBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const saveBtn = document.getElementById('saveBtn');
+
+    const seedLine = document.getElementById('seedLine');
+    const stateLine = document.getElementById('stateLine');
+    const countLine = document.getElementById('countLine');
+    const fpsLine = document.getElementById('fpsLine');
+
+    const DPR = Math.min(2, window.devicePixelRatio || 1);
+    const palette = ['#8de8ff', '#ff94d7', '#d1ff72', '#9fb7ff', '#f6e1ff'];
+
+    let w = 0;
+    let h = 0;
+    let paused = false;
+    let raf = 0;
+    let mouse = { x: null, y: null };
+    let state = {
+      seed: 1,
+      density: 260,
+      spin: 74,
+      chaos: 1,
+      ticks: 0,
+      frameTime: performance.now(),
+      lastSeed: 1,
+    };
+
+    const parts = [];
+
+    function parseSeed(raw) {
+      const n = Number(raw);
+      if (Number.isFinite(n)) {
+        return Math.max(1, Math.floor(Math.abs(n)));
+      }
+      return Math.floor(Math.random() * 2_000_000_000);
+    }
+
+    function parseHash() {
+      const frag = new URLSearchParams(window.location.hash.slice(1));
+      state.seed = parseSeed(frag.get('seed'));
+      state.density = Number(frag.get('density')) || Number(densityInput.value);
+      state.spin = Number(frag.get('spin')) || Number(spinInput.value);
+      state.chaos = Number(frag.get('chaos')) || Number(chaosInput.value);
+      if (!Number.isFinite(state.spin)) state.spin = Number(spinInput.value);
+      if (!Number.isFinite(state.chaos)) state.chaos = Number(chaosInput.value);
+      seedInput.value = String(state.seed);
+      densityInput.value = String(state.density);
+      spinInput.value = String(state.spin);
+      chaosInput.value = String(state.chaos);
+    }
+
+    function updateHash() {
+      const next = new URLSearchParams();
+      next.set('seed', String(state.seed));
+      next.set('density', String(state.density));
+      next.set('spin', String(state.spin));
+      next.set('chaos', String(state.chaos));
+      history.replaceState({}, '', `${location.pathname}#${next.toString()}`);
+    }
+
+    const makeRng = (seed) => {
+      let s = seed >>> 0;
+      return () => {
+        s ^= s << 13;
+        s ^= s >>> 17;
+        s ^= s << 5;
+        return (s >>> 0) / 4294967296;
+      };
+    };
+
+    let rng = makeRng(state.seed);
+
+    function reseed(value) {
+      state.seed = parseSeed(value);
+      seedInput.value = String(state.seed);
+      rng = makeRng(state.seed);
+      state.lastSeed = state.seed;
+      parts.length = 0;
+      for (let i = 0; i < 2; i++) spawnParticle(Math.random() * w, Math.random() * h);
+      updateHash();
+      seedLine.textContent = `seed: ${state.seed}`;
+      stateLine.textContent = 'state: reset';
+    }
+
+    function resize() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      w = Math.floor(rect.width);
+      h = Math.floor(rect.height);
+      canvas.width = Math.floor(w * DPR);
+      canvas.height = Math.floor(h * DPR);
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      clearField();
+      populate();
+    }
+
+    function clearField() {
+      ctx.fillStyle = 'rgba(9,11,18,.35)';
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    function spawnParticle(x = rng() * w, y = rng() * h) {
+      const spin = (Number(spinInput.value) / 50);
+      const chaos = Number(chaosInput.value);
+      const hue = Math.floor(rng() * 360);
+      const dir = (rng() - 0.5) * 2 * Math.PI;
+      parts.push({
+        x,
+        y,
+        vx: Math.cos(dir) * 0.6,
+        vy: Math.sin(dir) * 0.6,
+        life: 240 + rng() * 200,
+        max: 240 + rng() * 200,
+        age: 0,
+        hue,
+        radius: 1 + rng() * 2.4,
+        phase: rng() * Math.PI * 2,
+        spin,
+        chaos,
+      });
+    }
+
+    function populate() {
+      parts.length = 0;
+      const count = Math.floor(Number(densityInput.value));
+      for (let i = 0; i < count; i++) {
+        spawnParticle(rng() * w, rng() * h);
+      }
+      countLine.textContent = `particles: ${parts.length}`;
+    }
+
+    function fieldAt(x, y, t, p) {
+      const n = Math.sin((x * 0.006 * p.chaos) + t * 0.0007 + (state.seed % 1000) * 0.001);
+      const m = Math.cos((y * 0.005 * p.chaos) - t * 0.0009 + p.phase);
+      let fx = n * p.spin + m * 0.7;
+      let fy = m * p.spin - n * 0.7;
+
+      if (mouse.x !== null && mouse.y !== null) {
+        const dx = (x - mouse.x);
+        const dy = (y - mouse.y);
+        const d = Math.hypot(dx, dy) + 0.1;
+        const pull = 85 / (d + 60);
+        fx -= (dx / d) * pull;
+        fy -= (dy / d) * pull;
+      }
+      return { fx, fy };
+    }
+
+    function drawBackdrop() {
+      ctx.fillStyle = 'rgba(8,10,18,0.18)';
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.045)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 132) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y < h; y += 132) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+    }
+
+    let last = performance.now();
+    let frames = 0;
+    let fpsTimer = performance.now();
+
+    function frame(now) {
+      const dt = Math.min((now - last) / 1000, 0.06);
+      last = now;
+      state.ticks += 1;
+      if (state.ticks > 1) frames++;
+
+      if (!paused) {
+        drawBackdrop();
+        const t = now;
+
+        for (let i = parts.length - 1; i >= 0; i--) {
+          const p = parts[i];
+          const f = fieldAt(p.x, p.y, t, p);
+          p.vx = p.vx * 0.985 + f.fx * 0.017 * dt;
+          p.vy = p.vy * 0.985 + f.fy * 0.017 * dt;
+
+          const x2 = p.x + p.vx * 140 * dt;
+          const y2 = p.y + p.vy * 140 * dt;
+          const color = palette[Math.floor((p.hue + p.age) / 60) % palette.length];
+          const alpha = 0.45 * (1 - p.age / p.max);
+
+          ctx.strokeStyle = `${color + '80'}`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(x2, y2);
+          ctx.stroke();
+
+          const orb = 0.35 + Math.sin(now * 0.0012 + p.phase) * 0.15;
+          ctx.fillStyle = `rgba(${210 - p.hue * 0.2}, ${180 + Math.sin(p.phase) * 20}, ${245 - p.hue * 0.05}, ${alpha})`;
+          ctx.beginPath();
+          ctx.arc(x2, y2, p.radius + orb, 0, Math.PI * 2);
+          ctx.fill();
+
+          p.x = (x2 + w) % w;
+          p.y = (y2 + h) % h;
+          p.age++;
+          p.life = p.max - p.age;
+
+          if (p.life <= 0) {
+            spawnParticle(rng() * w, rng() * h);
+            parts.splice(i, 1);
+          }
+        }
+
+        if (parts.length < state.density * 0.9) {
+          spawnParticle(rng() * w, rng() * h);
+        }
+
+        if (parts.length < Number(densityInput.value) + 20 && rng() > 0.95) {
+          spawnParticle(rng() * w, rng() * h);
+        }
+
+        if (state.ticks % 4 === 0 && !isNaN(mouse.x)) {
+          const pulseRadius = 110 + 120 * Math.sin(now * 0.0018);
+          const cx = mouse.x + (rng() - 0.5) * 60;
+          const cy = mouse.y + (rng() - 0.5) * 60;
+          const grad = ctx.createRadialGradient(cx, cy, 10, cx, cy, pulseRadius);
+          grad.addColorStop(0, 'rgba(141,232,255,0.09)');
+          grad.addColorStop(1, 'rgba(255,148,215,0.0)');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(cx, cy, pulseRadius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      countLine.textContent = `particles: ${parts.length}`;
+      if ((now - fpsTimer) > 800) {
+        fpsLine.textContent = `fps: ${Math.round((frames * 1000) / (now - fpsTimer))}`;
+        frames = 0;
+        fpsTimer = now;
+      }
+
+      if (seedInput.value !== String(state.seed)) {
+        state.seed = parseSeed(seedInput.value);
+      }
+      stateLine.textContent = paused ? 'state: paused' : 'state: weaving';
+
+      raf = requestAnimationFrame(frame);
+    }
+
+    function updateFromInputs() {
+      state.density = Number(densityInput.value);
+      state.spin = Number(spinInput.value);
+      state.chaos = Number(chaosInput.value);
+      updateHash();
+      populate();
+    }
+
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      mouse.x = null;
+      mouse.y = null;
+    });
+
+    canvas.addEventListener('click', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      spawnParticle(e.clientX - rect.left, e.clientY - rect.top);
+    });
+
+    pauseBtn.addEventListener('click', () => {
+      paused = !paused;
+      pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+      if (pauseBtn.textContent === 'Resume') {
+        stateLine.textContent = 'state: paused';
+      } else {
+        stateLine.textContent = 'state: weaving';
+      }
+    });
+
+    reseedBtn.addEventListener('click', () => {
+      reseed(Math.floor(Math.random() * 2_000_000_000));
+    });
+
+    seedBtn.addEventListener('click', () => {
+      reseed(seedInput.value);
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      const url = `${location.origin}${location.pathname}#${new URLSearchParams({
+        seed: String(state.seed),
+        density: String(state.density),
+        spin: String(state.spin),
+        chaos: String(state.chaos),
+      }).toString()}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        copyBtn.textContent = 'Link copied';
+        setTimeout(() => (copyBtn.textContent = 'Copy share link'), 1100);
+      } catch {
+        copyBtn.textContent = 'Copy failed';
+        setTimeout(() => (copyBtn.textContent = 'Copy share link'), 1100);
+      }
+    });
+
+    saveBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = `echo-weft-${state.seed}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+
+    densityInput.addEventListener('input', updateFromInputs);
+    spinInput.addEventListener('input', updateFromInputs);
+    chaosInput.addEventListener('input', updateFromInputs);
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        pauseBtn.click();
+      }
+      if (e.key.toLowerCase() === 'r') {
+        reseed(Math.floor(Math.random() * 2_000_000_000));
+      }
+    });
+
+    parseHash();
+    resize();
+    state.density = Number(densityInput.value);
+    state.spin = Number(spinInput.value);
+    state.chaos = Number(chaosInput.value);
+    state.seed = parseSeed(state.seed);
+    rng = makeRng(state.seed);
+    seedLine.textContent = `seed: ${state.seed}`;
+    stateLine.textContent = 'state: ready';
+    populate();
+    updateHash();
+    raf = requestAnimationFrame(frame);
+  </script>
+</body>
+</html>

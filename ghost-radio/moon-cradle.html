@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ghost Radio — Moon Cradle</title>
+  <meta name="description" content="A deterministic moon-phase particle cradle from Ghost Radio. Tune density, drift, and pulse to hear a floating field of silent signals." />
+  <style>
+    :root{
+      --bg:#06080f;
+      --panel:rgba(14,18,28,.78);
+      --line:rgba(255,255,255,.08);
+      --text:#eff2ff;
+      --muted:#a7b1c9;
+      --accent:#8fe4ff;
+      --accent2:#ff9cf1;
+      --accent3:#d8ff7b;
+      color-scheme: dark;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 12% 12%, rgba(143,228,255,.22), transparent 22%),
+        radial-gradient(circle at 84% 18%, rgba(255,156,241,.16), transparent 24%),
+        radial-gradient(circle at 62% 82%, rgba(216,255,123,.1), transparent 28%),
+        linear-gradient(180deg, #080b14 0%, #05070d 52%, #04050a 100%);
+      overflow:hidden;
+    }
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      background:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+      background-size:100% 3px, 3px 100%;
+      opacity:.12;
+      pointer-events:none;
+    }
+    .shell{
+      width:min(1100px, calc(100vw - 20px));
+      margin:14px auto;
+      display:grid;
+      gap:12px;
+    }
+    .top{
+      border:1px solid var(--line);
+      border-radius:22px;
+      padding:14px 16px;
+      background:linear-gradient(180deg, rgba(17,21,34,.72), rgba(10,13,20,.78));
+      backdrop-filter:blur(8px);
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .title{font-weight:700; letter-spacing:-.02em}
+    .title small{display:block;color:var(--muted);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase}
+    .title h1{margin:0;font-size:1.3rem}
+    .meta{color:var(--muted);font-size:.88rem;max-width:57ch}
+    .meta a{color:#fff;text-decoration:none}
+    .panel{
+      border:1px solid var(--line);
+      border-radius:22px;
+      padding:10px;
+      background:linear-gradient(180deg, rgba(15,20,32,.8), rgba(9,12,19,.86));
+      display:grid;
+      grid-template-columns:minmax(0, 1fr) 260px;
+      gap:10px;
+    }
+    .frame{
+      border-radius:16px;
+      position:relative;
+      overflow:hidden;
+      min-height:68vh;
+      background:radial-gradient(circle at 50% 50%, rgba(143,228,255,.12), rgba(6,10,16,.95));
+      border:1px solid var(--line);
+    }
+    canvas{width:100%;height:100%;display:block}
+    .controls{
+      border-left:1px solid var(--line);
+      padding:10px;
+      display:grid;
+      gap:10px;
+      background:rgba(255,255,255,.02);
+      border-radius:14px;
+    }
+    .group{
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:12px;
+      padding:8px;
+      background:rgba(8,12,20,.6);
+    }
+    .label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+    .row{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:4px}
+    input[type="range"]{width:100%}
+    .row input[type="number"]{width:6.2rem;background:#0d111f;color:var(--text);border:1px solid var(--line);padding:4px 8px;border-radius:8px}
+    .actions{display:grid;gap:8px}
+    button{
+      border:1px solid var(--line);
+      border-radius:999px;
+      color:var(--text);
+      background:rgba(255,255,255,.06);
+      padding:8px 10px;
+      cursor:pointer;
+    }
+    button.primary{
+      background:linear-gradient(135deg, rgba(143,228,255,.28), rgba(255,156,241,.18));
+      border-color:rgba(143,228,255,.44);
+    }
+    .status{font-size:.84rem;color:#d7ddf3;min-height:1.1rem}
+    .status strong{color:#fff}
+    .foot{
+      border:1px solid var(--line);
+      border-radius:22px;
+      background:rgba(11,14,22,.82);
+      padding:8px 12px;
+      color:var(--muted);
+      font-size:.84rem;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .dot{color:var(--accent);font-weight:700}
+    @media (max-width:980px){
+      .panel{grid-template-columns:1fr}
+      .controls{border-left:none;border-top:1px solid var(--line)}
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="top">
+      <div class="title">
+        <small>Ghost Radio Side Chamber</small>
+        <h1>Moon Cradle</h1>
+      </div>
+      <div class="meta">
+        A seeded, deterministic particle cradle for the lunar band. Drag to pull the cradle center, then vary drift and density to reveal old echoes.
+      </div>
+    </section>
+
+    <main class="panel">
+      <section class="frame" aria-label="Moon cradle simulation">
+        <canvas id="c" role="img" aria-label="Moon cradle particle simulation"></canvas>
+      </section>
+      <aside class="controls" aria-label="Cradle controls">
+        <div class="group">
+          <div class="label">Seed</div>
+          <div class="row">
+            <input id="seedInput" type="number" min="1" max="999999" step="1" value="911" aria-label="Seed value" />
+            <button id="reseedBtn" type="button">Reroll</button>
+          </div>
+          <div class="status" id="seedStatus">Seeded lattice from shared link state.</div>
+        </div>
+
+        <div class="group">
+          <div class="label">Density</div>
+          <input id="density" type="range" min="120" max="720" step="20" value="360" aria-label="Density" />
+          <div class="row"><span id="densityVal">360</span> particles</div>
+        </div>
+
+        <div class="group">
+          <div class="label">Drift</div>
+          <input id="drift" type="range" min="0.04" max="0.6" step="0.01" value="0.22" aria-label="Drift speed" />
+          <div class="row"><span id="driftVal">0.22</span> force</div>
+        </div>
+
+        <div class="group">
+          <div class="label">Pulse</div>
+          <input id="pulse" type="range" min="0.2" max="2.9" step="0.1" value="1.2" aria-label="Pulse depth" />
+          <div class="row"><span id="pulseVal">1.2</span>x glow</div>
+        </div>
+
+        <div class="group actions">
+          <button id="pauseBtn" type="button" class="primary">Pause</button>
+          <button id="copyBtn" type="button">Copy link</button>
+          <button id="shotBtn" type="button">Download frame</button>
+          <button id="homeBtn" type="button">Open Ghost Radio</button>
+        </div>
+
+        <div class="status" id="statusLine" aria-live="polite"></div>
+      </aside>
+    </main>
+
+    <section class="foot" aria-live="polite">
+      <div>Try: <span class="dot">1</span> slow cradle, <span class="dot">2</span> quick cradle, <span class="dot">3</span> lock the motion, <span class="dot">space</span> pause.</div>
+      <div>Share state via URL hash and come back to the same cradle geometry.</div>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('c');
+    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    const ctx = canvas.getContext('2d');
+
+    const els = {
+      seedInput: document.getElementById('seedInput'),
+      reseedBtn: document.getElementById('reseedBtn'),
+      seedStatus: document.getElementById('seedStatus'),
+      density: document.getElementById('density'),
+      densityVal: document.getElementById('densityVal'),
+      drift: document.getElementById('drift'),
+      driftVal: document.getElementById('driftVal'),
+      pulse: document.getElementById('pulse'),
+      pulseVal: document.getElementById('pulseVal'),
+      pauseBtn: document.getElementById('pauseBtn'),
+      copyBtn: document.getElementById('copyBtn'),
+      shotBtn: document.getElementById('shotBtn'),
+      homeBtn: document.getElementById('homeBtn'),
+      statusLine: document.getElementById('statusLine')
+    };
+
+    const state = {
+      seed: 911,
+      density: Number(els.density.value),
+      drift: Number(els.drift.value),
+      pulse: Number(els.pulse.value),
+      paused: false,
+      particles: [],
+      cx: 0,
+      cy: 0,
+      t: 0,
+      pointer: {x: 0, y: 0, active: false},
+      lastHash: ''
+    };
+
+    function mulberry32(a){
+      return function(){
+        a |= 0;
+        a = a + 0x6D2B79F5 | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      }
+    }
+
+    function buildParticles() {
+      const rng = mulberry32(state.seed);
+      state.particles = new Array(state.density).fill(0).map((_, i) => {
+        const angle = rng() * Math.PI * 2;
+        const orbit = (rng() * 0.85 + 0.08) * 0.95;
+        const radius = Math.sqrt(rng()) * Math.min(innerWidth, innerHeight) * 0.34 * orbit;
+        const speed = (rng() * 0.8 + 0.35) * (i % 2 ? 1 : -1) * 0.0009;
+        const phase = rng() * Math.PI * 2;
+        return {
+          i,
+          angle,
+          orbit,
+          radius,
+          speed,
+          phase,
+          jitter: rng() * 0.8 + 0.2,
+          hue: Math.floor(180 + rng() * 120),
+          lastX: 0,
+          lastY: 0
+        };
+      });
+      renderHash();
+      announce(`Cradle rebuilt with ${state.density} particles.`);
+    }
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      state.cx = rect.width / 2;
+      state.cy = rect.height / 2;
+      state.pointer.x = state.cx;
+      state.pointer.y = state.cy;
+    }
+
+    function readHash() {
+      const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
+      const next = {
+        seed: Number(hash.get('seed') || state.seed),
+        density: Number(hash.get('density') || state.density),
+        drift: Number(hash.get('drift') || state.drift),
+        pulse: Number(hash.get('pulse') || state.pulse),
+        paused: hash.get('paused') === '1'
+      };
+
+      if (Number.isFinite(next.seed) && next.seed > 0) state.seed = Math.floor(next.seed);
+      if (Number.isFinite(next.density) && next.density >= 120 && next.density <= 720) state.density = Math.floor(next.density);
+      if (Number.isFinite(next.drift) && next.drift >= 0.04 && next.drift <= 0.6) state.drift = Number(next.drift.toFixed(2));
+      if (Number.isFinite(next.pulse) && next.pulse >= 0.2 && next.pulse <= 2.9) state.pulse = Number(next.pulse.toFixed(2));
+      state.paused = next.paused;
+
+      els.seedInput.value = state.seed;
+      els.density.value = String(state.density);
+      els.drift.value = String(state.drift);
+      els.pulse.value = String(state.pulse);
+      updateUI();
+      updatePauseUI();
+      buildParticles();
+      hydrateStateFromMemory();
+    }
+
+    function renderHash() {
+      const hash = new URLSearchParams();
+      hash.set('seed', String(state.seed));
+      hash.set('density', String(state.density));
+      hash.set('drift', String(state.drift));
+      hash.set('pulse', String(state.pulse));
+      if (state.paused) hash.set('paused', '1');
+      const next = hash.toString().replace(/%2F/g, '/')
+      if (`#${next}` !== state.lastHash) {
+        state.lastHash = `#${next}`;
+        history.replaceState(null, '', state.lastHash);
+      }
+      localStorage.setItem('moon-cradle', JSON.stringify({seed: state.seed, density: state.density, drift: state.drift, pulse: state.pulse, paused: state.paused}));
+    }
+
+    function updateUI() {
+      els.densityVal.textContent = state.density;
+      els.driftVal.textContent = state.drift.toFixed(2);
+      els.pulseVal.textContent = state.pulse.toFixed(1);
+      els.seedStatus.textContent = `Seed ${state.seed} • density ${state.density} • drift ${state.drift.toFixed(2)} • pulse ${state.pulse.toFixed(1)}`;
+    }
+
+    function updatePauseUI() {
+      els.pauseBtn.textContent = state.paused ? 'Resume' : 'Pause';
+      if (state.paused) {
+        state.lastTimeAtPause = performance.now();
+      }
+    }
+
+    function announce(message) {
+      els.statusLine.textContent = message;
+    }
+
+    function hydrateStateFromMemory() {
+      try {
+        const last = JSON.parse(localStorage.getItem('moon-cradle') || '{}');
+        if (!location.hash && last?.seed && Number.isFinite(last.seed)) {
+          state.seed = Math.max(1, Number(last.seed));
+          state.density = clamp(last.density || state.density, 120, 720);
+          state.drift = clamp(last.drift || state.drift, 0.04, 0.6);
+          state.pulse = clamp(last.pulse || state.pulse, 0.2, 2.9);
+          state.paused = Boolean(last.paused);
+          els.seedInput.value = state.seed;
+          els.density.value = String(state.density);
+          els.drift.value = String(state.drift);
+          els.pulse.value = String(state.pulse);
+          updateUI();
+          updatePauseUI();
+          buildParticles();
+        }
+      } catch (error) {
+        // ignore
+      }
+    }
+
+    function clamp(value, min, max) {
+      if (!Number.isFinite(Number(value))) return min;
+      return Math.min(max, Math.max(min, Number(value)));
+    }
+
+    function stepParticle(p, dt) {
+      const cx = state.cx + (state.pointer.x - state.cx) * 0.5;
+      const cy = state.cy + (state.pointer.y - state.cy) * 0.5;
+      const radius = p.radius * (1 + Math.sin(state.t * 0.00045 + p.phase) * 0.06);
+      const angle = p.angle + state.t * p.speed * (0.45 + p.jitter);
+      const x = cx + Math.cos(angle) * radius;
+      const y = cy + Math.sin(angle) * radius;
+      const wave = Math.sin((state.t * 0.0009 * state.drift) + p.phase * 2);
+      p.x = x + Math.cos(angle * 2 + p.phase) * 22 * wave;
+      p.y = y + Math.sin(angle * 1.7 - p.phase) * 18 * wave;
+      p.lastX = p.x;
+      p.lastY = p.y;
+    }
+
+    function renderFrame(time) {
+      const dt = Math.min(40, time - (state.lastTime || time));
+      state.lastTime = time;
+      state.t += state.paused ? 0 : dt;
+      resize();
+      ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+
+      const w = canvas.width / dpr;
+      const h = canvas.height / dpr;
+
+      ctx.fillStyle = 'rgba(11, 17, 28, 0.98)';
+      ctx.fillRect(0, 0, w, h);
+
+      const g = ctx.createRadialGradient(state.cx, state.cy, 30, state.cx, state.cy, Math.max(w, h) * 0.8);
+      g.addColorStop(0, 'rgba(143,228,255,0.19)');
+      g.addColorStop(0.5, 'rgba(255,156,241,0.10)');
+      g.addColorStop(1, 'rgba(5,7,13,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+
+      const pts = [];
+      for (let i = 0; i < state.particles.length; i++) {
+        const p = state.particles[i];
+        if (!state.paused) {
+          p.angle += p.speed * (0.85 + state.pulse * 0.25) * (state.drift * 2.2) * (dt / 16);
+          stepParticle(p, dt);
+        }
+        pts.push([p.x, p.y, p.hue, p.jitter]);
+      }
+
+      // soft connect
+      for (let i = 0; i < pts.length; i++) {
+        const [x, y, hue, jitter] = pts[i];
+        const next = pts[(i + Math.floor(Math.sqrt(state.density) * 0.5)) % pts.length];
+        const nx = next[0], ny = next[1], nh = next[2], nj = next[3];
+        const d = Math.hypot(x - nx, y - ny);
+        if (d < w * 0.16) {
+          const alpha = 0.21 * Math.max(0, 1 - d / (w * 0.16));
+          ctx.strokeStyle = `hsla(${(hue + nh) / 2},100%,70%,${alpha})`;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.quadraticCurveTo((x + nx + jitter * 6) / 2, (y + ny + nj * 6) / 2, nx, ny);
+          ctx.stroke();
+        }
+        const glow = 1 + Math.sin(state.t * 0.001 + i) * 2;
+        ctx.fillStyle = `hsla(${hue},100%,72%,${0.14 * glow * state.pulse})`;
+        ctx.beginPath();
+        ctx.arc(x, y, 2.2 + jitter * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const orbit = 0.9 + Math.sin(state.t * 0.00055) * 0.08;
+      const orbitR = Math.min(w, h) * 0.34 * orbit;
+      const centerRadius = 5 + state.pulse;
+      ctx.strokeStyle = 'rgba(220,230,255,0.24)';
+      ctx.beginPath();
+      ctx.arc(state.cx, state.cy, orbitR, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(143,228,255,0.7)';
+      ctx.beginPath();
+      ctx.arc(state.cx, state.cy, centerRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (!state.paused) {
+        state.pointer.x += (state.pointer.targetX - state.pointer.x) * 0.08;
+        state.pointer.y += (state.pointer.targetY - state.pointer.y) * 0.08;
+      }
+
+      if (state.t % 1200 < 16) {
+        const p = state.particles[Math.floor(Math.random() * state.particles.length)] || {};
+        announce(`Field breathes at seed ${state.seed} with ${state.particles.length} anchors`);
+      }
+
+      requestAnimationFrame(renderFrame);
+    }
+
+    function applyFromInputs() {
+      const nextSeed = Number(els.seedInput.value);
+      const density = Number(els.density.value);
+      const drift = Number(els.drift.value);
+      const pulse = Number(els.pulse.value);
+
+      state.seed = Math.max(1, Number.isFinite(nextSeed) ? Math.floor(nextSeed) : state.seed);
+      state.density = clamp(density, 120, 720);
+      state.drift = clamp(drift, 0.04, 0.6);
+      state.pulse = clamp(pulse, 0.2, 2.9);
+      state.seedInput.value = state.seed;
+      updateUI();
+      buildParticles();
+    }
+
+    function syncURL() {
+      renderHash();
+    }
+
+    els.seedInput.addEventListener('change', () => {
+      applyFromInputs();
+      syncURL();
+    });
+    els.reseedBtn.addEventListener('click', () => {
+      state.seed = Math.floor(100000 + Math.random() * 900000);
+      els.seedInput.value = state.seed;
+      applyFromInputs();
+      syncURL();
+    });
+    els.density.addEventListener('input', () => {
+      state.density = Number(els.density.value);
+      updateUI();
+      if (Math.abs((performance.now() - (state.lastDensityAdjust || 0))) > 180) {
+        buildParticles();
+        syncURL();
+        state.lastDensityAdjust = performance.now();
+      }
+    });
+    els.density.addEventListener('change', () => {
+      applyFromInputs();
+      syncURL();
+    });
+    els.drift.addEventListener('input', () => {
+      state.drift = Number(els.drift.value);
+      updateUI();
+      syncURL();
+    });
+    els.pulse.addEventListener('input', () => {
+      state.pulse = Number(els.pulse.value);
+      updateUI();
+      syncURL();
+    });
+
+    els.pauseBtn.addEventListener('click', () => {
+      state.paused = !state.paused;
+      updatePauseUI();
+      syncURL();
+      announce(state.paused ? 'Cradle paused.' : 'Cradle resumed.');
+    });
+
+    els.copyBtn.addEventListener('click', async () => {
+      const url = `${location.href.split('#')[0]}#${new URLSearchParams({seed: String(state.seed), density: String(state.density), drift: String(state.drift), pulse: String(state.pulse), ...(state.paused ? {paused: '1'} : {})})}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        announce('Share link copied.');
+      } catch (error) {
+        window.prompt('Copy this link:', url);
+      }
+    });
+
+    els.shotBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = `moon-cradle-${state.seed}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      announce('Frame download started.');
+    });
+
+    els.homeBtn.addEventListener('click', () => {
+      location.href = './';
+    });
+
+    canvas.addEventListener('pointermove', (event) => {
+      const rect = canvas.getBoundingClientRect();
+      state.pointer.targetX = event.clientX - rect.left;
+      state.pointer.targetY = event.clientY - rect.top;
+      state.pointer.active = true;
+    });
+    canvas.addEventListener('pointerleave', () => {
+      state.pointer.targetX = state.cx;
+      state.pointer.targetY = state.cy;
+      state.pointer.active = false;
+    });
+    canvas.addEventListener('click', () => {
+      state.seed = Math.max(1, state.seed + Math.floor(Math.random() * 47) + 1);
+      els.seedInput.value = state.seed;
+      applyFromInputs();
+      syncURL();
+      announce('Click nudges the cradle forward in seed space.');
+    });
+
+    window.addEventListener('keydown', (event) => {
+      if (event.key === '1') {
+        state.drift = 0.14;
+      } else if (event.key === '2') {
+        state.drift = 0.42;
+      } else if (event.key === '3') {
+        state.paused = true;
+      } else if (event.key.toLowerCase() === ' ') {
+        state.paused = !state.paused;
+      } else {
+        return;
+      }
+
+      els.drift.value = String(state.drift);
+      updatePauseUI();
+      updateUI();
+      syncURL();
+      if (event.key === '3') announce('Motion held for archival mode.');
+      if (event.key === ' ') announce(state.paused ? 'Space: paused.' : 'Space: resumed.');
+    }, {passive:true});
+
+    window.addEventListener('hashchange', () => {
+      const same = `#${new URLSearchParams(location.hash.replace(/^#/, '')).toString()}`;
+      if (same !== state.lastHash) readHash();
+    });
+
+    const onLoad = () => {
+      resize();
+      readHash();
+      state.pointer.targetX = state.cx;
+      state.pointer.targetY = state.cy;
+      requestAnimationFrame(renderFrame);
+      announce('Moon Cradle is alive. Drag to steer the field.');
+    };
+
+    onLoad();
+    window.addEventListener('resize', resize);
+  </script>
+</body>
+</html>

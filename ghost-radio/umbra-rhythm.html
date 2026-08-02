@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Umbra Rhythm is a seeded, pointer-magnetized canvas chamber in the Ghost Radio gallery where threads bloom, drift, and fold through a changing dark field." />
+  <meta name="theme-color" content="#090b12" />
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  <title>Ghost Radio — Umbra Rhythm</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070910;
+      --line: rgba(255, 255, 255, 0.14);
+      --text: #ecf4ff;
+      --muted: #b6c4e6;
+      --a: #7de6ff;
+      --b: #ff99d9;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 14% 12%, rgba(125, 230, 255, .16), transparent 30%),
+        radial-gradient(circle at 84% 74%, rgba(255, 153, 217, .12), transparent 28%),
+        linear-gradient(180deg, #06070d 0%, #090c14 50%, #04050a 100%);
+      overflow: hidden;
+    }
+
+    .wrap {
+      width: min(1180px, 100vw - 20px);
+      margin: 10px auto;
+      display: grid;
+      gap: 10px;
+      min-height: calc(100vh - 20px);
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(14, 16, 25, 0.72);
+      backdrop-filter: blur(8px);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: 1.1rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .title p {
+      margin: 4px 0 0;
+      max-width: 70ch;
+      color: var(--muted);
+      font-size: .84rem;
+      line-height: 1.4;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .actions label {
+      font-size: .8rem;
+      color: var(--muted);
+      margin-left: 6px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .actions input[type="range"] {
+      width: 130px;
+      accent-color: var(--a);
+      border: 1px solid rgba(255,255,255,.2);
+    }
+
+    button,
+    a {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 999px;
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      padding: 8px 11px;
+      font: inherit;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform .2s ease, border-color .2s ease;
+      white-space: nowrap;
+    }
+
+    button:hover,
+    a:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--a) 45%, white 55%);
+    }
+
+    .stage {
+      position: relative;
+      overflow: hidden;
+      min-height: calc(100vh - 220px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,.06), transparent 60%),
+        linear-gradient(140deg, rgba(125, 230, 255, .03), rgba(255, 153, 217, .03));
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .status {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      pointer-events: none;
+      font-size: .78rem;
+      color: #d6e4ff;
+    }
+
+    .pill {
+      background: rgba(0,0,0,.45);
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 8px;
+      padding: 5px 9px;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 860px) {
+      .panel-head {
+        gap: 14px;
+      }
+      .actions {
+        justify-content: flex-start;
+      }
+      .actions input[type="range"] {
+        width: 96px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="panel" aria-label="Umbra Rhythm controls">
+      <div class="panel-head">
+        <div class="title">
+          <h1>Umbra Rhythm</h1>
+          <p>
+            A haunted canvas where threads rise from a seed, orbit a private dark center,
+            and react to the pointer with memory. Click to inject ghost-tendrils; the field
+            keeps moving even when you only watch.
+          </p>
+        </div>
+        <div class="actions">
+          <label for="density">Density</label>
+          <input id="density" type="range" min="0.3" max="1.9" step="0.1" value="1" />
+          <label for="drift">Drift</label>
+          <input id="drift" type="range" min="0.2" max="2.4" step="0.1" value="1.1" />
+          <label for="haze">Haze</label>
+          <input id="haze" type="range" min="0.2" max="2.8" step="0.1" value="1.0" />
+          <button type="button" id="pauseBtn">Pause</button>
+          <button type="button" id="reseedBtn">Rerandomize</button>
+          <button type="button" id="copyBtn">Copy share link</button>
+          <button type="button" id="saveBtn">Save PNG</button>
+          <a href="./">← Back to Ghost Radio</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel stage" aria-label="Umbra Rhythm chamber">
+      <canvas id="canvas" aria-label="Moving thread field"></canvas>
+      <div class="status" aria-live="polite">
+        <span class="pill" id="seedLine">seed: loading</span>
+        <span class="pill" id="fpsLine">fps: —</span>
+        <span class="pill" id="countLine">threads: 0</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    const densityEl = document.getElementById('density');
+    const driftEl = document.getElementById('drift');
+    const hazeEl = document.getElementById('haze');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const reseedBtn = document.getElementById('reseedBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const seedLine = document.getElementById('seedLine');
+    const fpsLine = document.getElementById('fpsLine');
+    const countLine = document.getElementById('countLine');
+
+    const DPR = Math.min(2, window.devicePixelRatio || 1);
+    const state = {
+      paused: false,
+      t: 0,
+      pointer: { x: 0, y: 0, active: false, vx: 0, vy: 0, life: 0 }
+    };
+
+    let seed = loadSeedFromHash();
+    let rng = mulberry(seed);
+    let particles = [];
+
+    function mulberry(a) {
+      let h = Math.imul(a, 0x9e3779b1) >>> 0;
+      return function() {
+        h ^= h << 13;
+        h ^= h >>> 17;
+        h ^= h << 5;
+        return ((h >>> 0) / 0x100000000);
+      };
+    }
+
+    function hashString(input) {
+      let h = 2166136261 >>> 0;
+      for (let i = 0; i < input.length; i++) {
+        h ^= input.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return h >>> 0;
+    }
+
+    function randomSeedHex() {
+      return Math.floor(Math.random() * 0xffffffff).toString(16).padStart(8, '0');
+    }
+
+    function setSeed(nextSeed) {
+      seed = nextSeed >>> 0;
+      rng = mulberry(seed);
+      seedLine.textContent = 'seed: ' + seed.toString(16).padStart(8, '0');
+      rebuildField();
+    }
+
+    function loadSeedFromHash() {
+      const params = new URLSearchParams(location.hash.replace('#', ''));
+      const raw = params.get('seed');
+      if (raw) {
+        if (/^[0-9a-fA-F]+$/.test(raw)) return parseInt(raw, 16) >>> 0;
+        return hashString(raw);
+      }
+      return Math.floor(Math.random() * 0xffffffff);
+    }
+
+    function writeHashState() {
+      const params = new URLSearchParams(location.hash.replace('#', ''));
+      params.set('seed', seed.toString(16));
+      params.set('d', densityEl.value);
+      params.set('dr', driftEl.value);
+      params.set('h', hazeEl.value);
+      location.hash = params.toString();
+    }
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width * DPR);
+      canvas.height = Math.floor(rect.height * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function createThread() {
+      const w = canvas.width / DPR;
+      const h = canvas.height / DPR;
+      const angle = rng() * Math.PI * 2;
+      const radius = 10 + rng() * 18;
+      const speed = 0.45 + rng() * 0.8;
+      return {
+        x: w * 0.5 + Math.cos(angle) * radius,
+        y: h * 0.5 + Math.sin(angle) * radius,
+        px: w * 0.5,
+        py: h * 0.5,
+        angle: angle + Math.PI * 0.5,
+        phase: rng() * Math.PI * 2,
+        life: 140 + Math.floor(rng() * 240),
+        hue: 170 + rng() * 110,
+        width: 0.7 + rng() * 1.6,
+        speed,
+        tail: 14 + Math.floor(rng() * 20)
+      };
+    }
+
+    function rebuildField() {
+      particles = [];
+      const target = Math.floor(180 * densityEl.value);
+      for (let i = 0; i < target; i++) particles.push(createThread());
+      countLine.textContent = `threads: ${particles.length}`;
+      state.t = 0;
+      writeHashState();
+      seedLine.textContent = 'seed: ' + seed.toString(16).padStart(8, '0');
+    }
+
+    function fieldVector(x, y, t) {
+      const w = canvas.width / DPR;
+      const h = canvas.height / DPR;
+      const nx = (x / w - 0.5) * 1.9;
+      const ny = (y / h - 0.5) * 1.9;
+      const a = Math.sin((nx + t * 0.007) * 2.0) + Math.cos((ny - t * 0.008) * 2.2);
+      const b = Math.cos((ny + t * 0.011) * 1.8) + Math.sin((nx - t * 0.006) * 1.6);
+      const mag = Math.sqrt(nx * nx + ny * ny) + 0.05;
+      const c = (Math.cos((mag * 3.2) + t * 0.006) + 1) * 0.5;
+      return {
+        x: (a + c * 0.5) * 0.45,
+        y: (b + (1 - c) * 0.4) * 0.45
+      };
+    }
+
+    function step(dt) {
+      const w = canvas.width / DPR;
+      const h = canvas.height / DPR;
+      ctx.fillStyle = 'rgba(5, 6, 12, 0.12)';
+      ctx.fillRect(0, 0, w, h);
+
+      const d = Number(densityEl.value);
+      const drift = Number(driftEl.value);
+      const haze = Number(hazeEl.value);
+
+      state.t += dt;
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.phase += 0.0022 * drift + Math.sin(state.t * 0.0008 + p.hue) * 0.0004;
+
+        const v = fieldVector(p.x, p.y, state.t * 0.15 + p.phase);
+        let ox = p.x;
+        let oy = p.y;
+
+        if (state.pointer.active) {
+          const dx = state.pointer.x - p.x;
+          const dy = state.pointer.y - p.y;
+          const dist = Math.hypot(dx, dy) + 1;
+          const pull = Math.min(2.4, 140 / dist) * haze * 0.55;
+          p.x += (dx / dist) * pull;
+          p.y += (dy / dist) * pull;
+        }
+
+        p.x += (Math.cos(v.x) + (Math.cos(p.phase) * 0.35)) * drift * 0.85;
+        p.y += (Math.sin(v.y) + (Math.sin(p.phase) * 0.35)) * drift * 0.85;
+
+        const turn = 0.014 * Math.cos((p.hue + p.phase) * 0.04);
+        p.angle += turn;
+
+        p.x += Math.cos(p.angle) * p.speed;
+        p.y += Math.sin(p.angle) * p.speed;
+
+        const edgeForce = Math.min(1, Math.max(0, p.x / w));
+        if (p.x < -20 || p.x > w + 20 || p.y < -20 || p.y > h + 20 || p.life-- <= 0) {
+          const next = createThread();
+          particles[i] = next;
+          continue;
+        }
+
+        const a = (p.life / 220) * 0.9;
+        const alpha = Math.max(0.07, a) * (0.6 + (edgeForce * 0.4));
+        ctx.strokeStyle = `hsla(${p.hue + (state.t * 0.02)}, 90%, 78%, ${alpha.toFixed(3)})`;
+        ctx.lineWidth = p.width * 0.6;
+
+        ctx.beginPath();
+        ctx.moveTo(ox, oy);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+
+        p.px = p.x;
+        p.py = p.y;
+      }
+
+      countLine.textContent = `threads: ${particles.length}`;
+    }
+
+    let last = performance.now();
+    let fps = 0;
+
+    function draw() {
+      const now = performance.now();
+      const dt = now - last;
+      last = now;
+      fps = 0.9 * fps + 0.1 * (1000 / Math.max(12, dt));
+      fpsLine.textContent = `fps: ${fps.toFixed(0)}`;
+
+      if (!state.paused) step(12);
+      if (Math.random() < 0.16 * Number(densityEl.value)) {
+        for (let n = 0; n < 2; n++) {
+          particles.push(createThread());
+          if (particles.length > 320 * Number(densityEl.value)) particles.shift();
+        }
+        countLine.textContent = `threads: ${particles.length}`;
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    function init() {
+      resize();
+      densityEl.value = '1';
+      driftEl.value = '1.1';
+      hazeEl.value = '1.0';
+      setSeed(seed);
+      requestAnimationFrame(draw);
+    }
+
+    function reseed() {
+      setSeed(Math.floor(Math.random() * 0xffffffff));
+    }
+
+    function pointerPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const px = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+      const py = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+      return { x: px, y: py };
+    }
+
+    canvas.addEventListener('mousemove', (e) => {
+      const p = pointerPos(e);
+      state.pointer.vx = p.x - state.pointer.x;
+      state.pointer.vy = p.y - state.pointer.y;
+      state.pointer.x = p.x;
+      state.pointer.y = p.y;
+      state.pointer.active = true;
+      state.pointer.life = 12;
+      for (let i = 0; i < 2; i++) {
+        if (Math.random() < 0.35) {
+          const t = createThread();
+          t.x = p.x;
+          t.y = p.y;
+          particles.push(t);
+          if (particles.length > 420) particles.shift();
+        }
+      }
+    });
+
+    canvas.addEventListener('mouseleave', () => state.pointer.active = false);
+    canvas.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      const p = pointerPos(e);
+      for (let k = 0; k < 6; k++) {
+        const t = createThread();
+        t.x = p.x;
+        t.y = p.y;
+        t.width *= 1.4;
+        particles.push(t);
+      }
+      if (particles.length > 500) particles = particles.slice(-400);
+    });
+    canvas.addEventListener('touchstart', (e) => {
+      const p = pointerPos(e);
+      for (let k = 0; k < 8; k++) {
+        const t = createThread();
+        t.x = p.x;
+        t.y = p.y;
+        t.width *= 1.5;
+        particles.push(t);
+      }
+      if (particles.length > 500) particles = particles.slice(-420);
+    }, { passive: true });
+
+    pauseBtn.addEventListener('click', () => {
+      state.paused = !state.paused;
+      pauseBtn.textContent = state.paused ? 'Resume' : 'Pause';
+      pauseBtn.classList.toggle('is-paused', state.paused);
+    });
+
+    reseedBtn.addEventListener('click', reseed);
+
+    copyBtn.addEventListener('click', async () => {
+      writeHashState();
+      try {
+        await navigator.clipboard.writeText(location.href);
+        copyBtn.textContent = 'Copied';
+        setTimeout(() => copyBtn.textContent = 'Copy share link', 900);
+      } catch (e) {
+        copyBtn.textContent = 'Copy failed';
+        setTimeout(() => copyBtn.textContent = 'Copy share link', 900);
+      }
+    });
+
+    saveBtn.addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = `umbra-rhythm-${seed.toString(16)}.png`;
+      a.click();
+    });
+
+    function syncFromHash() {
+      const params = new URLSearchParams(location.hash.replace('#', ''));
+      if (params.get('d')) densityEl.value = clamp(Number(params.get('d')), Number(densityEl.min), Number(densityEl.max));
+      if (params.get('dr')) driftEl.value = clamp(Number(params.get('dr')), Number(driftEl.min), Number(driftEl.max));
+      if (params.get('h')) hazeEl.value = clamp(Number(params.get('h')), Number(hazeEl.min), Number(hazeEl.max));
+      if (params.get('seed')) seed = parseInt(params.get('seed'), 16) >>> 0;
+      setSeed(seed);
+    }
+
+    function clamp(v, min, max) {
+      if (!Number.isFinite(v)) return min;
+      return Math.min(max, Math.max(min, v));
+    }
+
+    densityEl.addEventListener('input', () => { rebuildField(); });
+    driftEl.addEventListener('input', () => { writeHashState(); });
+    hazeEl.addEventListener('input', () => { writeHashState(); });
+    window.addEventListener('hashchange', syncFromHash);
+
+    syncFromHash();
+    init();
+  </script>
+</body>
+</html>

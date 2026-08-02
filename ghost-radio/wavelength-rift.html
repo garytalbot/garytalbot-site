@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wavelength Rift</title>
+  <meta
+    name="description"
+    content="Wavelength Rift — a deterministic, seeded pointer ritual where phase rivers stretch and contract in response to distance, with live seed sharing and still-frame export."
+  />
+  <meta name="theme-color" content="#090b12" />
+  <meta name="robots" content="index,follow" />
+  <meta property="og:title" content="Wavelength Rift" />
+  <meta
+    property="og:description"
+    content="A ghostly generative canvas where nodes bend toward your cursor and drift away in fractal bursts."
+  />
+  <meta property="og:url" content="https://garytalbot.github.io/ghost-radio/wavelength-rift.html" />
+  <meta property="og:image" content="https://garytalbot.github.io/ghost-radio/share-card.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Wavelength Rift" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090b12;
+      --ink: #e7efff;
+      --soft: #95a1bf;
+      --a: #8de8ff;
+      --b: #ff94d7;
+      --line: rgba(255, 255, 255, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      color: var(--ink);
+      font: 14px/1.4 "Trebuchet MS", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 24% 0%, rgba(141, 232, 255, 0.12), transparent 34%),
+        radial-gradient(circle at 82% 16%, rgba(255, 148, 215, 0.11), transparent 34%),
+        #090b12;
+    }
+
+    canvas {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+
+    .panel {
+      position: fixed;
+      inset: 12px;
+      top: 12px;
+      z-index: 2;
+      max-width: min(880px, calc(100vw - 24px));
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(8, 11, 19, 0.5);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 80px rgba(0, 0, 0, 0.5);
+      display: grid;
+      gap: 8px;
+    }
+
+    .panel h1 {
+      margin: 0;
+      font: 700 18px/1.2 "Trebuchet MS", "Segoe UI", sans-serif;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #f2f8ff;
+    }
+
+    .panel p {
+      margin: 0;
+      color: var(--soft);
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 999px;
+      padding: 8px 11px;
+      background: rgba(255, 255, 255, 0.04);
+      color: #fff;
+      text-decoration: none;
+      font: 700 12px/1 sans-serif;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+      user-select: none;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--a) 35%, white 65%);
+      box-shadow: 0 0 0 1px rgba(141, 232, 255, 0.18);
+    }
+
+    .btn.active {
+      border-color: color-mix(in srgb, var(--b) 45%, white 55%);
+      box-shadow: 0 0 0 1px rgba(255, 148, 215, 0.25);
+    }
+
+    .inline {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      color: var(--soft);
+      font-size: 12px;
+    }
+
+    .inline .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--a);
+      display: inline-block;
+      box-shadow: 0 0 10px color-mix(in srgb, var(--a) 60%, transparent);
+    }
+
+    .stat {
+      margin-right: 10px;
+      color: #e0ebff;
+      font-weight: 600;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    label {
+      color: var(--soft);
+      font-size: 12px;
+      width: 88px;
+      display: inline-block;
+    }
+
+    input[type="range"] {
+      width: 170px;
+    }
+
+    .field output {
+      color: #f0f5ff;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    @media (max-width: 680px) {
+      .panel {
+        left: 8px;
+        right: 8px;
+        inset: 8px;
+      }
+      .controls .btn {
+        padding: 7px 10px;
+      }
+      label {
+        width: 70px;
+      }
+      input[type="range"] {
+        width: 120px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+
+  <aside class="panel" aria-live="polite">
+    <h1>Wavelength Rift</h1>
+    <p>A seeded thread ritual. Move the cursor and listen with your eyes.</p>
+    <div class="controls">
+      <button class="btn" id="pauseBtn">Pause drift</button>
+      <button class="btn" id="randomBtn">Rerandomize seed</button>
+      <button class="btn" id="copyBtn">Copy ritual link</button>
+      <button class="btn" id="saveBtn">Save still</button>
+      <button class="btn" id="modeA" data-mode="orbit">Mode: orbit</button>
+      <button class="btn" id="modeB" data-mode="rift">Mode: rift</button>
+      <button class="btn" id="modeC" data-mode="vein">Mode: vein</button>
+      <a class="btn" href="./" target="_self">Return to Ghost Radio</a>
+    </div>
+    <div class="inline">
+      <span class="dot"></span>
+      <span class="stat" id="seedVal">Seed: —</span>
+      <span class="stat" id="countVal">Nodes: 0</span>
+      <span class="stat" id="stateVal">State: orbit</span>
+      <span id="tapVal">Pointer: idle</span>
+    </div>
+
+    <div class="field">
+      <div class="field-row">
+        <label for="density">Density</label>
+        <input id="density" type="range" min="220" max="680" value="360" step="10" />
+        <output id="densityOut">360</output>
+      </div>
+      <div class="field-row">
+        <label for="flow">Flow</label>
+        <input id="flow" type="range" min="0.2" max="2.4" value="1.0" step="0.1" />
+        <output id="flowOut">1.0</output>
+      </div>
+      <div class="field-row">
+        <label for="chaos">Chaos</label>
+        <input id="chaos" type="range" min="0" max="1.0" value="0.35" step="0.01" />
+        <output id="chaosOut">0.35</output>
+      </div>
+    </div>
+  </aside>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    const seedEl = document.getElementById('seedVal');
+    const countEl = document.getElementById('countVal');
+    const stateEl = document.getElementById('stateVal');
+    const tapEl = document.getElementById('tapVal');
+
+    const densityInput = document.getElementById('density');
+    const flowInput = document.getElementById('flow');
+    const chaosInput = document.getElementById('chaos');
+    const densityOut = document.getElementById('densityOut');
+    const flowOut = document.getElementById('flowOut');
+    const chaosOut = document.getElementById('chaosOut');
+
+    const pauseBtn = document.getElementById('pauseBtn');
+    const randomBtn = document.getElementById('randomBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const saveBtn = document.getElementById('saveBtn');
+
+    const modeButtons = [...document.querySelectorAll('[data-mode]')];
+
+    const TWO_PI = Math.PI * 2;
+    const query = new URLSearchParams(location.search);
+    const parsedSeed = Number(query.get('seed'));
+
+    let seed = Number.isFinite(parsedSeed) ? Math.abs(parsedSeed) : randomSeed();
+
+    const setQuerySeed = () => {
+      query.set('seed', String(seed));
+      const next = query.toString();
+      const nextUrl = `${location.pathname}?${next}`;
+      history.replaceState(null, '', nextUrl);
+      seedEl.textContent = `Seed: ${seed}`;
+      return location.href;
+    };
+
+    function randomSeed() {
+      return (Math.random() * 2 ** 32) >>> 0;
+    }
+
+    function setSeed(next) {
+      seed = next >>> 0;
+      rng = mulberry32(seed);
+      buildNodes();
+      setQuerySeed();
+    }
+
+    function mulberry32(a) {
+      return function () {
+        let t = (a += 0x6D2B79F5);
+        t = Math.imul(t ^ (t >>> 15), 1 | t);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return (((t ^ (t >>> 14)) >>> 0) / 4294967296);
+      };
+    }
+
+    let rng = mulberry32(seed);
+
+    const palette = ['#8de8ff', '#ff94d7', '#d1ff72', '#ffffff', '#8be3ff'];
+
+    let dpr = Math.max(1, window.devicePixelRatio || 1);
+    let w = 0;
+    let h = 0;
+    let t = 0;
+    let paused = false;
+    let mode = 'orbit';
+
+    const pointer = {
+      x: 0.5,
+      y: 0.5,
+      down: false,
+      active: false,
+    };
+
+    const nodes = [];
+    const sparks = [];
+
+    function resize() {
+      dpr = Math.max(1, window.devicePixelRatio || 1);
+      w = innerWidth;
+      h = innerHeight;
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+    }
+
+    function buildNodes() {
+      const count = Number(densityInput.value);
+      nodes.length = 0;
+      for (let i = 0; i < count; i += 1) {
+        nodes.push({
+          x: rng() * w,
+          y: rng() * h,
+          px: 0,
+          py: 0,
+          life: Math.floor(120 + rng() * 220),
+          hue: Math.floor(rng() * palette.length),
+          phase: rng() * TWO_PI,
+          speed: 0.4 + rng() * 0.9,
+          weight: 1 + rng() * 1.7,
+        });
+      }
+      countEl.textContent = `Nodes: ${count}`;
+    }
+
+    function noise(ix, iy) {
+      return Math.sin(ix * 0.003 + t * 0.002 + Math.cos(iy * 0.002 + mode.length)) + Math.cos((iy - ix) * 0.0025 - t * 0.0015);
+    }
+
+    function updateNode(n) {
+      const cx = pointer.active ? pointer.x * w : w * 0.5;
+      const cy = pointer.active ? pointer.y * h : h * 0.5;
+      const dx = cx - n.x;
+      const dy = cy - n.y;
+      const d = Math.hypot(dx, dy) || 1;
+      const attract = (flowInput.value / 25) * (1 + pointer.active * 2);
+      const chaos = chaosInput.value;
+      const phase = noise(n.x, n.y) * chaos;
+
+      n.px = n.x;
+      n.py = n.y;
+
+      let vx = 0;
+      let vy = 0;
+
+      if (mode === 'orbit') {
+        const orbit = Math.atan2(dy, dx);
+        vx += Math.cos(orbit + phase) * attract;
+        vy += Math.sin(orbit + phase) * attract;
+        vx += Math.cos((n.x + t * 0.8 + n.phase) * 0.002) * chaos * 1.2;
+        vy += Math.sin((n.y + t * 0.9 + n.phase) * 0.002) * chaos * 1.2;
+      } else if (mode === 'rift') {
+        const pull = (1 / (d / 140 + 0.12));
+        vx += (dx / d) * attract * pull * (1.2 + chaos);
+        vy += (dy / d) * attract * pull * (1.2 + chaos);
+        vx += Math.cos((n.phase * 16 + t * 0.015) + noise(n.x, n.y)) * chaos * 1.6;
+        vy += Math.sin((n.phase * 16 - t * 0.012) + noise(n.y, n.x)) * chaos * 1.6;
+      } else {
+        // vein
+        const swirl = noise(n.x * 0.9, n.y * 0.9) * TWO_PI;
+        const orbit = Math.atan2(dy, dx);
+        vx += Math.cos(swirl + orbit) * attract * (1.25 + chaos);
+        vy += Math.sin(swirl + orbit) * attract * (1.25 + chaos);
+        const drift = 1 - Math.min(1, d / Math.min(w, h));
+        vx += (Math.sin(n.phase + t * 0.001) * drift) * 1.8;
+        vy += (Math.cos(n.phase - t * 0.0014) * drift) * 1.8;
+      }
+
+      vx *= n.speed;
+      vy *= n.speed;
+
+      n.x += vx;
+      n.y += vy;
+
+      if (n.x < 0) n.x += w;
+      if (n.x >= w) n.x -= w;
+      if (n.y < 0) n.y += h;
+      if (n.y >= h) n.y -= h;
+
+      n.life -= 1;
+      if (n.life <= 0) {
+        n.life = Math.floor(120 + rng() * 220);
+        n.hue = (n.hue + 1 + Math.floor(rng() * 2)) % palette.length;
+        n.phase = rng() * TWO_PI;
+      }
+
+      const alpha = 0.17 + Math.min(1, chaos) * 0.55;
+      const col = palette[n.hue];
+      ctx.strokeStyle = `${col}${Math.floor(alpha * 255).toString(16).padStart(2, '0')}`;
+      ctx.lineWidth = Math.max(0.6, n.weight * (0.8 + chaos));
+      ctx.beginPath();
+      ctx.moveTo(n.px, n.py);
+      ctx.lineTo(n.x, n.y);
+      ctx.stroke();
+    }
+
+    function drawField() {
+      ctx.fillStyle = 'rgba(9, 11, 18, 0.12)';
+      ctx.fillRect(0, 0, w, h);
+      nodes.forEach(updateNode);
+    }
+
+    function spawnSpark(x, y) {
+      for (let i = 0; i < 18; i += 1) {
+        const a = (i / 18) * TWO_PI + rng() * 0.2;
+        sparks.push({
+          x,
+          y,
+          r: 2 + rng() * 20,
+          life: 36 + rng() * 24,
+          a,
+          s: 0.7 + rng() * 1.5,
+          hue: Math.floor(rng() * palette.length),
+        });
+      }
+    }
+
+    function drawSparks() {
+      for (let i = sparks.length - 1; i >= 0; i -= 1) {
+        const p = sparks[i];
+        p.life -= 1;
+        p.r += p.s;
+        p.a += 0.015;
+        ctx.beginPath();
+        ctx.strokeStyle = `${palette[p.hue]}33`;
+        ctx.lineWidth = 1;
+        ctx.arc(p.x, p.y, p.r, 0, TWO_PI);
+        ctx.stroke();
+
+        if (p.life <= 0) {
+          sparks.splice(i, 1);
+        }
+      }
+    }
+
+    function tick() {
+      if (!paused) {
+        t += 1;
+        drawField();
+        drawSparks();
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    function updateModes(next) {
+      mode = next;
+      modeButtons.forEach((button) => {
+        button.classList.toggle('active', button.dataset.mode === mode);
+      });
+      stateEl.textContent = `State: ${mode}`;
+      buildNodes();
+    }
+
+    function bindEvents() {
+      pauseBtn.addEventListener('click', () => {
+        paused = !paused;
+        pauseBtn.textContent = paused ? 'Resume drift' : 'Pause drift';
+      });
+
+      randomBtn.addEventListener('click', () => {
+        setSeed(randomSeed());
+      });
+
+      copyBtn.addEventListener('click', async () => {
+        const url = setQuerySeed();
+        try {
+          await navigator.clipboard.writeText(url);
+          copyBtn.textContent = 'Link copied';
+          setTimeout(() => (copyBtn.textContent = 'Copy ritual link'), 1400);
+        } catch (_) {
+          copyBtn.textContent = 'Copy blocked';
+          setTimeout(() => (copyBtn.textContent = 'Copy ritual link'), 1400);
+        }
+      });
+
+      saveBtn.addEventListener('click', () => {
+        const link = document.createElement('a');
+        link.download = `wavelength-rift-${seed}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+
+      [densityInput, flowInput, chaosInput].forEach((input) => {
+        input.addEventListener('input', () => {
+          densityOut.textContent = densityInput.value;
+          flowOut.textContent = Number(flowInput.value).toFixed(1);
+          chaosOut.textContent = Number(chaosInput.value).toFixed(2);
+
+          if (input === densityInput) {
+            buildNodes();
+          }
+        });
+      });
+
+      densityOut.textContent = densityInput.value;
+      flowOut.textContent = Number(flowInput.value).toFixed(1);
+      chaosOut.textContent = Number(chaosInput.value).toFixed(2);
+
+      modeButtons.forEach((btn) => {
+        btn.addEventListener('click', () => updateModes(btn.dataset.mode));
+      });
+
+      const move = (event) => {
+        const rect = canvas.getBoundingClientRect();
+        pointer.x = (event.clientX - rect.left) / rect.width;
+        pointer.y = (event.clientY - rect.top) / rect.height;
+        pointer.active = true;
+        tapEl.textContent = `Pointer: ${Math.round(pointer.x * 100)}%, ${Math.round(pointer.y * 100)}%`;
+      };
+
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerenter', move);
+      window.addEventListener('pointerleave', () => {
+        pointer.active = false;
+        tapEl.textContent = 'Pointer: idle';
+      });
+
+      window.addEventListener('pointerdown', (event) => {
+        pointer.down = true;
+        spawnSpark(event.clientX, event.clientY);
+      });
+
+      window.addEventListener('pointerup', () => {
+        pointer.down = false;
+      });
+
+      window.addEventListener('resize', () => {
+        const oldMode = mode;
+        resize();
+        buildNodes();
+        stateEl.textContent = `State: ${oldMode}`;
+      });
+    }
+
+    function init() {
+      seed = isFinite(seed) ? seed >>> 0 : randomSeed() >>> 0;
+      rng = mulberry32(seed);
+      resize();
+      buildNodes();
+      updateModes('orbit');
+      setQuerySeed();
+      bindEvents();
+      tick();
+    }
+
+    init();
+  </script>
+</body>
+</html>

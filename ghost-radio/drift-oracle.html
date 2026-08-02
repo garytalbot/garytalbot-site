@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="description"
+    content="Drift Oracle is a haunted side chamber: pointer and click summon luminous drift-threads that rewrite their phase against a low-frequency carrier."
+  />
+  <meta name="theme-color" content="#090a11" />
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  <title>Ghost Radio — Drift Oracle</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090a11;
+      --line: rgba(255, 255, 255, 0.16);
+      --text: #f2f5ff;
+      --muted: #a9b4cc;
+      --a: #8de8ff;
+      --b: #ff94d7;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 15% 12%, rgba(141, 232, 255, .14), transparent 32%),
+        radial-gradient(circle at 85% 78%, rgba(255, 148, 215, .12), transparent 28%),
+        linear-gradient(180deg, #070a10 0%, #090b12 52%, #06070f 100%);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    .shell {
+      width: min(1120px, 100vw - 20px);
+      margin: 10px auto;
+      display: grid;
+      gap: 10px;
+      min-height: calc(100vh - 20px);
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(12, 16, 24, .56);
+      backdrop-filter: blur(8px);
+    }
+
+    .toolbar {
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.06rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #ecf6ff;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      max-width: 64ch;
+      color: var(--muted);
+      line-height: 1.35;
+      font-size: .9rem;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    button, .btn-link, input {
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font: inherit;
+    }
+
+    .btn-link {
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    label {
+      font-size: .8rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #dbe6ff;
+      margin-right: 4px;
+    }
+
+    input[type="range"] {
+      width: 130px;
+      accent-color: var(--a);
+      border: none;
+      padding: 0;
+      border-radius: 8px;
+      background: transparent;
+    }
+
+    button {
+      cursor: pointer;
+      transition: transform .12s ease, border-color .12s ease;
+    }
+
+    button:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--a) 35%, white 65%); }
+
+    .workspace {
+      position: relative;
+      overflow: hidden;
+      min-height: calc(100vh - 250px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 14px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      image-rendering: crisp-edges;
+    }
+
+    .status {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      pointer-events: none;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      font-size: .8rem;
+      color: #d4ddf4;
+      z-index: 2;
+    }
+
+    .pill {
+      border: 1px solid rgba(255, 255, 255, .22);
+      border-radius: 10px;
+      padding: 6px 10px;
+      background: rgba(0, 0, 0, .4);
+      white-space: nowrap;
+    }
+
+    .tip {
+      margin-top: 4px;
+      padding: 0 12px 8px;
+      color: var(--muted);
+      font-size: .76rem;
+      line-height: 1.35;
+    }
+
+    @media (max-width: 980px) {
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+      .controls { justify-content: flex-start; }
+      input[type="range"] { width: 120px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="panel toolbar">
+      <div>
+        <h1>Drift Oracle</h1>
+        <p class="subtitle">
+          A haunted routing toy for post-digital static. Click to seed a drift-thread. Move your pointer and
+          let orbiting frequency seams fold back on themselves.
+        </p>
+      </div>
+      <div class="controls">
+        <label for="density">Density</label>
+        <input id="density" type="range" min="90" max="360" value="220" step="10" />
+
+        <label for="chaos">Chaos</label>
+        <input id="chaos" type="range" min="0.1" max="2.8" value="0.95" step="0.05" />
+
+        <label for="drift">Drift</label>
+        <input id="drift" type="range" min="0.2" max="2.1" value="1.08" step="0.05" />
+
+        <button type="button" id="pauseBtn">Pause</button>
+        <button type="button" id="reseedBtn">Rerandomize</button>
+        <button type="button" id="copyBtn">Copy share link</button>
+        <button type="button" id="saveBtn">Save PNG</button>
+        <a class="btn-link" href="./">← Back to Ghost Radio</a>
+      </div>
+    </section>
+
+    <section class="panel workspace" aria-label="Drift Oracle chamber">
+      <canvas id="sketch"></canvas>
+      <div class="status" aria-live="polite">
+        <span class="pill" id="statePill">seed: loading</span>
+        <span class="pill" id="fpsPill">fps: —</span>
+        <span class="pill" id="threadsPill">threads: —</span>
+      </div>
+      <div class="tip">Click to summon a thread. Tap Space to pause. R to reseed. State is shareable with one hash value.</div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('sketch');
+    const ctx = canvas.getContext('2d');
+    const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+
+    const pauseBtn = document.getElementById('pauseBtn');
+    const reseedBtn = document.getElementById('reseedBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const densityInput = document.getElementById('density');
+    const chaosInput = document.getElementById('chaos');
+    const driftInput = document.getElementById('drift');
+
+    const statePill = document.getElementById('statePill');
+    const fpsPill = document.getElementById('fpsPill');
+    const threadsPill = document.getElementById('threadsPill');
+
+    let w = 0;
+    let h = 0;
+    let paused = false;
+    let last = performance.now();
+    let fpsSamples = [];
+    let seed = 1337;
+    let randomSeed = seedRand(seed);
+    let pointer = { x: 0, y: 0, active: false };
+    let nodes = [];
+
+    const palette = ['#8de8ff', '#ff94d7', '#d1ff72', '#b8c7ff', '#f8de8f', '#9af6ff'];
+
+    function hashState() {
+      const p = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      return p.get('seed') || '1337';
+    }
+
+    function syncState(newSeed) {
+      const p = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      p.set('seed', String(newSeed));
+      window.history.replaceState({}, '', `#${p.toString()}`);
+      statePill.textContent = `seed: ${newSeed}`;
+    }
+
+    function seedRand(s) {
+      let x = Math.max(1, Number(s) || 1) >>> 0;
+      return {
+        next() {
+          x ^= x << 13;
+          x ^= x >>> 17;
+          x ^= x << 5;
+          x >>>= 0;
+          return (x & 0xffffffff) / 0x100000000;
+        }
+      };
+    }
+
+    function rand(min, max) {
+      return min + (max - min) * randomSeed.next();
+    }
+
+    function resize() {
+      w = window.innerWidth - 0;
+      h = window.innerHeight - 0;
+      canvas.width = Math.max(300, Math.floor(w * DPR));
+      canvas.height = Math.max(300, Math.floor((h - 0) * DPR));
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+
+    function buildScene() {
+      nodes = [];
+      const count = Number(densityInput.value);
+      for (let i = 0; i < count; i++) {
+        nodes.push(makeNode(Math.floor(rand(0, w)), Math.floor(rand(0, h))));
+      }
+      threadsPill.textContent = `threads: ${nodes.length}`;
+      statePill.textContent = `seed: ${seed}`;
+    }
+
+    function makeNode(x = rand(0, w), y = rand(0, h)) {
+      const phase = rand(0, Math.PI * 2);
+      return {
+        x,
+        y,
+        px: x,
+        py: y,
+        vx: rand(-0.6, 0.6),
+        vy: rand(-0.6, 0.6),
+        hue: palette[Math.floor(rand(0, palette.length))],
+        size: rand(0.8, 2.4),
+        age: rand(0, 450),
+        drift: rand(0.3, 1.9),
+        phase
+      };
+    }
+
+    function lineThrough(n, t, chaos, drift) {
+      const cx = w / 2;
+      const cy = h / 2;
+      const dx = pointer.active ? (pointer.x - n.x) : (cx - n.x);
+      const dy = pointer.active ? (pointer.y - n.y) : (cy - n.y);
+      const d = Math.hypot(dx, dy) || 1;
+      const nrmx = dx / d;
+      const nrmy = dy / d;
+
+      const carrier = Math.sin((n.phase * 2) + (t * 0.00045 * drift) + (n.drift * 0.8));
+      const orbital = Math.cos((n.phase * 1.5) + (t * 0.00022 * (drift * 1.2) + n.age * 0.001));
+      const pull = Math.max(0.04, (chaos * 0.75 * (pointer.active ? 1 : 0.45)) / Math.max(90, d));
+
+      const sx = n.vx + (nrmx * pull * d * 0.002) + (orbital * 0.15);
+      const sy = n.vy + (nrmy * pull * d * 0.002) - (carrier * 0.04 * chaos) + (orbital * 0.09);
+
+      n.vx = n.vx * 0.988 + sx * 0.012;
+      n.vy = n.vy * 0.988 + sy * 0.012;
+
+      n.px = n.x;
+      n.py = yClamp(n.y);
+      n.x += n.vx;
+      n.y += n.vy;
+
+      const wallPush = 0.22;
+      if (n.x < 0) { n.x = 0; n.vx *= -wallPush; }
+      if (n.x > w) { n.x = w; n.vx *= -wallPush; }
+      if (n.y < 0) { n.y = 0; n.vy *= -wallPush; }
+      if (n.y > h) { n.y = h; n.vy *= -wallPush; }
+
+      n.phase += 0.002 + (chaos * 0.008);
+      n.age += 1 + chaos;
+
+      if (n.age > (840 + n.size * 120)) {
+        Object.assign(n, makeNode(Math.floor(rand(0, w)), Math.floor(rand(0, h))));
+      }
+    }
+
+    function yClamp(v) { return Math.min(h, Math.max(0, v)); }
+
+    function drawFrame(time) {
+      if (paused) {
+        requestAnimationFrame(drawFrame);
+        return;
+      }
+
+      const chaos = Number(chaosInput.value);
+      const driftFactor = Number(driftInput.value);
+
+      ctx.fillStyle = 'rgba(6, 8, 14, 0.16)';
+      ctx.fillRect(0, 0, w, h);
+
+      for (const n of nodes) {
+        n.px = n.x;
+        n.py = n.y;
+        stepNode(n, time, chaos, driftFactor);
+
+        const alpha = Math.max(0.06, 0.55 - Math.hypot(n.x - pointer.x, n.y - pointer.y) / Math.max(w, h));
+        ctx.strokeStyle = `${n.hue}${Math.max(10, Math.floor(alpha * 170)).toString(16).padStart(2, '0')}`;
+        ctx.lineWidth = n.size;
+        ctx.beginPath();
+        ctx.moveTo(n.px, n.py);
+        ctx.lineTo(n.x, n.y);
+        ctx.stroke();
+      }
+
+      if (pointer.active) {
+        const t = (time * 0.001) % 1;
+        const radius = 8 + t * 26;
+        ctx.strokeStyle = 'rgba(141, 232, 255, .24)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(pointer.x, pointer.y, radius, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      const dt = Math.max(16, time - last);
+      last = time;
+      const fps = 1000 / dt;
+      fpsSamples.push(fps);
+      if (fpsSamples.length > 14) fpsSamples.shift();
+      const avg = Math.round(fpsSamples.reduce((a, b) => a + b, 0) / fpsSamples.length);
+      fpsPill.textContent = `fps: ${avg}`;
+
+      requestAnimationFrame(drawFrame);
+    }
+
+    function stepNode(node, time, chaos, driftFactor) {
+      const cx = w / 2;
+      const cy = h / 2;
+      const targetX = pointer.active ? pointer.x : cx;
+      const targetY = pointer.active ? pointer.y : cy;
+      const dx = targetX - node.x;
+      const dy = targetY - node.y;
+      const d = Math.hypot(dx, dy) || 1;
+      const t = time * 0.0009;
+
+      const field = Math.sin((node.phase * 2.6) + d * 0.008 + t * node.drift);
+      const swirl = Math.cos((node.phase * 1.3) + t * driftFactor + node.age * 0.004);
+
+      const pull = Math.max(0.02, (1 / d) * 10 * (pointer.active ? 1.15 : 0.6) * chaos);
+      const px = (dx / d) * pull * (0.9 + chaos * 0.18) + field * 0.08;
+      const py = (dy / d) * pull * (0.9 + chaos * 0.18) + swirl * 0.07;
+
+      node.vx = (node.vx * 0.96) + (px * 0.04);
+      node.vy = (node.vy * 0.96) + (py * 0.04);
+      node.x += node.vx;
+      node.y += node.vy;
+
+      if (node.x < 2 || node.x > w - 2) { node.vx *= -0.62; }
+      if (node.y < 2 || node.y > h - 2) { node.vy *= -0.62; }
+      if (node.x < 0) node.x = 0;
+      if (node.x > w) node.x = w;
+      if (node.y < 0) node.y = 0;
+      if (node.y > h) node.y = h;
+
+      node.phase += 0.004 + (chaos * 0.0025);
+      node.age += 1;
+      if (node.age > (900 + node.size * 130)) {
+        node.vx = 0;
+        node.vy = 0;
+        Object.assign(node, makeNode(Math.floor(rand(0, w)), Math.floor(rand(0, h))));
+      }
+    }
+
+    function reseed() {
+      seed = Math.floor(Math.abs(seedRand(seed).next() * 2_000_000_000)) || 1337;
+      randomSeed = seedRand(seed);
+      buildScene();
+      syncState(seed);
+      ctx.clearRect(0, 0, w, h);
+      drawSeedBurst();
+    }
+
+    function drawSeedBurst() {
+      ctx.fillStyle = 'rgba(6, 8, 14, 1)';
+      ctx.fillRect(0, 0, w, h);
+      for (let i = 0; i < nodes.length; i += 8) {
+        const n = nodes[i];
+        const x = n.x;
+        const y = n.y;
+        ctx.fillStyle = n.hue;
+        ctx.globalAlpha = 0.08;
+        ctx.beginPath();
+        ctx.arc(x, y, 8 + (i % 6), 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function pointerMove(ev) {
+      const rect = canvas.getBoundingClientRect();
+      const x = ev.clientX - rect.left;
+      const y = ev.clientY - rect.top;
+      pointer = { x: (x / rect.width) * w, y: (y / rect.height) * h, active: true };
+      if (ev.type === 'pointerdown') {
+        const injected = makeNode(pointer.x, pointer.y);
+        injected.size *= 2.2;
+        nodes.push(injected);
+        if (nodes.length > Number(densityInput.value) + 70) {
+          nodes.shift();
+        }
+        threadsPill.textContent = `threads: ${nodes.length}`;
+      }
+    }
+
+    function pointerLeave() {
+      pointer.active = false;
+    }
+
+    copyBtn.addEventListener('click', async () => {
+      try {
+        const target = `${location.origin}${location.pathname}${location.hash}`;
+        await navigator.clipboard.writeText(target);
+        copyBtn.textContent = 'Copied ✅';
+        setTimeout(() => copyBtn.textContent = 'Copy share link', 1200);
+      } catch (err) {
+        copyBtn.textContent = 'Copy failed';
+        setTimeout(() => copyBtn.textContent = 'Copy share link', 1200);
+      }
+    });
+
+    saveBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = `drift-oracle-${seed}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+
+    pauseBtn.addEventListener('click', () => {
+      paused = !paused;
+      pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+      if (!paused) requestAnimationFrame(drawFrame);
+    });
+
+    reseedBtn.addEventListener('click', reseed);
+
+    densityInput.addEventListener('input', () => {
+      buildScene();
+    });
+
+    chaosInput.addEventListener('input', () => {
+      // no-op, live update
+    });
+
+    driftInput.addEventListener('input', () => {
+      // no-op, live update
+    });
+
+    document.addEventListener('keydown', (ev) => {
+      if (ev.code === 'Space') {
+        ev.preventDefault();
+        paused = !paused;
+        pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+        if (!paused) requestAnimationFrame(drawFrame);
+      }
+      if (ev.code === 'KeyR') {
+        reseed();
+      }
+    });
+
+    canvas.addEventListener('pointermove', pointerMove);
+    canvas.addEventListener('pointerdown', pointerMove);
+    canvas.addEventListener('pointerleave', pointerLeave);
+    canvas.addEventListener('pointercancel', pointerLeave);
+
+    function init() {
+      seed = Number(hashState()) || 1337;
+      randomSeed = seedRand(seed);
+      resize();
+      buildScene();
+      syncState(seed);
+      drawSeedBurst();
+      requestAnimationFrame(drawFrame);
+      window.addEventListener('resize', () => {
+        resize();
+        buildScene();
+      });
+      window.addEventListener('hashchange', () => {
+        const next = Number(hashState()) || seed;
+        if (next === seed) return;
+        seed = next;
+        randomSeed = seedRand(seed);
+        buildScene();
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>

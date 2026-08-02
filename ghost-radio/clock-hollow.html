@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ghost Radio — Clock Hollow</title>
+  <meta
+    name="description"
+    content="Clock Hollow is an experimental side chamber where moving echoes orbit a silent center and collapse into new pulses.">
+  <meta name="theme-color" content="#090b12" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070912;
+      --panel: rgba(11, 13, 22, 0.82);
+      --line: rgba(255, 255, 255, 0.1);
+      --text: #f4f7ff;
+      --muted: #a9b1c8;
+      --accent: #8de8ff;
+      --accent-2: #ff94d7;
+      --accent-3: #d1ff72;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 10%, rgba(141, 232, 255, 0.11), transparent 34%),
+        radial-gradient(circle at 85% 82%, rgba(255, 148, 215, 0.1), transparent 36%),
+        linear-gradient(180deg, #05070d 0%, #090b12 48%, #05060b 100%);
+      overflow: hidden;
+    }
+
+    .shell {
+      width: min(1024px, calc(100vw - 18px));
+      margin: 10px auto;
+      display: grid;
+      gap: 10px;
+      min-height: calc(100vh - 20px);
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+    }
+
+    .left h1 {
+      margin: 0 0 4px;
+      font-size: 1.05rem;
+    }
+
+    .left p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+      max-width: 64ch;
+      line-height: 1.35;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    label, button, input[type="range"], input[type="text"] {
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      padding: 8px 10px;
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      transition: transform .16s ease, border-color .16s ease, background .16s ease;
+    }
+
+    button:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--accent) 45%, white 55%); }
+
+    .seed { display: flex; align-items: center; gap: 8px; padding: 0 2px; }
+    .seed label { font-size: .82rem; color: #c4ccdf; white-space: nowrap; }
+    .seed input { min-width: 220px; }
+
+    .stage {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      min-height: calc(100vh - 210px);
+      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.045), transparent 55%),
+        linear-gradient(150deg, rgba(141, 232, 255, 0.04), rgba(255, 148, 215, 0.04));
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .hud {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      z-index: 3;
+      pointer-events: none;
+      font-size: .78rem;
+    }
+
+    .chip {
+      color: #d9e0f5;
+      background: rgba(0,0,0,0.45);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 7px 10px;
+      border-radius: 8px;
+      backdrop-filter: blur(3px);
+    }
+
+    .back {
+      position: absolute;
+      right: 12px;
+      top: 12px;
+      z-index: 4;
+      text-decoration: none;
+      color: #d9e3ff;
+      background: rgba(0,0,0,0.38);
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .back:hover { border-color: color-mix(in srgb, var(--accent) 45%, white 55%); }
+
+    @media (max-width: 860px) {
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+      .controls {
+        justify-content: flex-start;
+      }
+      .seed input { min-width: 150px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="toolbar">
+      <div class="left">
+        <h1>Clock Hollow</h1>
+        <p>
+          A side chamber where every move you make is remembered by the clock. Click, drag,
+          and change turbulence to hear the geometry breathe.
+        </p>
+      </div>
+      <div class="controls">
+        <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;">
+          Distort
+          <input id="distort" type="range" min="1" max="120" value="48" />
+        </label>
+        <button id="regenBtn" type="button">Regenerate</button>
+        <button id="pauseBtn" type="button">Pause</button>
+        <button id="copyBtn" type="button">Copy share link</button>
+        <button id="downloadBtn" type="button">Save PNG</button>
+      </div>
+      <div class="seed">
+        <label for="seed">Seed</label>
+        <input id="seed" type="text" />
+      </div>
+    </section>
+
+    <section class="stage" aria-label="Clock Hollow canvas">
+      <a class="back" href="./">Back to Ghost Radio</a>
+      <canvas id="canvas" aria-label="Clock Hollow generative field"></canvas>
+      <div class="hud" id="hud" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const distort = document.getElementById('distort');
+    const regenBtn = document.getElementById('regenBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const seedInput = document.getElementById('seed');
+    const hud = document.getElementById('hud');
+    const DPR = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+
+    let running = true;
+    let time = 0;
+    let rafId = 0;
+
+    const state = {
+      seed: parseInt(readHash('seed'), 10),
+      particles: [],
+      beacons: [],
+      width: 0,
+      height: 0,
+      cx: 0,
+      cy: 0,
+    };
+
+    function randFromSeed(seed) {
+      let s = seed >>> 0 || 1234567;
+      return () => {
+        s ^= s << 13;
+        s ^= s >>> 17;
+        s ^= s << 5;
+        return ((s >>> 0) / 0x100000000);
+      };
+    }
+
+    function parseSeed(raw) {
+      const n = Number(raw);
+      if (Number.isFinite(n)) {
+        return Math.abs(Math.floor(n)) % 2147483647 || 1;
+      }
+      return 1 + Math.floor(Math.random() * 2147483647);
+    }
+
+    function readHash(key) {
+      const frag = location.hash.slice(1);
+      if (!frag) return null;
+      const p = new URLSearchParams(frag);
+      return p.get(key);
+    }
+
+    function writeHash() {
+      const p = new URLSearchParams();
+      p.set('seed', String(state.seed));
+      p.set('d', String(distort.value));
+      history.replaceState({}, '', `${location.pathname}#${p.toString()}`);
+    }
+
+    function setSeed(value, forceReset = true) {
+      state.seed = parseSeed(value);
+      seedInput.value = String(state.seed);
+      if (forceReset) buildState();
+      writeHash();
+      updateHud('seed set');
+    }
+
+    function resize() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      state.width = rect.width;
+      state.height = rect.height;
+      canvas.width = Math.floor(rect.width * DPR);
+      canvas.height = Math.floor(rect.height * DPR);
+      state.cx = rect.width / 2;
+      state.cy = rect.height / 2;
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      buildState();
+      drawStaticRing();
+    }
+
+    function buildState() {
+      const rand = randFromSeed(state.seed);
+      const count = 180 + Math.floor(rand() * 120);
+      state.particles = Array.from({ length: count }, () => {
+        const angle = rand() * Math.PI * 2;
+        const ring = (0.12 + rand() * 0.7) * Math.min(state.width, state.height) / 2;
+        const orbit = Math.max(25, ring + rand() * 45);
+        const speed = (rand() - 0.5) * 0.0011;
+        const pulse = rand() * Math.PI * 2;
+        return {
+          angle,
+          orbit,
+          speed: speed < 0 ? speed - 0.0002 : speed + 0.0002,
+          pulse,
+          amp: 8 + rand() * 24,
+          phase: rand() * Math.PI * 2,
+          hue: 190 + rand() * 80,
+          tone: rand(),
+          radius: 1.4 + rand() * 2.2,
+        };
+      });
+      updateHud('rebuilt field');
+    }
+
+    function addBeacon(x, y) {
+      const r = Math.random() * 0.75 + 0.6;
+      state.beacons.push({
+        x,
+        y,
+        age: 0,
+        life: 280 + Math.floor(Math.random() * 160),
+        radius: 12,
+        strength: 1 + r,
+      });
+    }
+
+    function drawStaticRing() {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 1;
+      const maxR = Math.min(state.width, state.height) * 0.44;
+      for (let i = 1; i <= 6; i += 1) {
+        ctx.beginPath();
+        const rr = (maxR / 6) * i;
+        ctx.arc(state.cx, state.cy, rr, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function step() {
+      if (!running) {
+        rafId = requestAnimationFrame(step);
+        return;
+      }
+
+      time += 1;
+      const warp = Number(distort.value) * 0.003;
+      const m = Math.min(state.width, state.height);
+
+      ctx.clearRect(0, 0, state.width, state.height);
+      ctx.fillStyle = 'rgba(8,10,16,0.25)';
+      ctx.fillRect(0, 0, state.width, state.height);
+
+      drawStaticRing();
+
+      const cursorPulse = (time * 0.012 + state.seed * 0.02) % (Math.PI * 2);
+
+      // ambient rings
+      for (let k = 0; k < 8; k++) {
+        const rr = (m * 0.5) * (k + 1) / 8 + Math.sin(time * 0.003 + k) * 8;
+        const hue = 195 + k * 7 + Math.sin(time * 0.002) * 12;
+        const alpha = 0.02 + (k / 8) * 0.05;
+        ctx.strokeStyle = `hsla(${hue},95%,75%,${alpha})`;
+        ctx.lineWidth = 1 + (k === 3 ? 1.2 : 0.5);
+        ctx.beginPath();
+        ctx.arc(state.cx, state.cy, Math.max(12, rr), 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      for (const p of state.particles) {
+        p.angle += p.speed;
+        p.pulse += 0.01 + p.tone * 0.016;
+        const spiral = Math.sin(p.pulse + cursorPulse) * warp * 6;
+        const orbit = p.orbit + Math.cos(p.angle * 2.2 + time * 0.002 + p.phase) * (8 + warp * 10) + spiral;
+
+        const x = state.cx + Math.cos(p.angle + state.cx * 0) * orbit;
+        const y = state.cy + Math.sin(p.angle + state.cy * 0) * orbit;
+        const tail = Math.sin(time * 0.015 + p.phase) * 0.85 + 0.15;
+
+        const drift = warp * (0.5 + p.tone);
+        const blink = 0.35 + Math.sin(p.angle * 3 + time * 0.012) * 0.22;
+        const alpha = Math.min(1, (tail * 0.5 + 0.4) * (0.4 + Math.sin(time * 0.004) * 0.2 + 0.6));
+
+        ctx.fillStyle = `hsla(${(p.hue + orbit * 0.15) % 360},80%,${55 + p.tone * 30}%,${alpha * 0.55})`;
+        ctx.beginPath();
+        ctx.arc(x + Math.sin(time * 0.002 + p.phase) * drift, y + Math.cos(time * 0.002 + p.phase) * drift, p.radius * 1.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = `hsla(${(p.hue + 20 + p.tone * 90) % 360},95%,80%,${alpha * 0.24})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(x, y, p.amp + Math.sin(time * 0.012 + p.phase) * 4 + (blink * 6), 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // draw active beacons
+      for (let i = state.beacons.length - 1; i >= 0; i--) {
+        const b = state.beacons[i];
+        b.age += 1;
+        const t = b.age / b.life;
+        if (t >= 1) {
+          state.beacons.splice(i, 1);
+          continue;
+        }
+
+        const scale = 1 + t * 2;
+        const alpha = (1 - t) * 0.45;
+        const w = b.radius * scale;
+        const grad = ctx.createRadialGradient(b.x, b.y, w * 0.2, b.x, b.y, w * 2.8);
+        grad.addColorStop(0, `rgba(141,232,255,${alpha * 0.35})`);
+        grad.addColorStop(1, 'rgba(255,148,215,0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, w * 2.8 * b.strength, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const pulseText = `seed ${state.seed} | distortion ${distort.value} | particles ${state.particles.length} | beacons ${state.beacons.length}`;
+      hud.innerHTML = `
+        <span class="chip">${pulseText}</span>
+        <span class="chip">mode: drift-clock</span>
+      `;
+
+      rafId = requestAnimationFrame(step);
+    }
+
+    function downloadPNG() {
+      const url = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `clock-hollow-${state.seed}.png`;
+      a.click();
+    }
+
+    function copyLink() {
+      writeHash();
+      const url = `${location.origin}${location.pathname}${location.hash}`;
+      navigator.clipboard.writeText(url).then(() => {
+        copyBtn.textContent = 'Copied';
+        setTimeout(() => (copyBtn.textContent = 'Copy share link'), 1200);
+      }).catch(() => {
+        copyBtn.textContent = 'Copy failed';
+        setTimeout(() => (copyBtn.textContent = 'Copy share link'), 1200);
+      });
+    }
+
+    function wire() {
+      const params = new URLSearchParams(location.hash.slice(1));
+      const seeded = parseSeed(params.get('seed'));
+      const d = Number(params.get('d'));
+      setSeed(seeded, false);
+      if (Number.isFinite(d)) {
+        distort.value = String(Math.min(120, Math.max(1, Math.round(d))));
+      } else {
+        distort.value = '48';
+      }
+      seedInput.addEventListener('change', () => setSeed(seedInput.value, true));
+      regenBtn.addEventListener('click', () => setSeed(seedInput.value, true));
+      pauseBtn.addEventListener('click', () => {
+        running = !running;
+        pauseBtn.textContent = running ? 'Pause' : 'Resume';
+      });
+      copyBtn.addEventListener('click', copyLink);
+      downloadBtn.addEventListener('click', downloadPNG);
+      distort.addEventListener('input', writeHash);
+      canvas.addEventListener('pointerdown', (event) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        addBeacon(x, y);
+      });
+      canvas.addEventListener('pointermove', (event) => {
+        if (event.buttons !== 1) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        if (Math.random() < 0.2) addBeacon(x, y);
+      });
+
+      window.addEventListener('resize', resize);
+      window.addEventListener('hashchange', wireHash);
+      wireHash();
+      resize();
+      rafId = requestAnimationFrame(step);
+    }
+
+    function wireHash() {
+      const params = new URLSearchParams(location.hash.slice(1));
+      const hashSeed = params.get('seed');
+      const hashDistort = params.get('d');
+      if (hashSeed && String(state.seed) !== String(parseSeed(hashSeed))) {
+        setSeed(hashSeed, true);
+      }
+      if (hashDistort && Number(hashDistort) >= 1 && Number(hashDistort) <= 120) {
+        distort.value = String(Math.round(Number(hashDistort)));
+      }
+      updateHud('synced hash');
+    }
+
+    function updateHud(status) {
+      hud.textContent = `status: ${status}`;
+    }
+
+    function init() {
+      if (!Number.isFinite(state.seed) || !state.seed) {
+        state.seed = parseSeed(null);
+      }
+      setSeed(state.seed, true);
+      buildState();
+      wire();
+    }
+
+    init();
+  </script>
+</body>
+</html>

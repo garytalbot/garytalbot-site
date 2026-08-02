@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="description"
+    content="Ether Trellis is a haunted, seeded thread lattice. Touch the page and seed chaos, then steer it with density, drift, and chaos dials."
+  />
+  <title>Ether Trellis</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090b12;
+      --line: #25314a;
+      --ink: #d8e2ff;
+      --soft: #95a8ff;
+      --mint: #7ff0ca;
+      --pink: #ff93db;
+      --yellow: #d8ff73;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 16% 11%, rgba(127,240,202,.12), transparent 28%),
+        radial-gradient(circle at 84% 22%, rgba(255,147,217,.12), transparent 30%),
+        var(--bg);
+      color: var(--ink);
+      overflow: hidden;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .hud {
+      position: fixed;
+      inset: 0;
+      padding: 14px;
+      pointer-events: none;
+      z-index: 3;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: minmax(300px, 1fr) auto;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .panel {
+      pointer-events: auto;
+      width: min(940px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 11px 12px;
+      background: rgba(9, 11, 18, .79);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 18px 36px rgba(0,0,0,.35);
+    }
+
+    .title {
+      text-transform: uppercase;
+      letter-spacing: .11em;
+      font-size: 13px;
+      margin: 0 0 4px;
+      color: var(--soft);
+    }
+
+    .panel p {
+      margin: 0;
+      color: #b8c9ff;
+      font-size: 13px;
+      line-height: 1.34;
+    }
+
+    .btnrow { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+    button, a.btn {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      color: var(--ink);
+      font: inherit;
+      font-size: 11px;
+      padding: 8px 11px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform .12s ease, border-color .2s ease;
+      pointer-events: auto;
+      white-space: nowrap;
+    }
+
+    button:hover, a.btn:hover {
+      border-color: color-mix(in hsl, var(--mint), #fff 30%);
+      transform: translateY(-1px);
+    }
+
+    .group {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 9px 0;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 11px;
+      color: #96a9d6;
+      background: rgba(255,255,255,.06);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    input[type="range"] {
+      width: 210px;
+      accent-color: #a2afff;
+      margin: 0;
+    }
+
+    .mini {
+      margin-top: 8px;
+      color: #8fa1cf;
+      font-size: 11px;
+      max-width: 420px;
+    }
+
+    .tone { color: var(--mint); }
+    .tone2 { color: var(--pink); }
+    .tone3 { color: var(--yellow); }
+
+    .seed {
+      margin-top: 8px;
+      font-size: 10px;
+      color: #96a0c6;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: .06em;
+    }
+
+    .return {
+      justify-self: end;
+      pointer-events: auto;
+    }
+
+    .return .btn {
+      background: rgba(127, 240, 202, 0.15);
+      border-color: rgba(127, 240, 202, .36);
+    }
+
+    @media (max-width: 880px) {
+      .row { grid-template-columns: 1fr; }
+      .panel { width: calc(100vw - 28px); min-width: 0; }
+      .return { justify-self: start; }
+      .return .btn { width: fit-content; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <div class="hud">
+    <div class="row">
+      <section class="panel" aria-live="polite" id="statusPanel">
+        <h1 class="title">Ether Trellis</h1>
+        <p>
+          Draw through a seeded thread field. Pointer motion and clicks inject thread packets that bend through a vector wind.
+          Move sliders to reshape velocity, density, and chaos; copy the URL to keep a beautiful accident alive.
+        </p>
+
+        <div class="btnrow" aria-label="Canvas controls">
+          <button id="pauseBtn" type="button">Pause</button>
+          <button id="reseedBtn" type="button">Reseed</button>
+          <button id="randomBtn" type="button">Randomize</button>
+          <button id="clearBtn" type="button">Clear</button>
+          <button id="copyBtn" type="button">Copy Link</button>
+          <button id="saveBtn" type="button">Save Frame</button>
+          <button id="clickModeBtn" type="button" data-active="false">Hold: OFF</button>
+        </div>
+
+        <div class="group">
+          <span class="pill">Chaos <span id="chaosLabel"></span></span>
+          <input id="chaos" type="range" min="0.2" max="1.7" step="0.01" value="0.95" />
+          <span class="pill">Density <span id="densityLabel"></span></span>
+          <input id="density" type="range" min="220" max="840" step="20" value="440" />
+        </div>
+
+        <div class="group">
+          <span class="pill">Drift <span id="driftLabel"></span></span>
+          <input id="drift" type="range" min="0.35" max="1.95" step="0.01" value="1.01" />
+          <span class="pill">Line <span id="lineLabel"></span></span>
+          <input id="lineWidth" type="range" min="0.4" max="2.2" step="0.1" value="1.0" />
+        </div>
+
+        <p class="mini">
+          <span class="tone">Click</span> to burst an injector. 
+          <span class="tone2">Hold</span> and move for a dense braid. 
+          <span class="tone3">Shift + click</span> for a heavy node burst.
+        </p>
+
+        <div class="seed" id="seedBadge"></div>
+      </section>
+      <div class="return">
+        <a class="btn" href="./index.html" target="_blank" rel="noopener noreferrer">Back to Ghost Radio</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    const ui = {
+      pauseBtn: document.getElementById('pauseBtn'),
+      reseedBtn: document.getElementById('reseedBtn'),
+      randomBtn: document.getElementById('randomBtn'),
+      clearBtn: document.getElementById('clearBtn'),
+      copyBtn: document.getElementById('copyBtn'),
+      saveBtn: document.getElementById('saveBtn'),
+      clickModeBtn: document.getElementById('clickModeBtn'),
+      chaos: document.getElementById('chaos'),
+      density: document.getElementById('density'),
+      drift: document.getElementById('drift'),
+      lineWidth: document.getElementById('lineWidth'),
+      chaosLabel: document.getElementById('chaosLabel'),
+      densityLabel: document.getElementById('densityLabel'),
+      driftLabel: document.getElementById('driftLabel'),
+      lineLabel: document.getElementById('lineLabel'),
+      seedBadge: document.getElementById('seedBadge'),
+    };
+
+    const palette = ['#8de8ff', '#ff96db', '#d1ff72', '#97ffe7', '#ffdb67', '#e0f1ff'];
+    const threads = [];
+
+    let w = 0;
+    let h = 0;
+    let pointer = { x: 0, y: 0, down: false };
+    let paused = false;
+    let last = performance.now();
+    let raf = null;
+    let random = mulberry32(Date.now());
+    let cursorHoldMode = false;
+
+    const state = {
+      seed: 0,
+      chaos: parseFloat(ui.chaos.value),
+      density: parseInt(ui.density.value, 10),
+      drift: parseFloat(ui.drift.value),
+      line: parseFloat(ui.lineWidth.value),
+    };
+
+    function mulberry32(seed) {
+      let t = seed >>> 0;
+      return function () {
+        t |= 0;
+        t = (t + 0x6D2B79F5) | 0;
+        let r = Math.imul(t ^ (t >>> 15), 1 | t);
+        r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+        return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function clamp(v, lo, hi) {
+      if (!Number.isFinite(v)) return lo;
+      return Math.max(lo, Math.min(hi, v));
+    }
+
+    function syncURL() {
+      const p = new URLSearchParams();
+      p.set('seed', String(state.seed));
+      p.set('chaos', state.chaos.toFixed(2));
+      p.set('density', String(state.density));
+      p.set('drift', state.drift.toFixed(2));
+      p.set('line', state.line.toFixed(2));
+      if (cursorHoldMode) p.set('hold', '1');
+      history.replaceState({}, '', `${location.pathname}?${p.toString()}`);
+    }
+
+    function reseed(seed) {
+      if (!Number.isFinite(seed) || seed <= 0) seed = (Date.now() * 1103515245) >>> 0;
+      state.seed = seed >>> 0;
+      random = mulberry32(state.seed);
+      threads.length = 0;
+      seedBurst();
+      syncURL();
+      paintBadge();
+    }
+
+    function paintBadge() {
+      ui.seedBadge.textContent = `seed ${state.seed} · active threads ${threads.length}`;
+    }
+
+    function hydrate() {
+      const q = new URLSearchParams(location.search);
+      const s = parseInt(q.get('seed') || '', 10);
+      reseed(Number.isFinite(s) ? s : Math.floor(Math.random() * 0xffffffff));
+
+      state.chaos = clamp(parseFloat(q.get('chaos')) || state.chaos, 0.2, 1.7);
+      state.density = Math.round(clamp(parseFloat(q.get('density')) || state.density, 220, 840));
+      state.drift = clamp(parseFloat(q.get('drift')) || state.drift, 0.35, 1.95);
+      state.line = clamp(parseFloat(q.get('line')) || state.line, 0.4, 2.2);
+      cursorHoldMode = q.get('hold') === '1';
+
+      ui.chaos.value = state.chaos;
+      ui.density.value = state.density;
+      ui.drift.value = state.drift;
+      ui.lineWidth.value = state.line;
+      ui.chaosLabel.textContent = state.chaos.toFixed(2);
+      ui.densityLabel.textContent = state.density;
+      ui.driftLabel.textContent = state.drift.toFixed(2);
+      ui.lineLabel.textContent = state.line.toFixed(1);
+      updateClickModeUI();
+      syncURL();
+    }
+
+    class Thread {
+      constructor(x, y, phase) {
+        const angle = random() * Math.PI * 2;
+        const spread = (random() * 2 - 1) * 0.2;
+        this.x = x;
+        this.y = y;
+        this.vx = Math.cos(angle) * 0.15 + spread;
+        this.vy = Math.sin(angle) * 0.15 - spread;
+        this.life = 0;
+        this.maxLife = 180 + Math.floor(random() * 240);
+        this.color = palette[Math.floor(random() * palette.length)];
+        this.w = (0.4 + random()) * state.line;
+        this.phase = phase;
+        this.history = [{ x, y }];
+      }
+
+      update(dt) {
+        this.life++;
+        if (this.life > this.maxLife) return true;
+
+        const n = noise(this.x * 0.0014, this.y * 0.0012, this.phase + this.life * 0.003);
+        const fx = Math.cos(n * 6.6 + pointer.y * 0.001) * (0.8 + state.chaos);
+        const fy = Math.sin(n * 6.2 + pointer.x * 0.001) * (0.8 + state.chaos);
+
+        this.vx = this.vx * 0.96 + (fx + (pointer.x - this.x) * 0.000004) * dt * state.drift * 0.6;
+        this.vy = this.vy * 0.96 + (fy + (pointer.y - this.y) * 0.000004) * dt * state.drift * 0.6;
+
+        this.x += this.vx * 360 * dt;
+        this.y += this.vy * 360 * dt;
+
+        if (this.x < 0) this.x = w;
+        if (this.x > w) this.x = 0;
+        if (this.y < 0) this.y = h;
+        if (this.y > h) this.y = 0;
+
+        this.history.push({ x: this.x, y: this.y });
+        const keep = Math.max(140, Math.round(state.density / 3));
+        if (this.history.length > keep) this.history.shift();
+        return false;
+      }
+
+      draw() {
+        if (this.history.length < 2) return;
+        const alpha = 1 - (this.life / this.maxLife);
+
+        ctx.beginPath();
+        const start = this.history[0];
+        ctx.moveTo(start.x, start.y);
+        for (let i = 1; i < this.history.length; i++) {
+          const p0 = this.history[i - 1];
+          const p1 = this.history[i];
+          const cx = (p0.x + p1.x) / 2;
+          const cy = (p0.y + p1.y) / 2;
+          ctx.quadraticCurveTo(p0.x, p0.y, cx, cy);
+        }
+
+        const glow = Math.max(0.2, this.w * (1 + random() * 0.8));
+        ctx.lineWidth = glow;
+        ctx.strokeStyle = `color-mix(in hsl, ${this.color} ${Math.round(alpha * 72)}%, transparent)`;
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 14 * alpha;
+        ctx.stroke();
+
+        const end = this.history[this.history.length - 1];
+        ctx.beginPath();
+        ctx.fillStyle = `${this.color}`;
+        ctx.arc(end.x, end.y, 0.8 + glow * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    function noise(x, y, z) {
+      const a = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453123;
+      const b = Math.cos(y * 78.233 + z * 12.9898) * 43758.5453123;
+      return (a + b) - Math.floor(a + b);
+    }
+
+    function seedBurst() {
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        const ox = Math.cos(a) * (12 + random() * 20);
+        const oy = Math.sin(a) * (12 + random() * 20);
+        burst(pointer.x + ox, pointer.y + oy, 3);
+      }
+    }
+
+    function burst(x, y, count = 6) {
+      for (let i = 0; i < count; i++) {
+        threads.push(new Thread(x, y, state.seed + i * 31));
+      }
+    }
+
+    function maybeEmit() {
+      const n = Math.max(1, Math.floor(state.density / 220));
+      if (random() < state.density / 12000) {
+        burst(random() * w, random() * h, n);
+      }
+    }
+
+    function update() {
+      if (paused) {
+        raf = requestAnimationFrame(update);
+        return;
+      }
+
+      const now = performance.now();
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+
+      ctx.fillStyle = 'rgba(9, 11, 18, 0.2)';
+      ctx.fillRect(0, 0, w, h);
+
+      if (pointer.down || cursorHoldMode) {
+        const burstCount = cursorHoldMode ? Math.max(1, Math.round(state.density / 320)) : Math.max(1, Math.round(state.density / 520));
+        if (Math.random() < dt * (8 + state.chaos * 5)) burst(pointer.x, pointer.y, burstCount);
+      }
+
+      maybeEmit();
+
+      for (let i = threads.length - 1; i >= 0; i--) {
+        const t = threads[i];
+        const dead = t.update(dt);
+        if (dead) {
+          threads.splice(i, 1);
+          continue;
+        }
+        t.draw();
+      }
+
+      drawNetwork();
+
+      paintBadge();
+      raf = requestAnimationFrame(update);
+    }
+
+    function drawNetwork() {
+      if (threads.length < 6) return;
+      for (let i = 0; i < Math.min(48, threads.length); i++) {
+        const a = threads[i];
+        const aHead = a.history[a.history.length - 1];
+        for (let j = 1; j < 4; j++) {
+          const b = threads[(i * j + 7) % threads.length];
+          if (!b || b === a) continue;
+          const bHead = b.history[b.history.length - 1];
+          const dist = Math.hypot(aHead.x - bHead.x, aHead.y - bHead.y);
+          if (dist < 118) {
+            ctx.strokeStyle = `rgba(170, 190, 255, ${Math.max(0.01, 0.16 - dist * 0.001)})`;
+            ctx.lineWidth = 0.4;
+            ctx.beginPath();
+            ctx.moveTo(aHead.x, aHead.y);
+            const cx = (aHead.x + bHead.x) / 2 + Math.sin((aHead.y + bHead.y) * 0.01 + state.chaos);
+            const cy = (aHead.y + bHead.y) / 2 + Math.cos((aHead.x + bHead.x) * 0.01 + state.chaos);
+            ctx.quadraticCurveTo(cx, cy, bHead.x, bHead.y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // tiny static grain
+      for (let i = 0; i < 14; i++) {
+        const x = random() * w;
+        const y = random() * h;
+        const a = random() * 0.16;
+        ctx.fillStyle = `rgba(255,255,255,${a})`;
+        ctx.fillRect(x, y, 1, 1);
+      }
+    }
+
+    function resize() {
+      w = Math.floor(innerWidth);
+      h = Math.floor(innerHeight);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function randomizeParams() {
+      state.chaos = 0.2 + random() * 1.5;
+      state.density = 220 + Math.floor(random() * 620);
+      state.drift = 0.35 + random() * 1.6;
+      state.line = 0.4 + random() * 1.8;
+
+      ui.chaos.value = state.chaos;
+      ui.density.value = state.density;
+      ui.drift.value = state.drift;
+      ui.lineWidth.value = state.line;
+      ui.chaosLabel.textContent = state.chaos.toFixed(2);
+      ui.densityLabel.textContent = state.density;
+      ui.driftLabel.textContent = state.drift.toFixed(2);
+      ui.lineLabel.textContent = state.line.toFixed(1);
+    }
+
+    function handleReSeed() {
+      const n = Math.floor(random() * 0xffffffff);
+      reseed(n);
+    }
+
+    function clearAll() {
+      threads.length = 0;
+      for (let i = 0; i < 20; i++) {
+        burst(random() * w, random() * h, 2);
+      }
+      syncURL();
+      paintBadge();
+    }
+
+    function updateClickModeUI() {
+      ui.clickModeBtn.dataset.active = cursorHoldMode ? 'true' : 'false';
+      ui.clickModeBtn.textContent = `Hold: ${cursorHoldMode ? 'ON' : 'OFF'}`;
+    }
+
+    function copyLink() {
+      const link = `${location.origin}${location.pathname}?${new URLSearchParams({
+        seed: String(state.seed),
+        chaos: state.chaos.toFixed(2),
+        density: String(state.density),
+        drift: state.drift.toFixed(2),
+        line: state.line.toFixed(2),
+        hold: cursorHoldMode ? '1' : '0',
+      }).toString()}`;
+
+      navigator.clipboard.writeText(link).then(() => {
+        ui.copyBtn.textContent = 'Copied';
+        setTimeout(() => (ui.copyBtn.textContent = 'Copy Link'), 900);
+      }).catch(() => {
+        prompt('Copy link:', link);
+      });
+    }
+
+    function saveFrame() {
+      const anchor = document.createElement('a');
+      anchor.download = `ether-trellis-${state.seed}.png`;
+      anchor.href = canvas.toDataURL('image/png');
+      anchor.click();
+    }
+
+    function onMove(e) {
+      pointer.x = e.clientX;
+      pointer.y = e.clientY;
+      if (pointer.down && !cursorHoldMode) {
+        if (random() < 0.18) burst(pointer.x, pointer.y, 2);
+      }
+    }
+
+    function onDown(e) {
+      if (e.button !== 0) return;
+      pointer.down = true;
+      pointer.x = e.clientX;
+      pointer.y = e.clientY;
+      burst(pointer.x, pointer.y, e.shiftKey ? 10 : 4);
+    }
+
+    function onUp() {
+      pointer.down = false;
+    }
+
+    function onKey(e) {
+      if (e.key === ' ' || e.code === 'Space') {
+        paused = !paused;
+        ui.pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+        return;
+      }
+      if (e.key.toLowerCase() === 'c') {
+        cursorHoldMode = !cursorHoldMode;
+        updateClickModeUI();
+        syncURL();
+      }
+    }
+
+    ui.chaos.addEventListener('input', () => {
+      state.chaos = parseFloat(ui.chaos.value);
+      ui.chaosLabel.textContent = state.chaos.toFixed(2);
+      syncURL();
+    });
+
+    ui.density.addEventListener('input', () => {
+      state.density = parseInt(ui.density.value, 10);
+      ui.densityLabel.textContent = state.density;
+      syncURL();
+    });
+
+    ui.drift.addEventListener('input', () => {
+      state.drift = parseFloat(ui.drift.value);
+      ui.driftLabel.textContent = state.drift.toFixed(2);
+      syncURL();
+    });
+
+    ui.lineWidth.addEventListener('input', () => {
+      state.line = parseFloat(ui.lineWidth.value);
+      ui.lineLabel.textContent = state.line.toFixed(1);
+      syncURL();
+    });
+
+    ui.pauseBtn.addEventListener('click', () => {
+      paused = !paused;
+      ui.pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+    });
+
+    ui.reseedBtn.addEventListener('click', () => {
+      handleReSeed();
+    });
+
+    ui.randomBtn.addEventListener('click', () => {
+      randomizeParams();
+      randomizeAll();
+      syncURL();
+    });
+
+    ui.clearBtn.addEventListener('click', clearAll);
+    ui.copyBtn.addEventListener('click', copyLink);
+    ui.saveBtn.addEventListener('click', saveFrame);
+    ui.clickModeBtn.addEventListener('click', () => {
+      cursorHoldMode = !cursorHoldMode;
+      updateClickModeUI();
+      syncURL();
+    });
+
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerdown', onDown);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('resize', resize);
+
+    function randomizeAll() {
+      handleReSeed();
+      const fresh = Math.floor(random() * 0xffffffff);
+      random = mulberry32(fresh);
+      clearAll();
+      for (let i = 0; i < 24; i++) {
+        burst(random() * w, random() * h, 3);
+      }
+      syncURL();
+    }
+
+    // startup
+    resize();
+    pointer.x = w / 2;
+    pointer.y = h / 2;
+    hydrate();
+    clearAll();
+    requestAnimationFrame(update);
+  </script>
+</body>
+</html>

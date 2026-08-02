@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ghost Radio — Frequency Veil</title>
+  <meta
+    name="description"
+    content="A strange interactive generator that maps static and pulses into a living frequency veil for Ghost Radio."
+  />
+  <meta name="theme-color" content="#090b12" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070912;
+      --panel: rgba(12, 14, 22, 0.75);
+      --line: rgba(255, 255, 255, 0.11);
+      --text: #f4f7ff;
+      --muted: #adb4cf;
+      --accent: #8de8ff;
+      --accent2: #ff94d7;
+      --accent3: #d1ff72;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      background: radial-gradient(circle at 20% 10%, rgba(141, 232, 255, 0.12), transparent 34%),
+        radial-gradient(circle at 80% 80%, rgba(255, 148, 215, 0.1), transparent 36%),
+        linear-gradient(180deg, #05070d 0%, #090b12 52%, #04050a 100%);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    .shell {
+      width: min(980px, calc(100vw - 20px));
+      margin: 12px auto;
+      display: grid;
+      gap: 10px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      backdrop-filter: blur(8px);
+    }
+
+    .toolbar h1 {
+      margin: 6px 8px 6px 0;
+      font-size: 1.05rem;
+      flex: 1 1 260px;
+    }
+
+    .toolbar p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+      flex: 1 1 320px;
+    }
+
+    button,
+    input[type="range"],
+    select,
+    input[type="text"] {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 11px;
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--accent) 45%, white 55%);
+    }
+
+    .stage {
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      min-height: calc(100vh - 180px);
+      background: radial-gradient(circle at 50% 32%, rgba(255, 255, 255, 0.05), transparent 55%),
+        linear-gradient(140deg, rgba(141, 232, 255, 0.04), rgba(255, 148, 215, 0.04));
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      image-rendering: crisp-edges;
+    }
+
+    .hud {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      z-index: 2;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      color: #d9e0f5;
+      font-size: 0.82rem;
+      pointer-events: none;
+    }
+
+    .hud span {
+      background: rgba(0, 0, 0, 0.38);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 7px 10px;
+      border-radius: 8px;
+      backdrop-filter: blur(3px);
+    }
+
+    .tiny {
+      font-size: 0.74rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-left: auto;
+    }
+
+    .muted-link {
+      color: #dbe6ff;
+      text-decoration: none;
+      opacity: 0.9;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 8px 10px;
+      border-radius: 10px;
+    }
+
+    .seed {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 620px) {
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .toolbar h1,
+      .toolbar p,
+      .controls {
+        flex: 1 1 100%;
+      }
+
+      .controls {
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="toolbar" aria-label="Ghost radio frequency controls">
+      <h1>Frequency Veil</h1>
+      <p>
+        Click the canvas to seed a transmitter, drag to pull silence into shape, and watch the
+        ghost-network reveal itself.
+      </p>
+      <div class="controls">
+        <label style="display:flex;align-items:center;gap:6px;white-space:nowrap">
+          Static
+          <input id="noise" type="range" min="1" max="120" value="60" />
+        </label>
+        <button id="regenBtn" type="button">Regenerate</button>
+        <button id="pauseBtn" type="button">Pause</button>
+        <button id="copyBtn" type="button">Copy share link</button>
+        <button id="downloadBtn" type="button">Save PNG</button>
+      </div>
+      <a class="muted-link" href="./">Back to Ghost Radio</a>
+    </section>
+
+    <section class="seed">
+      <label for="seed" style="color:#c9d4f0;">Seed</label>
+      <input id="seed" type="text" value="" />
+      <span class="tiny">Reload uses this deterministic state.</span>
+    </section>
+
+    <section class="stage" aria-label="Frequency veil canvas">
+      <canvas id="canvas" aria-label="Frequency veil visualization"></canvas>
+      <div class="hud" aria-live="polite">
+        <span id="stateLine">seed: waiting for ignition</span>
+        <span id="pulseLine">pulse: calm</span>
+        <span id="nodesLine">nodes: 0</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const noiseInput = document.getElementById('noise');
+    const regenBtn = document.getElementById('regenBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const seedInput = document.getElementById('seed');
+    const stateLine = document.getElementById('stateLine');
+    const pulseLine = document.getElementById('pulseLine');
+    const nodesLine = document.getElementById('nodesLine');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    let running = true;
+    let time = 0;
+    let last = 0;
+    const state = {
+      nodes: [],
+      links: [],
+      seed: parseSeed(readHash('seed')),
+      baseHue: 192,
+      mode: readHash('mode') || 'drift',
+    };
+
+    const palette = ['#8de8ff', '#ff94d7', '#d1ff72', '#9fb7ff'];
+
+    function parseSeed(raw) {
+      const n = Number(raw);
+      if (Number.isFinite(n)) return Math.abs(Math.floor(n)) % 2147483647;
+      return Math.floor(Math.random() * 2147483647);
+    }
+
+    function hashState() {
+      const next = new URLSearchParams();
+      next.set('seed', String(state.seed));
+      next.set('mode', state.mode);
+      history.replaceState({}, '', `${location.pathname}#${next.toString()}`);
+    }
+
+    function readHash(name) {
+      const frag = location.hash.slice(1);
+      if (!frag) return null;
+      const params = new URLSearchParams(frag);
+      return params.get(name);
+    }
+
+    function seedRng(seed) {
+      let s = seed || 123456789;
+      return () => {
+        s ^= s << 13;
+        s ^= s >>> 17;
+        s ^= s << 5;
+        return ((s >>> 0) / 4294967296);
+      };
+    }
+
+    let rand = seedRng(state.seed);
+
+    function seedRngPreview(value) {
+      state.seed = parseSeed(value);
+      rand = seedRng(state.seed);
+      seedInput.value = String(state.seed);
+      buildField();
+      hashState();
+      updateHud('seed changed', 'drift');
+    }
+
+    function resize() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width * DPR);
+      canvas.height = Math.floor(rect.height * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      buildField();
+    }
+
+    function createNode(x, y) {
+      const hue = state.baseHue + rand() * 90;
+      return {
+        x,
+        y,
+        vx: (rand() - 0.5) * 0.25,
+        vy: (rand() - 0.5) * 0.25,
+        life: Math.floor(420 + rand() * 760),
+        tone: rand(),
+        hue: hue % 360,
+        radius: 2 + rand() * 4,
+      };
+    }
+
+    function buildField() {
+      const stage = canvas.parentElement.getBoundingClientRect();
+      const count = 40 + Math.floor(noiseInput.value / 2);
+      state.nodes = [];
+      for (let i = 0; i < count; i++) {
+        state.nodes.push(
+          createNode(
+            rand() * stage.width,
+            rand() * stage.height,
+          ),
+        );
+      }
+      state.links = [];
+      for (let i = 0; i < state.nodes.length; i++) {
+        for (let j = i + 1; j < state.nodes.length; j++) {
+          const a = state.nodes[i];
+          const b = state.nodes[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const d = Math.hypot(dx, dy);
+          if (d < 180) {
+            state.links.push([i, j, d]);
+          }
+        }
+      }
+      nodesLine.textContent = `nodes: ${state.nodes.length}`;
+    }
+
+    function drawGrid() {
+      const { width, height } = canvas.getBoundingClientRect();
+      const spacing = 110;
+      ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < width; x += spacing) {
+        ctx.beginPath();
+        ctx.moveTo(x + 0.5, 0);
+        ctx.lineTo(x + 0.5, height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < height; y += spacing) {
+        ctx.beginPath();
+        ctx.moveTo(0, y + 0.5);
+        ctx.lineTo(width, y + 0.5);
+        ctx.stroke();
+      }
+    }
+
+    function wrap(v, m) {
+      return ((v % m) + m) % m;
+    }
+
+    function updateHud(mode, pulse) {
+      stateLine.textContent = `seed: ${state.seed} / mode: ${mode}`;
+      pulseLine.textContent = `pulse: ${pulse}`;
+    }
+
+    function updateNodes() {
+      const { width, height } = canvas.getBoundingClientRect();
+      for (const node of state.nodes) {
+        node.life -= 1;
+        if (node.life <= 0 || node.x < -40 || node.y < -40 || node.x > width + 40 || node.y > height + 40) {
+          Object.assign(node, createNode(Math.random() * width, Math.random() * height));
+        }
+
+        const drift = state.mode === 'drift' ? 0.15 : 0.07;
+        node.x += node.vx + Math.cos((time * 0.002 + node.tone * 6.4) * drift) * drift;
+        node.y += node.vy + Math.sin((time * 0.003 + node.tone * 4.8) * drift) * drift;
+        node.vx *= 0.998;
+        node.vy *= 0.998;
+
+        node.x = wrap(node.x, width);
+        node.y = wrap(node.y, height);
+      }
+    }
+
+    function drawNodes() {
+      const { width, height } = canvas.getBoundingClientRect();
+      const noise = Number(noiseInput.value);
+
+      // background noise
+      for (let i = 0; i < noise; i++) {
+        const x = rand() * width;
+        const y = rand() * height;
+        const alpha = rand() * 0.15;
+        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+        ctx.fillRect(x, y, 1, 1);
+      }
+
+      // links
+      for (const [i, j, baseDist] of state.links) {
+        const a = state.nodes[i];
+        const b = state.nodes[j];
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const d = Math.hypot(dx, dy);
+        if (d > 210) continue;
+        const t = 1 - (d / 210);
+        const wave = Math.sin(time * 0.012 + (a.tone + b.tone) * 6.28) * 0.5 + 0.5;
+        const alpha = (0.06 + wave * 0.18) * t;
+        ctx.strokeStyle = `rgba(${140 + i * 0 + b.tone * 90},${230 - d * 0.2 + b.tone * 20},255,${alpha})`;
+        ctx.lineWidth = 0.4 + t * 1.3;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.quadraticCurveTo(
+          (a.x + b.x) / 2 + Math.sin(time * 0.001 + baseDist * 0.01) * 20,
+          (a.y + b.y) / 2 + Math.cos(time * 0.001 + baseDist * 0.013) * 20,
+          b.x,
+          b.y,
+        );
+        ctx.stroke();
+      }
+
+      // nodes
+      for (const node of state.nodes) {
+        const glow = (Math.sin(time * 0.012 + node.tone * 10) + 1) * 0.5;
+        const color = palette[Math.floor(node.tone * palette.length) % palette.length];
+        ctx.fillStyle = color.replace(')', `, ${0.08 + glow * 0.18})`).replace('rgb', 'rgba');
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, node.radius + glow * 1.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, node.radius * (0.25 + glow * 0.4), 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // pulse ring
+      const cx = (Math.sin(time * 0.001) + 1) * width * 0.5;
+      const cy = (Math.cos(time * 0.001 + 1.3) + 1) * height * 0.5;
+      const pulse = (Math.sin(time * 0.01) + 1) * 90;
+      const grad = ctx.createRadialGradient(cx, cy, 10, cx, cy, 240 + pulse);
+      grad.addColorStop(0, 'rgba(141,232,255,0.24)');
+      grad.addColorStop(0.7, 'rgba(255,148,215,0.08)');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 240 + pulse, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function addSeedNode(x, y) {
+      state.nodes.push({
+        ...createNode(x, y),
+        x,
+        y,
+        life: 200 + rand() * 640,
+        radius: 3.2,
+      });
+      if (state.nodes.length > 260) {
+        state.nodes.shift();
+      }
+      state.links = [];
+      for (let i = 0; i < state.nodes.length; i++) {
+        for (let j = i + 1; j < state.nodes.length; j++) {
+          const a = state.nodes[i];
+          const b = state.nodes[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const d = Math.hypot(dx, dy);
+          if (d < 190) {
+            state.links.push([i, j, d]);
+          }
+        }
+      }
+      nodesLine.textContent = `nodes: ${state.nodes.length}`;
+      return state.nodes[state.nodes.length - 1];
+    }
+
+    function updateSeedFromField() {
+      let acc = 2166136261 >>> 0;
+      for (const node of state.nodes) {
+        acc = Math.imul(acc ^ ((node.x << 5) ^ node.y), 16777619);
+      }
+      state.seed = acc >>> 0;
+      seedInput.value = String(state.seed);
+    }
+
+    function render(ts) {
+      if (!running) {
+        last = ts;
+        requestAnimationFrame(render);
+        return;
+      }
+      const dt = Math.min(60, ts - last || 16);
+      last = ts;
+      time += dt;
+
+      const { width, height } = canvas.getBoundingClientRect();
+      ctx.clearRect(0, 0, width, height);
+
+      drawGrid();
+      updateNodes();
+      drawNodes();
+
+      if (time % 240 < 4) {
+        updateSeedFromField();
+        updateHud(state.mode, state.baseHue % 2 ? 'screaming seam' : 'drifted');
+      }
+
+      requestAnimationFrame(render);
+    }
+
+    function pointerSeed(event) {
+      const rect = canvas.getBoundingClientRect();
+      const x = event.offsetX || (event.touches ? event.touches[0].clientX - rect.left : 0);
+      const y = event.offsetY || (event.touches ? event.touches[0].clientY - rect.top : 0);
+      addSeedNode(Math.max(0, x), Math.max(0, y));
+      if (!running) {
+        running = true;
+        pauseBtn.textContent = 'Pause';
+      }
+      updateSeedFromField();
+      hashState();
+    }
+
+    function exportPng() {
+      const url = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `ghost-radio-frequency-veil-${Date.now()}.png`;
+      link.click();
+    }
+
+    noiseInput.addEventListener('input', () => {
+      buildField();
+    });
+
+    regenBtn.addEventListener('click', () => {
+      state.baseHue = 160 + rand() * 120;
+      state.mode = state.mode === 'drift' ? 'veil' : 'drift';
+      buildField();
+      hashState();
+      updateHud(state.mode, `reseeded (${state.mode})`);
+    });
+
+    pauseBtn.addEventListener('click', () => {
+      running = !running;
+      pauseBtn.textContent = running ? 'Pause' : 'Resume';
+      stateLine.textContent = `seed: ${state.seed} / mode: ${state.mode}`;
+      updateHud(state.mode, running ? 'resumed' : 'paused');
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      updateSeedFromField();
+      hashState();
+      try {
+        await navigator.clipboard.writeText(location.href);
+        updateHud(state.mode, 'copied link');
+      } catch {
+        window.prompt('Copy this link', location.href);
+      }
+    });
+
+    downloadBtn.addEventListener('click', exportPng);
+
+    seedInput.addEventListener('change', (event) => {
+      seedRngPreview(event.target.value);
+    });
+
+    canvas.addEventListener('click', pointerSeed);
+    canvas.addEventListener('touchstart', (event) => {
+      const touch = event.touches[0];
+      if (!touch) return;
+      const rect = canvas.getBoundingClientRect();
+      pointerSeed({
+        offsetX: touch.clientX - rect.left,
+        offsetY: touch.clientY - rect.top,
+      });
+    });
+
+    window.addEventListener('resize', resize);
+
+    seedInput.value = String(state.seed);
+    resize();
+    buildField();
+    hashState();
+    updateHud(state.mode, 'ready');
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>

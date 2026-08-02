@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ghost Radio — Orbit Liturgy</title>
+  <meta
+    name="description"
+    content="A pointer-reactive orbital ritual where spinning rays answer clicks, with deterministic seed state and save/share controls."
+  />
+  <meta name="theme-color" content="#080b13" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070a11;
+      --panel: rgba(10, 13, 24, 0.84);
+      --line: rgba(255, 255, 255, 0.12);
+      --text: #f5f7ff;
+      --muted: #b7bfd9;
+      --accent: #8de8ff;
+      --accent2: #ff94d7;
+      --accent3: #d1ff72;
+      font-synthesis-weight: none;
+      text-rendering: geometricPrecision;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      color: var(--text);
+      font: 16px/1.45 "Trebuchet MS", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 18% 14%, rgba(141, 232, 255, 0.15), transparent 34%),
+        radial-gradient(circle at 82% 82%, rgba(255, 148, 215, 0.12), transparent 34%),
+        linear-gradient(180deg, #060810 0%, #090c14 52%, #04070c 100%);
+      overflow: hidden;
+    }
+
+    .shell {
+      width: min(1200px, calc(100vw - 20px));
+      margin: 10px auto;
+      display: grid;
+      gap: 10px;
+      min-height: calc(100vh - 20px);
+    }
+
+    .panel {
+      display: grid;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) minmax(360px, 2.2fr) auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .toolbar h1 {
+      margin: 0;
+      font-size: 1.2rem;
+      letter-spacing: -0.02em;
+    }
+
+    .toolbar p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+      max-width: 52ch;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    button,
+    input[type="range"],
+    input[type="text"] {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font: inherit;
+    }
+
+    button { cursor: pointer; white-space: nowrap; transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
+    button:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--accent) 45%, white 55%);
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
+    }
+
+    .seed {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .seed label {
+      font-size: .76rem;
+      color: #c3ccf0;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .seed input {
+      min-width: 172px;
+      width: 172px;
+      font-size: 12px;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      min-height: calc(100vh - 235px);
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, .06), transparent 60%),
+        linear-gradient(140deg, rgba(141, 232, 255, 0.04), rgba(255, 148, 215, 0.06));
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .hud {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      pointer-events: none;
+      flex-wrap: wrap;
+      font-size: 0.74rem;
+      color: #dce3ff;
+    }
+
+    .chip {
+      padding: 7px 9px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(4px);
+      letter-spacing: .02em;
+    }
+
+    .back {
+      position: absolute;
+      right: 12px;
+      top: 12px;
+      z-index: 3;
+      color: #d5ddfb;
+      text-decoration: none;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      background: rgba(0,0,0,.38);
+      pointer-events: auto;
+    }
+
+    .back:hover { border-color: color-mix(in srgb, var(--accent) 45%, white 55%); }
+
+    label {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.78rem;
+      color: #d6def9;
+    }
+
+    @media (max-width: 1080px) {
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+      .canvas-wrap {
+        min-height: calc(100vh - 270px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="panel toolbar">
+      <div>
+        <h1>Orbit Liturgy</h1>
+        <p>
+          Pointer-guided orbital liturgy: rays spin through a seeded field, click for a burst of ceremonial gravity,
+          and return is always possible through the shared hash.
+        </p>
+      </div>
+      <div class="controls" role="group" aria-label="Orbit Liturgy controls">
+        <label>
+          Orbit density
+          <input id="density" type="range" min="0.4" max="1.8" step="0.1" value="0.95">
+        </label>
+        <label>
+          Chaos
+          <input id="chaos" type="range" min="0.2" max="2.6" step="0.1" value="1.0">
+        </label>
+        <label>
+          Spin
+          <input id="spin" type="range" min="0.2" max="3.2" step="0.1" value="1.0">
+        </label>
+        <button id="reseed" type="button">Rerandomize</button>
+        <button id="pauseBtn" type="button">Pause</button>
+        <button id="copyBtn" type="button">Copy link</button>
+        <button id="saveBtn" type="button">Save frame</button>
+        <div class="seed">
+          <label for="seedInput">Seed</label>
+          <input id="seedInput" type="text" />
+        </div>
+      </div>
+    </section>
+
+    <section class="panel canvas-wrap" aria-label="Orbit Liturgy canvas">
+      <a class="back" href="./">Back to Ghost Radio</a>
+      <canvas id="orbitCanvas" aria-label="Orbit liturgy canvas"></canvas>
+      <div class="hud" id="hud" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('orbitCanvas');
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    const densityInput = document.getElementById('density');
+    const chaosInput = document.getElementById('chaos');
+    const spinInput = document.getElementById('spin');
+    const reseed = document.getElementById('reseed');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const seedInput = document.getElementById('seedInput');
+    const hud = document.getElementById('hud');
+
+    const DPR = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+    const baseCount = 900;
+
+    const state = {
+      seed: '',
+      density: 0.95,
+      chaos: 1,
+      spin: 1,
+      paused: false,
+      seedRng: null,
+      particles: [],
+      mouse: { x: 0.5, y: 0.5, active: false },
+      pulse: [],
+      width: 0,
+      height: 0,
+      cx: 0,
+      cy: 0,
+      radius: 0,
+      time: 0,
+      frame: 0
+    };
+
+    function hashParams() {
+      const raw = location.hash.slice(1);
+      const params = new URLSearchParams(raw);
+      const values = {
+        seed: params.get('seed') || randomSeed(),
+        density: clamp(parseFloat(params.get('d')) || 0.95, 0.4, 1.8),
+        chaos: clamp(parseFloat(params.get('c')) || 1.0, 0.2, 2.6),
+        spin: clamp(parseFloat(params.get('s')) || 1.0, 0.2, 3.2),
+      };
+      if (!params.has('p')) {
+        values.paused = false;
+      }
+      return values;
+    }
+
+    function clamp(v, lo, hi) {
+      if (!Number.isFinite(v)) return lo;
+      return Math.max(lo, Math.min(hi, v));
+    }
+
+    function randomSeed() {
+      const t = (Date.now() + Math.floor(Math.random() * 1e8)) >>> 0;
+      return t.toString(16).slice(0, 8);
+    }
+
+    function makeRng(seed) {
+      let x = (Number.parseInt(seed, 16) >>> 0) || 0x2f6e2b;
+      return function next() {
+        x ^= x << 13;
+        x ^= x >> 17;
+        x ^= x << 5;
+        return ((x >>> 0) / 0x100000000);
+      };
+    }
+
+    function syncInputs() {
+      densityInput.value = String(state.density);
+      chaosInput.value = String(state.chaos);
+      spinInput.value = String(state.spin);
+      seedInput.value = state.seed;
+      pauseBtn.textContent = state.paused ? 'Resume' : 'Pause';
+      pauseBtn.setAttribute('aria-pressed', String(state.paused));
+    }
+
+    function writeHash() {
+      const params = new URLSearchParams({
+        seed: state.seed,
+        d: state.density.toFixed(2),
+        c: state.chaos.toFixed(2),
+        s: state.spin.toFixed(2)
+      });
+      if (state.paused) params.set('p', '1');
+      location.hash = params.toString();
+    }
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width * DPR);
+      canvas.height = Math.floor(rect.height * DPR);
+      state.width = canvas.width / DPR;
+      state.height = canvas.height / DPR;
+      state.cx = rect.width / 2;
+      state.cy = rect.height / 2;
+      state.radius = Math.min(state.cx, state.cy) * 0.93;
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      reseedParticles();
+    }
+
+    function makeParticle() {
+      const r = state.seedRng() * state.radius * 0.92;
+      const angle = state.seedRng() * Math.PI * 2;
+      const spin = (state.seedRng() * 2 - 1) * 0.45 * (state.spin * 0.08) + 0.003;
+      const drift = state.seedRng() * 0.8 + 0.2;
+      const pulse = state.seedRng() * 0.8;
+      return {
+        r,
+        angle,
+        baseR: r,
+        spin,
+        drift,
+        phase: state.seedRng() * Math.PI * 2,
+        width: 0.8 + state.seedRng() * 1.7,
+        hue: 190 + state.seedRng() * 100,
+        lastX: 0,
+        lastY: 0,
+        burst: 0
+      };
+    }
+
+    function reseedParticles() {
+      const count = Math.round(baseCount * state.density);
+      state.particles = Array.from({ length: count }, makeParticle);
+      hud.innerHTML = '';
+      const meta = document.createElement('div');
+      meta.className = 'chip';
+      meta.textContent = `Orbit points: ${count.toLocaleString()}`;
+      hud.appendChild(meta);
+    }
+
+    function applyHash() {
+      const parsed = hashParams();
+      state.seed = parsed.seed;
+      state.density = parsed.density;
+      state.chaos = parsed.chaos;
+      state.spin = parsed.spin;
+      state.paused = !!parsed.paused;
+      syncInputs();
+    }
+
+    function setSeed(value) {
+      state.seed = value || randomSeed();
+      state.seedRng = makeRng(parseInt(value, 16));
+      state.seedRng = state.seedRng || makeRng(0x2f6e2b);
+      reseedParticles();
+      writeHash();
+      syncInputs();
+      seedInput.value = state.seed;
+    }
+
+    function pointFromMouse(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (clientX - rect.left) / rect.width,
+        y: (clientY - rect.top) / rect.height
+      };
+    }
+
+    function addPulse(x, y) {
+      state.pulse.push({ x, y, life: 1 });
+      if (state.pulse.length > 36) state.pulse.splice(0, state.pulse.length - 36);
+    }
+
+    function step(dt) {
+      if (state.paused) return;
+      state.time += dt;
+      state.frame += 1;
+      const t = state.time * 0.001;
+      const cx = state.cx;
+      const cy = state.cy;
+      const maxDist = Math.min(state.width, state.height) * 0.48;
+
+      ctx.clearRect(0, 0, state.width, state.height);
+      ctx.fillStyle = `rgba(7,10,18,${0.18})`;
+      ctx.fillRect(0, 0, state.width, state.height);
+
+      const orbitAlpha = 0.55 + (state.chaos - 0.2) / 2.4 * 0.3;
+      ctx.lineCap = 'round';
+
+      for (let i = 0; i < state.particles.length; i++) {
+        const p = state.particles[i];
+        const drift = Math.sin(t * 0.9 + p.phase) * state.chaos * 0.18;
+        p.angle += (p.spin + 0.0006 * state.spin * (1 + p.drift)) + drift * 0.0008;
+
+        const px = cx + Math.cos(p.angle) * p.r;
+        const py = cy + Math.sin(p.angle) * p.r;
+        p.lastX = px;
+        p.lastY = py;
+
+        const nx = state.mouse.x * state.width;
+        const ny = state.mouse.y * state.height;
+        const dpx = px - nx;
+        const dpy = py - ny;
+        const dist = Math.hypot(dpx, dpy);
+
+        const orbitGain = Math.max(0, 1 - (dist / maxDist));
+        p.r += (Math.sin(p.angle * 3 + p.phase + t * 0.4) * 0.8 + orbitGain * 2.5 * state.chaos) * (state.chaos * 0.4);
+        p.r += (dist ? Math.sin((dist / 18) + t + p.phase) * 0.06 : 0) * state.chaos;
+
+        const attract = state.mouse.active ? orbitGain * 0.04 * state.chaos : 0;
+        const targetAngle = Math.atan2(ny - py, nx - px);
+        const wrap = normalizeAngle(targetAngle - p.angle);
+        p.angle += wrap * attract;
+        p.r += (dist > maxDist ? -(p.r - p.baseR) * 0.005 : dist / 1800);
+
+        if (p.r < 24) p.r = state.radius * 0.9;
+        if (p.r > state.radius) p.r = 24;
+
+        const prevX = px;
+        const prevY = py;
+
+        const nextX = cx + Math.cos(p.angle) * p.r;
+        const nextY = cy + Math.sin(p.angle) * p.r;
+
+        const glow = Math.max(0.2, orbitGain * 1.2 + state.chaos / 2.6);
+        const alpha = (0.06 + 0.22 * glow + (p.burst || 0) * 0.2);
+        ctx.strokeStyle = `hsla(${p.hue + state.chaos * 12}, 80%, ${45 + state.chaos * 8}%, ${alpha})`;
+        ctx.lineWidth = p.width * (0.5 + glow * 1.5);
+        ctx.beginPath();
+        ctx.moveTo(prevX, prevY);
+        ctx.lineTo(nextX, nextY);
+        ctx.stroke();
+
+        if (p.burst > 0) p.burst -= 0.025;
+      }
+
+      for (let i = state.pulse.length - 1; i >= 0; i--) {
+        const ring = state.pulse[i];
+        ring.life -= dt * 0.0012;
+        const px = ring.x * state.width;
+        const py = ring.y * state.height;
+        const alpha = Math.max(0, ring.life);
+        if (alpha <= 0) {
+          state.pulse.splice(i, 1);
+          continue;
+        }
+
+        const waveR = (1 - alpha) * state.radius * 0.8;
+        ctx.strokeStyle = `rgba(255, 148, 215, ${alpha * 0.38})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(px, py, waveR, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = `rgba(17, 20, 32, ${orbitAlpha})`;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      for (let i = 0; i < state.particles.length; i++) {
+        if (i % Math.max(1, Math.floor(12 / state.density)) === 0) {
+          const p = state.particles[i];
+          const nx = cx + Math.cos(p.angle) * p.r;
+          const ny = cy + Math.sin(p.angle) * p.r;
+          const d = Math.hypot(nx - state.mouse.x * state.width, ny - state.mouse.y * state.height);
+          if (d < 120) {
+            p.burst = Math.max(p.burst, 1);
+          }
+        }
+      }
+
+      hudStatus();
+    }
+
+    function hudStatus() {
+      const seedChip = hud.children.length > 0 ? hud.children[0] : null;
+      if (seedChip) {
+        seedChip.textContent = `Seed ${state.seed} • ${state.particles.length} rays • t${(state.time / 1000).toFixed(1)}s`;
+      }
+      if (hud.children.length < 2) {
+        const pulseChip = document.createElement('div');
+        pulseChip.className = 'chip';
+        hud.appendChild(pulseChip);
+      }
+      const pulseChip = hud.children[1];
+      pulseChip.textContent = `Chaos ${state.chaos.toFixed(1)}  Spin ${state.spin.toFixed(1)}  Density ${state.density.toFixed(1)}  ${state.paused ? 'Paused' : 'Live'}`;
+    }
+
+    function normalizeAngle(a) {
+      while (a > Math.PI) a -= Math.PI * 2;
+      while (a < -Math.PI) a += Math.PI * 2;
+      return a;
+    }
+
+    function loop(ts) {
+      const now = ts || performance.now();
+      const dt = Math.min(40, now - (state.lastTs || now));
+      state.lastTs = now;
+      step(dt);
+      requestAnimationFrame(loop);
+    }
+
+    function onMouseMove(event) {
+      const pt = pointFromMouse(event.clientX, event.clientY);
+      state.mouse.x = clamp(pt.x, 0, 1);
+      state.mouse.y = clamp(pt.y, 0, 1);
+    }
+
+    function syncFromSliders() {
+      state.density = clamp(parseFloat(densityInput.value), 0.4, 1.8);
+      state.chaos = clamp(parseFloat(chaosInput.value), 0.2, 2.6);
+      state.spin = clamp(parseFloat(spinInput.value), 0.2, 3.2);
+      reseedParticles();
+      writeHash();
+      syncInputs();
+    }
+
+    function seedManual() {
+      const raw = seedInput.value.trim().replace(/[^a-fA-F0-9]/g, '').slice(0, 8);
+      if (raw.length < 3) {
+        setSeed(randomSeed());
+        return;
+      }
+      setSeed(raw);
+    }
+
+    function saveFrame() {
+      const a = document.createElement('a');
+      a.download = `ghost-radio-orbit-liturgy-${state.seed}.png`;
+      a.href = canvas.toDataURL('image/png');
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    function copyShare() {
+      const url = `${location.origin}${location.pathname}${location.search || ''}#${new URLSearchParams(location.hash.slice(1)).toString()}`;
+      navigator.clipboard.writeText(url)
+        .then(() => {
+          const chip = document.createElement('div');
+          chip.className = 'chip';
+          chip.textContent = 'Link copied';
+          hud.appendChild(chip);
+          setTimeout(() => chip.remove(), 800);
+        })
+        .catch(() => {
+          window.prompt('Copy this link manually:', url);
+        });
+    }
+
+    densityInput.addEventListener('input', syncFromSliders);
+    chaosInput.addEventListener('input', syncFromSliders);
+    spinInput.addEventListener('input', syncFromSliders);
+
+    reseed.addEventListener('click', () => {
+      setSeed(randomSeed());
+    });
+
+    pauseBtn.addEventListener('click', () => {
+      state.paused = !state.paused;
+      if (!state.paused) {
+        state.lastTs = performance.now();
+      }
+      writeHash();
+      syncInputs();
+    });
+
+    copyBtn.addEventListener('click', copyShare);
+    saveBtn.addEventListener('click', saveFrame);
+
+    seedInput.addEventListener('change', seedManual);
+    seedInput.addEventListener('blur', seedManual);
+
+    window.addEventListener('hashchange', () => {
+      const before = state.seed;
+      const parsed = hashParams();
+      if (parsed.seed !== before) {
+        state.seed = parsed.seed;
+        state.density = parsed.density;
+        state.chaos = parsed.chaos;
+        state.spin = parsed.spin;
+        state.paused = !!parsed.paused;
+        state.seedRng = makeRng(parseInt(state.seed, 16) || 0x2f6e2b);
+        reseedParticles();
+        syncInputs();
+      }
+    });
+
+    canvas.addEventListener('pointermove', (event) => {
+      state.mouse.active = true;
+      onMouseMove(event);
+    });
+    canvas.addEventListener('pointerleave', () => {
+      state.mouse.active = false;
+      state.mouse.x = 0.5;
+      state.mouse.y = 0.5;
+    });
+    canvas.addEventListener('pointerdown', (event) => {
+      const pt = pointFromMouse(event.clientX, event.clientY);
+      addPulse(clamp(pt.x, 0, 1), clamp(pt.y, 0, 1));
+      for (let i = 0; i < state.particles.length; i += 7) {
+        state.particles[i].burst = 1;
+      }
+    });
+
+    window.addEventListener('keydown', (event) => {
+      if (event.key === ' ') {
+        event.preventDefault();
+        pauseBtn.click();
+      }
+      if (event.key.toLowerCase() === 's') {
+        event.preventDefault();
+        saveBtn.click();
+      }
+      if (event.key.toLowerCase() === 'r') {
+        reseed.click();
+      }
+    });
+
+    function boot() {
+      applyHash();
+      state.seedRng = makeRng(parseInt(state.seed, 16) || 0x2f6e2b);
+      syncInputs();
+      resize();
+      writeHash();
+      requestAnimationFrame(loop);
+    }
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', resize);
+
+    boot();
+  </script>
+</body>
+</html>

@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Void Loom</title>
+  <meta
+    name="description"
+    content="Void Loom is a generative sketch where cursor pressure weaves recursive threads and quiet clicks summon passing ghosts of signal in a dark sea of noise."
+  />
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      --bg: #04060d;
+      --panel: rgba(12, 16, 28, 0.78);
+      --line: rgba(255, 255, 255, 0.14);
+      --text: #eff4ff;
+      --muted: #a8b3d1;
+      --a: #8de8ff;
+      --b: #ff82dc;
+      --c: #e7ff7a;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+
+    body {
+      background:
+        radial-gradient(circle at 20% 12%, rgba(141, 232, 255, 0.22), transparent 24%),
+        radial-gradient(circle at 78% 10%, rgba(255, 130, 220, 0.16), transparent 20%),
+        radial-gradient(circle at 50% 80%, rgba(231, 255, 122, 0.12), transparent 30%),
+        linear-gradient(180deg, #05070f 0%, #06070d 60%, #04050b 100%);
+      color: var(--text);
+      font: 14px/1.45 "Trebuchet MS", "Segoe UI", sans-serif;
+      overflow: hidden;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: crosshair;
+    }
+
+    .top {
+      position: fixed;
+      inset: 0.7rem;
+      display: grid;
+      gap: 0.7rem;
+      z-index: 2;
+      justify-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      backdrop-filter: blur(8px);
+      padding: 0.65rem 0.8rem;
+      width: min(740px, calc(100vw - 16px));
+      display: grid;
+      gap: 0.65rem;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .btn {
+      border: 1px solid #4f6188;
+      border-radius: 999px;
+      background: rgba(130, 150, 190, 0.18);
+      color: var(--text);
+      padding: 0.42rem 0.78rem;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .btn:hover,
+    .btn:focus-visible {
+      border-color: #8de8ff;
+      outline: none;
+      background: rgba(141, 232, 255, 0.22);
+    }
+
+    .btn.primary { border-color: #8de8ff; background: rgba(141, 232, 255, 0.2); }
+
+    .label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #a9b9dd;
+      white-space: nowrap;
+    }
+
+    .value {
+      color: var(--c);
+      font-size: 0.8rem;
+      margin-right: 0.45rem;
+    }
+
+    input[type='range'] {
+      width: min(160px, 40vw);
+      accent-color: #d0f6ff;
+    }
+
+    .stat {
+      color: #d2dbff;
+      font-size: 0.84rem;
+      min-height: 1.15rem;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      max-width: min(740px, calc(100vw - 16px));
+      display: grid;
+      gap: 0.15rem;
+      text-shadow: 0 0 12px rgba(0,0,0,0.45);
+      font-size: 0.78rem;
+      line-height: 1.4;
+    }
+
+    .footer-note small { color: #90a0bf; }
+
+    @media (max-width: 640px) {
+      .panel { padding: 0.58rem; }
+      input[type='range'] { width: 92px; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="loom"></canvas>
+
+  <div class="top">
+    <div class="panel" aria-label="Void Loom controls">
+      <div class="row">
+        <a class="btn" href="./">Back to main</a>
+        <button class="btn" id="pauseBtn">pause: off</button>
+        <button class="btn primary" id="pulseBtn">pulse node</button>
+        <button class="btn" id="seedBtn">reseed</button>
+      </div>
+
+      <div class="row">
+        <span class="label">tension</span>
+        <span class="value" id="tensionVal">0.62</span>
+        <input id="tension" type="range" min="0.25" max="1.2" step="0.01" value="0.62" />
+
+        <span class="label">drift</span>
+        <span class="value" id="driftVal">0.68</span>
+        <input id="drift" type="range" min="0.2" max="1.6" step="0.01" value="0.68" />
+
+        <span class="label">threads</span>
+        <span class="value" id="countVal">320</span>
+        <input id="count" type="range" min="140" max="520" step="1" value="320" />
+      </div>
+
+      <div class="stat" id="statusLine">status: waiting for cursor weight</div>
+      <div class="footer-note">
+        <strong>Void Loom</strong>
+        <small>Drag / click for heavier gravity wells. The farther you drag, the more aggressively nodes chase the trace.</small>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('loom');
+    const ctx = canvas.getContext('2d');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const pulseBtn = document.getElementById('pulseBtn');
+    const seedBtn = document.getElementById('seedBtn');
+    const tensionRange = document.getElementById('tension');
+    const driftRange = document.getElementById('drift');
+    const countRange = document.getElementById('count');
+    const tensionVal = document.getElementById('tensionVal');
+    const driftVal = document.getElementById('driftVal');
+    const countVal = document.getElementById('countVal');
+    const statusLine = document.getElementById('statusLine');
+
+    const state = {
+      w: 0,
+      h: 0,
+      dpr: 1,
+      t: 0,
+      paused: false,
+      cursor: { x: -9999, y: -9999, down: false, vx: 0, vy: 0 },
+      particles: [],
+      ghosts: [],
+      count: Number(countRange.value),
+      tension: Number(tensionRange.value),
+      drift: Number(driftRange.value),
+      seed: Date.now() & 0xffffffff
+    };
+
+    const palette = ['#8de8ff', '#ff82dc', '#e7ff7a', '#b8ff9d', '#7dd8ff', '#ffffff'];
+
+    function mulberry32(seed) {
+      let a = seed >>> 0;
+      return function random() {
+        a += 0x6D2B79F5;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    let rng = mulberry32(state.seed);
+
+    function resize() {
+      state.dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      state.w = canvas.clientWidth;
+      state.h = canvas.clientHeight;
+      canvas.width = Math.floor(state.w * state.dpr);
+      canvas.height = Math.floor(state.h * state.dpr);
+      ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+    }
+
+    function seed() {
+      rng = mulberry32((state.seed = (state.seed + 0x9e3779b9 + Math.floor(Math.random() * 1000)) >>> 0));
+      state.particles = [];
+      state.ghosts = [];
+      for (let i = 0; i < state.count; i++) {
+        state.particles.push({
+          x: rng() * state.w,
+          y: rng() * state.h,
+          px: rng() * state.w,
+          py: rng() * state.h,
+          phase: rng() * Math.PI * 2,
+          radius: 0.8 + rng() * 1.8,
+          hue: palette[Math.floor(rng() * palette.length)],
+          life: 0,
+          spin: (rng() - 0.5) * 0.8,
+          speed: 0.2 + rng() * 0.95,
+        });
+      }
+      statusLine.textContent = `status: reseeded with ${state.count} strands`;
+    }
+
+    function addPulse(x = state.w / 2, y = state.h / 2) {
+      state.ghosts.push({
+        x,
+        y,
+        r: 2,
+        life: 140,
+        maxLife: 140,
+        hue: palette[Math.floor(rng() * palette.length)]
+      });
+      statusLine.textContent = 'status: pulse cast from cursor';
+    }
+
+    function pointerWorld(e) {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      return { x, y };
+    }
+
+    function update() {
+      if (state.paused) {
+        requestAnimationFrame(update);
+        return;
+      }
+      state.t += 0.0045 * state.drift;
+      const t = state.t;
+
+      ctx.clearRect(0, 0, state.w, state.h);
+      ctx.fillStyle = '#04060d';
+      ctx.fillRect(0, 0, state.w, state.h);
+
+      const cx = state.cursor.x;
+      const cy = state.cursor.y;
+
+      // Background noise texture
+      for (let i = 0; i < 3; i++) {
+        ctx.fillStyle = `rgba(255,255,255,${0.02 + i * 0.008})`;
+        ctx.fillRect(0, 0, state.w, state.h);
+      }
+
+      for (let i = 0; i < state.particles.length; i++) {
+        const p = state.particles[i];
+        const nX = Math.sin(t + p.phase + i * 0.0025);
+        const nY = Math.cos(t * 0.9 + p.phase * 1.3 - i * 0.002);
+
+        const tx = cx + (rng() - 0.5) * 240 + nX * 120;
+        const ty = cy + (rng() - 0.5) * 240 + nY * 120;
+
+        const dx = tx - p.x;
+        const dy = ty - p.y;
+
+        const pull = 0.0085 * state.tension;
+        const gravity = Math.min(2.2, Math.hypot(dx, dy) / 120);
+        p.vx = (p.vx || 0) * 0.985 + dx * pull;
+        p.vy = (p.vy || 0) * 0.985 + dy * pull;
+
+        p.x += p.vx * (0.22 + 0.08 * gravity) + p.spin;
+        p.y += p.vy * (0.22 + 0.08 * gravity) + Math.sin(t + p.phase) * 0.25;
+        p.phase += 0.002 + p.speed * 0.0015;
+        p.x = (p.x + state.w) % state.w;
+        p.y = (p.y + state.h) % state.h;
+
+        const age = Math.max(0.2, 1 - Math.abs(state.ghosts[0]?.life ?? 1));
+        const alpha = Math.max(0.1, 1 - age * 0.2);
+        ctx.strokeStyle = `${p.hue}${Math.floor(80 * alpha).toString(16).padStart(2, '0')}`;
+        ctx.lineWidth = Math.max(0.5, p.radius * 0.5);
+
+        ctx.beginPath();
+        ctx.moveTo(p.px || p.x, p.py || p.y);
+        ctx.quadraticCurveTo(
+          (p.x + cx) * 0.5,
+          (p.y + cy) * 0.5,
+          p.x + nY * 18,
+          p.y - nX * 18
+        );
+        ctx.stroke();
+
+        p.px = p.x;
+        p.py = p.y;
+      }
+
+      // ghost pulses
+      for (let i = state.ghosts.length - 1; i >= 0; i--) {
+        const g = state.ghosts[i];
+        g.life -= 1;
+        const p = 1 - g.life / g.maxLife;
+        const rad = g.r + p * 160 * state.tension;
+
+        const grad = ctx.createRadialGradient(g.x, g.y, 0, g.x, g.y, rad);
+        grad.addColorStop(0, `${g.hue}33`);
+        grad.addColorStop(1, `${g.hue}00`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(g.x, g.y, rad, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (g.life <= 0) state.ghosts.splice(i, 1);
+      }
+
+      if (state.cursor.down) {
+        const pulse = ((Math.sin(t * 6) + 1) * 0.5);
+        statusLine.textContent = `status: dragging → pulling ${Math.round(pulse * 100)}%`;
+      }
+
+      requestAnimationFrame(update);
+    }
+
+    function pointerMove(e) {
+      const p = pointerWorld(e);
+      const prevX = state.cursor.x;
+      const prevY = state.cursor.y;
+      state.cursor.x = p.x;
+      state.cursor.y = p.y;
+      state.cursor.vx = p.x - prevX;
+      state.cursor.vy = p.y - prevY;
+      if (state.cursor.down && (Math.abs(state.cursor.vx) + Math.abs(state.cursor.vy)) > 0.4) {
+        addPulse(p.x, p.y);
+      }
+    }
+
+    function pointerDown(e) {
+      state.cursor.down = true;
+      const p = pointerWorld(e);
+      state.cursor.x = p.x;
+      state.cursor.y = p.y;
+      for (let i = 0; i < 4; i++) addPulse(p.x + (rng() - 0.5) * 40, p.y + (rng() - 0.5) * 40);
+    }
+
+    function pointerUp() {
+      state.cursor.down = false;
+      statusLine.textContent = 'status: cursor released';
+    }
+
+    function syncControls() {
+      state.tension = Number(tensionRange.value);
+      state.drift = Number(driftRange.value);
+      state.count = Number(countRange.value);
+      tensionVal.textContent = state.tension.toFixed(2);
+      driftVal.textContent = state.drift.toFixed(2);
+      countVal.textContent = String(state.count);
+      if (state.particles.length !== state.count) seed();
+    }
+
+    function init() {
+      resize();
+      window.addEventListener('resize', resize);
+      canvas.addEventListener('mousemove', pointerMove);
+      canvas.addEventListener('touchmove', (e) => {
+        const t = e.touches[0];
+        if (t) {
+          pointerMove(t);
+        }
+      }, { passive: true });
+      canvas.addEventListener('mousedown', pointerDown);
+      canvas.addEventListener('mouseup', pointerUp);
+      canvas.addEventListener('mouseleave', pointerUp);
+      canvas.addEventListener('touchstart', (e) => {
+        const t = e.touches[0];
+        if (t) pointerDown(t);
+      }, { passive: true });
+      canvas.addEventListener('touchend', pointerUp, { passive: true });
+
+      pauseBtn.addEventListener('click', () => {
+        state.paused = !state.paused;
+        pauseBtn.textContent = `pause: ${state.paused ? 'on' : 'off'}`;
+        statusLine.textContent = `status: ${state.paused ? 'paused by hand' : 'resuming weave'}`;
+      });
+
+      pulseBtn.addEventListener('click', () => addPulse(state.w * 0.5, state.h * 0.5));
+      seedBtn.addEventListener('click', () => seed());
+
+      tensionRange.addEventListener('input', syncControls);
+      driftRange.addEventListener('input', syncControls);
+      countRange.addEventListener('input', syncControls);
+
+      const params = new URLSearchParams(location.search);
+      state.seed = Number.parseInt(params.get('seed'), 16) || state.seed;
+      state.tension = Number(params.get('tension')) || state.tension;
+      state.drift = Number(params.get('drift')) || state.drift;
+      state.count = Number(params.get('count')) || state.count;
+      tensionRange.value = String(state.tension);
+      driftRange.value = String(state.drift);
+      countRange.value = String(state.count);
+      syncControls();
+
+      seed();
+      requestAnimationFrame(update);
+    }
+
+    init();
+  </script>
+</body>
+</html>

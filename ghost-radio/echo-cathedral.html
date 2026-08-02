@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Echo Cathedral</title>
+  <meta name="description" content="Echo Cathedral is a seeded interactive static chapel where particles chant in deterministic spirals and respond to your cursor." />
+  <meta name="theme-color" content="#090b12" />
+  <meta name="robots" content="index,follow" />
+  <meta property="og:title" content="Echo Cathedral" />
+  <meta property="og:description" content="A deterministic cursor-seeded particle cathedral in one-screen static." />
+  <meta property="og:url" content="https://garytalbot.github.io/ghost-radio/echo-cathedral.html" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Echo Cathedral" />
+  <meta name="twitter:description" content="A cursor-seeded particle cathedral with shareable seed state." />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080a11;
+      --ink: #ecf2ff;
+      --muted: #9aa7c2;
+      --line: rgba(255, 255, 255, 0.15);
+      --a: #8de8ff;
+      --b: #ff94d7;
+      --c: #d1ff72;
+      --panel: rgba(10, 12, 20, 0.58);
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font: 15px/1.45 "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 20% 12%, rgba(141, 232, 255, 0.15), transparent 24%),
+        radial-gradient(circle at 80% 8%, rgba(255, 148, 215, 0.12), transparent 20%),
+        radial-gradient(180deg, #090b12 0%, #05070e 80%, #02030a 100%);
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+
+    .panel {
+      position: fixed;
+      z-index: 2;
+      top: 10px;
+      left: 10px;
+      max-width: min(920px, calc(100vw - 20px));
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 12px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+    }
+
+    .panel h1 {
+      margin: 0 0 5px;
+      font: 700 1rem/1.2 "Trebuchet MS", "Segoe UI", sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .panel p {
+      margin: 0 0 9px;
+      color: var(--muted);
+      max-width: 72ch;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    button, a {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.04);
+      color: #fff;
+      border-radius: 999px;
+      padding: 8px 11px;
+      font: 700 .8rem/1 "Trebuchet MS", "Segoe UI", sans-serif;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+      white-space: nowrap;
+    }
+
+    button:hover, a:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--a) 40%, white 60%);
+      box-shadow: 0 0 0 2px rgba(141, 232, 255, 0.18);
+    }
+
+    button:focus-visible, a:focus-visible {
+      outline: 2px solid #8de8ff;
+      outline-offset: 2px;
+    }
+
+    .active {
+      background: linear-gradient(135deg, rgba(141,232,255,.22), rgba(255,148,215,.14));
+      border-color: color-mix(in srgb, var(--b) 46%, white 54%);
+    }
+
+    .stats {
+      margin-top: 6px;
+      display: grid;
+      gap: 4px;
+      color: var(--muted);
+      font-size: .84rem;
+    }
+    .stats span { color: #e9f0ff; margin-left: 6px; }
+
+    label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #a2b0cb;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-size: .76rem;
+      margin: 5px 0;
+    }
+
+    input[type="range"] { width: 180px; }
+    .small {
+      font-size: .73rem;
+      color: #b8c5e2;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 760px) {
+      .panel { max-width: calc(100vw - 16px); }
+      button, a { padding: 8px 10px; font-size: .74rem; }
+      input[type="range"] { width: 140px; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="cathedral"></canvas>
+
+  <section class="panel" aria-label="Echo Cathedral controls">
+    <h1>Echo Cathedral</h1>
+    <p>
+      A field of particles drifts through a haunted geometry. Tap the panel, drag the cursor,
+      and seed the next cathedral with a single click.
+    </p>
+
+    <div class="row">
+      <button id="pauseBtn" type="button" data-state="play">Pause</button>
+      <button id="seedBtn" type="button">Rerandomize seed</button>
+      <button id="copyBtn" type="button">Copy seed link</button>
+      <button id="saveBtn" type="button">Save frame</button>
+      <a href="./" rel="noopener noreferrer">Return to Ghost Radio</a>
+    </div>
+
+    <div>
+      <label>
+        Choir density
+        <input id="density" type="range" min="0.35" max="1.35" value="0.85" step="0.01" />
+        <span id="densityLabel">0.85</span>
+      </label>
+    </div>
+    <div>
+      <label>
+        Drift width
+        <input id="drift" type="range" min="0.4" max="2.8" value="1.1" step="0.01" />
+        <span id="driftLabel">1.10</span>
+      </label>
+    </div>
+
+    <div class="stats" aria-live="polite">
+      Seed: <span id="seedLabel">—</span><br>
+      Frames: <span id="frameLabel">0</span><br>
+      Mode: <span id="modeLabel">live</span>
+    </div>
+
+    <div class="small">Hint: click to inject a flare and pull the choir into a new orbit.</div>
+  </section>
+
+  <script>
+    const canvas = document.getElementById('cathedral');
+    const ctx = canvas.getContext('2d', { alpha: true });
+
+    const pauseBtn = document.getElementById('pauseBtn');
+    const seedBtn = document.getElementById('seedBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const density = document.getElementById('density');
+    const densityLabel = document.getElementById('densityLabel');
+    const drift = document.getElementById('drift');
+    const driftLabel = document.getElementById('driftLabel');
+    const seedLabel = document.getElementById('seedLabel');
+    const frameLabel = document.getElementById('frameLabel');
+    const modeLabel = document.getElementById('modeLabel');
+
+    const qs = new URLSearchParams(location.search);
+    const basePalette = ['#8de8ff', '#ff94d7', '#d1ff72', '#7de6ff', '#c5a9ff'];
+
+    function parseSeed(v) {
+      const n = Number(v);
+      return Number.isFinite(n) && n > 0 ? Math.floor(n) >>> 0 : 0;
+    }
+
+    function makeSeeded(seedVal) {
+      let s = seedVal >>> 0;
+      return function random() {
+        s ^= (s << 13);
+        s ^= (s >>> 17);
+        s ^= (s << 5);
+        return (s >>> 0) / 0xffffffff;
+      };
+    }
+
+    let seed = parseSeed(qs.get('seed'));
+    if (!seed) {
+      seed = Math.floor(Math.random() * 0xffffffff);
+    }
+
+    const params = new URLSearchParams(qs);
+    function syncSeedQuery() {
+      params.set('seed', String(seed));
+      const url = `${location.pathname}?${params.toString()}`;
+      history.replaceState({}, '', url);
+    }
+
+    const paramsForShare = {
+      href() {
+        return `${location.origin}${location.pathname}?${new URLSearchParams({ seed: String(seed) })}`;
+      }
+    };
+
+    let rnd = makeSeeded(seed);
+    let width = 0;
+    let height = 0;
+    let raf = 0;
+    let last = 0;
+    let t = 0;
+    let paused = false;
+
+    const world = {
+      points: [],
+      densityMul: Number(density.value),
+      driftMul: Number(drift.value),
+    };
+
+    const pointer = {
+      x: 0.5,
+      y: 0.5,
+      vx: 0,
+      vy: 0,
+      down: false,
+    };
+
+    function resize() {
+      const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function spawn() {
+      world.points = [];
+      const n = Math.floor(400 * world.densityMul);
+      for (let i = 0; i < n; i++) {
+        world.points.push({
+          x: rnd(),
+          y: rnd(),
+          vx: (rnd() - 0.5) * 0.0007,
+          vy: (rnd() - 0.5) * 0.0007,
+          a: rnd() * Math.PI * 2,
+          speed: 0.0012 + rnd() * 0.0018,
+          r: rnd() * 1.75 + 0.35,
+          p: rnd() * 0.5 + 0.4,
+          hue: Math.floor(rnd() * basePalette.length),
+          age: 0,
+          maxAge: 2200 + Math.floor(rnd() * 1300),
+        });
+      }
+      seedLabel.textContent = String(seed);
+      syncSeedQuery();
+    }
+
+    function pointerFromEvent(e) {
+      if (e.touches && e.touches[0]) {
+        return {
+          x: e.touches[0].clientX / width,
+          y: e.touches[0].clientY / height,
+        };
+      }
+      return {
+        x: e.clientX / width,
+        y: e.clientY / height,
+      };
+    }
+
+    function injectFlare(x, y) {
+      for (let i = 0; i < 26; i++) {
+        const phi = rnd() * Math.PI * 2;
+        const rad = rnd() * 0.09;
+        world.points.push({
+          x,
+          y,
+          vx: Math.cos(phi) * (0.0015 + rnd() * 0.0027),
+          vy: Math.sin(phi) * (0.0015 + rnd() * 0.0027),
+          a: phi,
+          speed: 0.0018 + rnd() * 0.002,
+          r: rnd() * 1.95 + 0.35,
+          p: 1,
+          hue: Math.floor(rnd() * basePalette.length),
+          age: 0,
+          maxAge: 500 + Math.floor(rnd() * 500),
+        });
+      }
+    }
+
+    function fieldAt(x, y, index) {
+      const ring = Math.sin((x * 1.8 + y * 1.3) * Math.PI * 3 + t * 0.18) * 0.0018;
+      const curl = Math.cos((y - x) * 3.2 + t * 0.14 + index * 0.03) * 0.0015;
+      const pullX = (pointer.x - x) * 0.00058;
+      const pullY = (pointer.y - y) * 0.00058;
+      return { fx: ring + pullX, fy: curl + pullY };
+    }
+
+    function step() {
+      if (paused) return;
+
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = 'rgba(8, 10, 17, 0.22)';
+      ctx.fillRect(0, 0, width, height);
+
+      world.points.forEach((p, i) => {
+        const f = fieldAt(p.x, p.y, i);
+        const localDrift = world.driftMul * (0.5 + p.p);
+        p.vx += (f.fx * localDrift);
+        p.vy += (f.fy * localDrift);
+
+        p.x += p.vx * (1 + p.speed * 900);
+        p.y += p.vy * (1 + p.speed * 900);
+
+        if (p.x > 1) p.x -= 1;
+        if (p.x < 0) p.x += 1;
+        if (p.y > 1) p.y -= 1;
+        if (p.y < 0) p.y += 1;
+
+        p.vx *= 0.975;
+        p.vy *= 0.975;
+        p.a += p.speed;
+        p.age += 1;
+
+        const px = p.x * width;
+        const py = p.y * height;
+        const near = world.points[(i * 19 + 17) % world.points.length];
+        if (near) {
+          const nx = near.x * width;
+          const ny = near.y * height;
+          const ddx = nx - px;
+          const ddy = ny - py;
+          const dd = Math.hypot(ddx, ddy);
+          const maxD = Math.min(width, height) * 0.16;
+          if (dd < maxD) {
+            ctx.strokeStyle = `${basePalette[(p.hue + near.hue) % basePalette.length]}55`;
+            ctx.lineWidth = Math.max(0.25, 0.8 - dd / 120);
+            ctx.beginPath();
+            ctx.moveTo(px, py);
+            ctx.lineTo(nx, ny);
+            ctx.stroke();
+          }
+        }
+
+        const life = 1 - p.age / p.maxAge;
+        const alpha = Math.max(0, Math.min(1, life));
+        ctx.fillStyle = `${basePalette[p.hue]}${Math.floor(alpha * 200).toString(16).padStart(2, '0')}`;
+        ctx.beginPath();
+        ctx.arc(px, py, Math.max(0.4, p.r), 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Remove the oldest collapsed points.
+      world.points = world.points.filter((p) => p.age < p.maxAge);
+      while (world.points.length < Math.floor(420 * world.densityMul)) {
+        world.points.push({
+          x: rnd(),
+          y: rnd(),
+          vx: (rnd() - 0.5) * 0.001,
+          vy: (rnd() - 0.5) * 0.001,
+          a: rnd() * Math.PI * 2,
+          speed: 0.001 + rnd() * 0.002,
+          r: rnd() * 1.6 + 0.4,
+          p: rnd() * 0.5 + 0.4,
+          hue: Math.floor(rnd() * basePalette.length),
+          age: 0,
+          maxAge: 1800 + Math.floor(rnd() * 1400),
+        });
+      }
+
+      frameLabel.textContent = String(Math.round(t));
+      t += 1;
+      raf = requestAnimationFrame(step);
+    }
+
+    function movePointer(e) {
+      const pt = pointerFromEvent(e);
+      pointer.x = pt.x;
+      pointer.y = pt.y;
+    }
+
+    function downPointer(e) {
+      pointer.down = true;
+      const pt = pointerFromEvent(e);
+      movePointer(e);
+      injectFlare(pt.x, pt.y);
+      e.preventDefault();
+    }
+
+    function upPointer() {
+      pointer.down = false;
+    }
+
+    function setPause(next) {
+      if (next === paused) return;
+      paused = next;
+      if (paused) {
+        modeLabel.textContent = 'paused';
+        pauseBtn.textContent = 'Resume';
+        pauseBtn.dataset.state = 'pause';
+        return;
+      }
+      modeLabel.textContent = 'live';
+      pauseBtn.textContent = 'Pause';
+      pauseBtn.dataset.state = 'play';
+      raf = requestAnimationFrame(step);
+    }
+
+    function saveFrame() {
+      const a = document.createElement('a');
+      a.download = `echo-cathedral-${seed}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    }
+
+    async function copyLink() {
+      const link = paramsForShare.href();
+      await navigator.clipboard.writeText(link);
+      copyBtn.textContent = 'Copied';
+      setTimeout(() => {
+        copyBtn.textContent = 'Copy seed link';
+      }, 1200);
+    }
+
+    function reseed() {
+      seed = (Math.random() * 0xffffffff) >>> 0;
+      rnd = makeSeeded(seed);
+      spawn();
+    }
+
+    pauseBtn.addEventListener('click', () => setPause(!paused));
+    seedBtn.addEventListener('click', reseed);
+    copyBtn.addEventListener('click', copyLink);
+    saveBtn.addEventListener('click', saveFrame);
+
+    density.addEventListener('input', (e) => {
+      world.densityMul = Number(e.target.value);
+      densityLabel.textContent = Number(e.target.value).toFixed(2);
+      spawn();
+    });
+
+    drift.addEventListener('input', (e) => {
+      world.driftMul = Number(e.target.value);
+      driftLabel.textContent = Number(e.target.value).toFixed(2);
+    });
+
+    canvas.addEventListener('mousemove', movePointer);
+    canvas.addEventListener('touchmove', movePointer, { passive: true });
+    canvas.addEventListener('mousedown', downPointer);
+    canvas.addEventListener('mouseup', upPointer);
+    canvas.addEventListener('mouseleave', upPointer);
+    canvas.addEventListener('touchstart', downPointer, { passive: false });
+    canvas.addEventListener('touchend', upPointer);
+
+    window.addEventListener('resize', () => {
+      resize();
+    });
+
+    window.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        setPause(true);
+      } else {
+        setPause(false);
+      }
+    });
+
+    world.densityMul = Number(density.value);
+    world.driftMul = Number(drift.value);
+    densityLabel.textContent = Number(density.value).toFixed(2);
+    driftLabel.textContent = Number(drift.value).toFixed(2);
+
+    resize();
+    spawn();
+    frameLabel.textContent = '0';
+    modeLabel.textContent = 'live';
+    raf = requestAnimationFrame(step);
+  </script>
+</body>
+</html>

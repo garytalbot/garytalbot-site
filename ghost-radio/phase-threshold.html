@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Phase Threshold is a haunted Ghost Radio side chamber where drifting phase particles respond to pointer pressure, chaos, and speed settings. Reseed, pause, and share deterministic states by hash." />
+  <meta name="theme-color" content="#090b12" />
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  <title>Ghost Radio — Phase Threshold</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070912;
+      --line: rgba(255, 255, 255, 0.15);
+      --text: #f2f5ff;
+      --muted: #a8b2d1;
+      --a: #8de8ff;
+      --b: #ff94d7;
+      --c: #d1ff72;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 10%, rgba(141, 232, 255, .14), transparent 30%),
+        radial-gradient(circle at 82% 15%, rgba(255, 148, 215, .09), transparent 26%),
+        linear-gradient(180deg, #070a10 0%, #090b12 48%, #05060a 100%);
+      overflow: hidden;
+    }
+
+    .shell {
+      width: min(1080px, 100vw - 24px);
+      margin: 10px auto;
+      display: grid;
+      gap: 10px;
+      min-height: calc(100vh - 20px);
+    }
+
+    .toolbar {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(12, 14, 22, 0.58);
+      backdrop-filter: blur(8px);
+      display: grid;
+      gap: 10px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 4px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-size: clamp(1.08rem, 2.7vw, 1.3rem);
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+      max-width: 70ch;
+      line-height: 1.45;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .knobs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 8px;
+      align-items: center;
+    }
+
+    label {
+      color: #d8e4ff;
+      font-size: .74rem;
+      display: grid;
+      grid-template-columns: 1fr 180px 54px;
+      gap: 7px;
+      align-items: center;
+    }
+
+    button, input, .ghost-link {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font: inherit;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease;
+      white-space: nowrap;
+    }
+
+    button:hover, .ghost-link:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--a) 45%, white 55%);
+    }
+
+    input[type="range"] { accent-color: var(--a); }
+
+    input[type="text"] {
+      width: 100%;
+      border-radius: 8px;
+      max-width: 160px;
+    }
+
+    input[readonly] {
+      color: var(--muted);
+      font-size: .75rem;
+      letter-spacing: .02em;
+    }
+
+    .ghost-link {
+      border-radius: 10px;
+    }
+
+    .stage {
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 14px;
+      overflow: hidden;
+      min-height: calc(100vh - 255px);
+      background:
+        radial-gradient(circle at 50% 40%, rgba(255, 255, 255, .06), transparent 66%),
+        linear-gradient(140deg, rgba(141,232,255,.05), rgba(255,148,215,.05));
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .status {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      pointer-events: none;
+      font-size: .78rem;
+      color: #d5deff;
+    }
+
+    .pill {
+      background: rgba(0, 0, 0, .5);
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 8px;
+      padding: 6px 10px;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 760px) {
+      .actions { justify-content: flex-start; }
+      label { grid-template-columns: 1fr 1fr; }
+      .knobs { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="toolbar" aria-label="Phase Threshold controls">
+      <div class="hero">
+        <h1>Phase Threshold</h1>
+        <p>
+          Phase Threshold bends a particle cloud through a resonant field and your pointer.
+          Change chaos, drift, and orbit speed, then reseed for a new haunt or share the exact state by URL.
+        </p>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="pauseBtn">Pause</button>
+        <button type="button" id="reseedBtn">Reseed</button>
+        <button type="button" id="copyBtn">Copy share link</button>
+        <button type="button" id="saveBtn">Save PNG</button>
+        <a class="ghost-link" href="./" rel="noopener">← Back to Ghost Radio</a>
+        <input id="seedInput" type="text" readonly value="" aria-label="Current seed value" />
+      </div>
+
+      <div class="knobs">
+        <label>
+          Chaos
+          <input id="chaosInput" type="range" min="0.1" max="2.7" step="0.05" value="1.2" />
+          <span id="chaosLabel">1.2</span>
+        </label>
+        <label>
+          Drift
+          <input id="driftInput" type="range" min="0.2" max="2.6" step="0.05" value="1.05" />
+          <span id="driftLabel">1.05</span>
+        </label>
+        <label>
+          Flow
+          <input id="flowInput" type="range" min="0.3" max="2.2" step="0.05" value="1.0" />
+          <span id="flowLabel">1.0</span>
+        </label>
+      </div>
+    </section>
+
+    <section class="stage" aria-label="Phase Threshold chamber">
+      <canvas id="canvas" aria-label="Phase Threshold canvas"></canvas>
+      <div class="status" aria-live="polite">
+        <span class="pill" id="seedLine">seed: ...</span>
+        <span class="pill" id="fpsLine">fps: —</span>
+        <span class="pill" id="stateLine">state: warmup</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    const pauseBtn = document.getElementById('pauseBtn');
+    const reseedBtn = document.getElementById('reseedBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const seedInput = document.getElementById('seedInput');
+
+    const chaosInput = document.getElementById('chaosInput');
+    const driftInput = document.getElementById('driftInput');
+    const flowInput = document.getElementById('flowInput');
+
+    const chaosLabel = document.getElementById('chaosLabel');
+    const driftLabel = document.getElementById('driftLabel');
+    const flowLabel = document.getElementById('flowLabel');
+
+    const seedLine = document.getElementById('seedLine');
+    const fpsLine = document.getElementById('fpsLine');
+    const stateLine = document.getElementById('stateLine');
+
+    const defaultState = {
+      seed: Math.floor(Math.random() * 2147483647) + 1,
+      chaos: Number(chaosInput.value),
+      drift: Number(driftInput.value),
+      flow: Number(flowInput.value)
+    };
+
+    const state = {
+      seed: defaultState.seed,
+      chaos: defaultState.chaos,
+      drift: defaultState.drift,
+      flow: defaultState.flow,
+      paused: false,
+      pointer: { x: null, y: null, alive: false, phase: 0 }
+    };
+
+    const particles = [];
+    const count = 1400;
+    let seedNow = state.seed;
+    let rng = mulberry32(seedNow);
+    let t = 0;
+    let last = 0;
+    let fpsSamples = [];
+    let rafId = null;
+
+    function mulberry32(a) {
+      let t = a >>> 0;
+      return () => {
+        t += 0x6D2B79F5;
+        let x = Math.imul(t ^ (t >>> 15), 1 | t);
+        x ^= x + Math.imul(x ^ (x >>> 7), 61 | x);
+        return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function pickSeedValue(raw) {
+      const n = Number(raw);
+      if (!Number.isFinite(n) || n <= 0) return Math.floor(Math.random() * 2147483647) + 1;
+      return Math.floor(Math.abs(n)) % 2147483647 || 1;
+    }
+
+    function parseHash() {
+      if (!location.hash || location.hash.length < 2) return;
+      const hash = location.hash.slice(1);
+      for (const chunk of hash.split('&')) {
+        const [k, v] = chunk.split('=');
+        if (!k) continue;
+        const value = decodeURIComponent(v || '');
+        switch (k) {
+          case 'seed': state.seed = pickSeedValue(value); break;
+          case 'chaos': state.chaos = Number(value) || state.chaos; break;
+          case 'drift': state.drift = Number(value) || state.drift; break;
+          case 'flow': state.flow = Number(value) || state.flow; break;
+        }
+      }
+    }
+
+    function writeHash() {
+      const payload = new URLSearchParams({
+        seed: String(state.seed),
+        chaos: state.chaos.toFixed(2),
+        drift: state.drift.toFixed(2),
+        flow: state.flow.toFixed(2)
+      }).toString();
+      const nextHash = `#${payload}`;
+      if (location.hash !== nextHash) {
+        history.replaceState(null, '', nextHash);
+      }
+    }
+
+    function syncInputsFromState() {
+      chaosInput.value = String(state.chaos);
+      driftInput.value = String(state.drift);
+      flowInput.value = String(state.flow);
+      chaosLabel.textContent = state.chaos;
+      driftLabel.textContent = state.drift;
+      flowLabel.textContent = state.flow;
+      seedInput.value = String(state.seed);
+      seedLine.textContent = `seed: ${state.seed}`;
+      updateSeedLine();
+    }
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width * DPR);
+      canvas.height = Math.floor(rect.height * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+
+    function reseed() {
+      state.seed = pickSeedValue(seedInput.value || (Date.now() & 0x7fffffff));
+      seedNow = state.seed;
+      rng = mulberry32(state.seed);
+      particles.length = 0;
+      const w = canvas.width / DPR;
+      const h = canvas.height / DPR;
+      for (let i = 0; i < count; i++) {
+        particles.push(createParticle(w, h));
+      }
+      writeHash();
+      stateLine.textContent = 'state: reseeded';
+      seedLine.textContent = `seed: ${state.seed}`;
+      seedInput.value = String(state.seed);
+    }
+
+    function createParticle(w, h) {
+      return {
+        x: rng() * w,
+        y: rng() * h,
+        px: 0,
+        py: 0,
+        vx: (rng() - 0.5) * 0.5,
+        vy: (rng() - 0.5) * 0.5,
+        phase: rng() * Math.PI * 2,
+        age: rng() * 100
+      };
+    }
+
+    function updateSeedLine() {
+      seedLine.textContent = `seed: ${state.seed}`;
+    }
+
+    function clamp(v, a, b) {
+      return v < a ? a : v > b ? b : v;
+    }
+
+    function fieldAt(p, time) {
+      const nx = (p.x * 0.002) + Math.sin(time * 0.35 + p.phase) * state.drift;
+      const ny = (p.y * 0.002) + Math.cos(time * 0.42 - p.phase) * state.drift;
+      const wave = Math.sin(nx + time * state.flow * 0.25) + Math.cos(ny - time * state.flow * 0.18);
+      const curl = Math.sin((nx * 0.9) + (ny * 0.75) + p.phase) * state.chaos;
+      const sink = Math.sin(time * 0.22 + p.phase + wave) * state.chaos;
+
+      let ax = Math.cos(wave + p.phase) * state.flow * 0.22 + curl * 0.12;
+      let ay = Math.sin(curl + p.phase) * state.flow * 0.22 + sink * 0.12;
+
+      if (state.pointer.alive) {
+        const dx = state.pointer.x - p.x;
+        const dy = state.pointer.y - p.y;
+        const dist = Math.max(12, Math.hypot(dx, dy));
+        const pull = 0.00075 * state.chaos;
+        ax += (dx / dist) * pull;
+        ay += (dy / dist) * pull;
+      }
+
+      return { ax, ay };
+    }
+
+    function tick(now) {
+      if (!last) last = now;
+      const dt = Math.min(0.035, (now - last) / 1000);
+      last = now;
+
+      if (!state.paused) {
+        t += dt * state.flow;
+        const w = canvas.width / DPR;
+        const h = canvas.height / DPR;
+        const time = t;
+
+        for (const p of particles) {
+          const { ax, ay } = fieldAt(p, time);
+          p.vx = p.vx * 0.98 + ax;
+          p.vy = p.vy * 0.98 + ay;
+          p.px = p.x;
+          p.py = p.y;
+          p.x += p.vx;
+          p.y += p.vy;
+          p.age += dt;
+
+          if (p.x < 0 || p.x > w || p.y < 0 || p.y > h) {
+            p.x = clamp(p.x, 0, w);
+            p.y = clamp(p.y, 0, h);
+            p.vx *= -0.35;
+            p.vy *= -0.35;
+            p.phase += Math.PI * (0.3 + rng() * 0.7);
+          }
+        }
+
+        drawFrame();
+      }
+
+      const fps = Math.min(120, 1000 / (now - (window.__lastNow || now)));
+      window.__lastNow = now;
+      fpsSamples.push(fps);
+      if (fpsSamples.length > 12) fpsSamples.shift();
+      const avg = fpsSamples.reduce((a, b) => a + b, 0) / fpsSamples.length;
+      fpsLine.textContent = `fps: ${avg.toFixed(0)}`;
+
+      rafId = requestAnimationFrame(tick);
+    }
+
+    function drawFrame() {
+      const w = canvas.width / DPR;
+      const h = canvas.height / DPR;
+      ctx.fillStyle = 'rgba(7, 9, 18, 0.16)';
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.strokeStyle = '#8de8ff';
+      ctx.lineWidth = 1;
+
+      const noiseTint = `hsl(${190 + state.chaos * 40}, 75%, ${45 + state.drift * 5}%)`;
+      const altTint = `hsl(${320 + state.flow * 20}, 74%, 62%)`;
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const pulse = (Math.sin(p.age * 2 + p.phase) + 1) * 0.5;
+        ctx.strokeStyle = i % 7 < 4 ? noiseTint : altTint;
+        ctx.globalAlpha = 0.05 + pulse * 0.11;
+
+        ctx.beginPath();
+        ctx.moveTo(p.px, p.py);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+      }
+
+      ctx.globalCompositeOperation = 'source-over';
+
+      if (state.pointer.alive) {
+        ctx.fillStyle = 'rgba(255, 148, 215, 0.16)';
+        ctx.beginPath();
+        ctx.arc(state.pointer.x, state.pointer.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      stateLine.textContent = `state: ${state.paused ? 'paused' : 'live'}`;
+    }
+
+    function setPause(next) {
+      state.paused = next;
+      pauseBtn.textContent = state.paused ? 'Resume' : 'Pause';
+      stateLine.textContent = state.paused ? 'state: paused' : 'state: live';
+    }
+
+    function copyShare() {
+      writeHash();
+      const link = `${location.href.split('#')[0]}${location.hash || ''}`;
+      const fallback = () => {
+        const ta = document.createElement('textarea');
+        ta.value = link;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      };
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(link).then(
+          () => {
+            stateLine.textContent = 'state: share link copied';
+            setTimeout(() => (stateLine.textContent = `state: ${state.paused ? 'paused' : 'live'}`), 900);
+          },
+          fallback
+        );
+      } else {
+        fallback();
+        stateLine.textContent = 'state: share link copied';
+        setTimeout(() => (stateLine.textContent = `state: ${state.paused ? 'paused' : 'live'}`), 900);
+      }
+    }
+
+    function savePng() {
+      const link = document.createElement('a');
+      const href = canvas.toDataURL('image/png');
+      link.href = href;
+      link.download = `phase-threshold-${state.seed}.png`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      stateLine.textContent = 'state: png queued';
+      setTimeout(() => (stateLine.textContent = `state: ${state.paused ? 'paused' : 'live'}`), 900);
+    }
+
+    function bindEvents() {
+      const onMove = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        state.pointer.x = e.clientX - rect.left;
+        state.pointer.y = e.clientY - rect.top;
+        state.pointer.alive = true;
+      };
+
+      const onLeave = () => {
+        state.pointer.alive = false;
+      };
+
+      canvas.addEventListener('pointermove', onMove);
+      canvas.addEventListener('pointerleave', onLeave);
+      canvas.addEventListener('pointerdown', onMove);
+
+      pauseBtn.addEventListener('click', () => setPause(!state.paused));
+      reseedBtn.addEventListener('click', reseed);
+      copyBtn.addEventListener('click', copyShare);
+      saveBtn.addEventListener('click', savePng);
+
+      chaosInput.addEventListener('input', () => {
+        state.chaos = Number(chaosInput.value);
+        chaosLabel.textContent = state.chaos;
+        writeHash();
+      });
+
+      driftInput.addEventListener('input', () => {
+        state.drift = Number(driftInput.value);
+        driftLabel.textContent = state.drift;
+        writeHash();
+      });
+
+      flowInput.addEventListener('input', () => {
+        state.flow = Number(flowInput.value);
+        flowLabel.textContent = state.flow;
+        writeHash();
+      });
+
+      seedInput.addEventListener('change', () => {
+        state.seed = pickSeedValue(seedInput.value);
+        reseed();
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === ' ' || e.key.toLowerCase() === 'p') {
+          e.preventDefault();
+          setPause(!state.paused);
+        }
+      });
+
+      window.addEventListener('resize', resize);
+    }
+
+    function boot() {
+      parseHash();
+      syncInputsFromState();
+      resize();
+      reseed();
+      bindEvents();
+      setPause(false);
+      ctx.fillStyle = '#090b12';
+      ctx.fillRect(0, 0, canvas.width / DPR, canvas.height / DPR);
+      writeHash();
+      rafId = requestAnimationFrame(tick);
+    }
+
+    boot();
+  </script>
+</body>
+</html>

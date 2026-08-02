@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ghost Radio — Quiet Bell</title>
+  <meta
+    name="description"
+    content="A soft orbital ritual where points ring around an unseen bell and your cursor bends their drift."
+  />
+  <meta name="theme-color" content="#090b12" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070a11;
+      --panel: rgba(12, 15, 24, 0.8);
+      --line: rgba(255, 255, 255, 0.12);
+      --text: #f4f7ff;
+      --muted: #afb7cf;
+      --accent: #8de8ff;
+      --accent2: #ff94d7;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 18% 12%, rgba(141, 232, 255, 0.12), transparent 34%),
+        radial-gradient(circle at 86% 84%, rgba(255, 148, 215, 0.1), transparent 36%),
+        linear-gradient(180deg, #05070d 0%, #090b12 54%, #04050a 100%);
+      overflow: hidden;
+    }
+
+    .shell {
+      width: min(1020px, calc(100vw - 16px));
+      margin: 12px auto;
+      display: grid;
+      gap: 10px;
+      min-height: calc(100vh - 24px);
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) minmax(260px, 2.2fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel);
+      backdrop-filter: blur(8px);
+    }
+
+    .toolbar h1 {
+      margin: 0;
+      font-size: 1.12rem;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+
+    .toolbar p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+
+    .control-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    button,
+    input[type="range"],
+    input[type="text"] {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      border-radius: 10px;
+      font: inherit;
+      padding: 8px 10px;
+    }
+
+    button {
+      cursor: pointer;
+      transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--accent) 45%, white 55%);
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
+    }
+
+    .seed {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-top: 4px;
+    }
+
+    .seed label {
+      font-size: 0.8rem;
+      color: #c5cfeb;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .seed input {
+      min-width: 160px;
+    }
+
+    .field {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      min-height: calc(100vh - 220px);
+      background:
+        radial-gradient(circle at 52% 50%, rgba(255, 255, 255, 0.05), transparent 62%),
+        linear-gradient(140deg, rgba(141, 232, 255, 0.05), rgba(255, 148, 215, 0.06));
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .hud {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      pointer-events: none;
+    }
+
+    .pill {
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 7px 10px;
+      color: #dfe5f7;
+      font-size: 0.76rem;
+      backdrop-filter: blur(4px);
+      letter-spacing: 0.02em;
+    }
+
+    .hud a {
+      pointer-events: auto;
+      text-decoration: none;
+      color: #dbe3ff;
+    }
+
+    .back {
+      position: absolute;
+      right: 12px;
+      top: 12px;
+      z-index: 3;
+      text-decoration: none;
+      color: #d9e3ff;
+      background: rgba(0, 0, 0, 0.38);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 999px;
+      padding: 8px 11px;
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      z-index: 3;
+    }
+
+    .back:hover { border-color: color-mix(in srgb, var(--accent) 45%, white 55%); }
+
+    @media (max-width: 1020px) {
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+      .field {
+        min-height: calc(100vh - 240px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="toolbar">
+      <div>
+        <h1>Quiet Bell</h1>
+        <p>
+          A low-orbit ritual. Orbit lines ring around the center, bend to your touch, and retain their current
+          state in the URL so another day can pick up the same vibration.
+        </p>
+      </div>
+
+      <div class="control-group">
+        <label style="display:flex;align-items:center;gap:8px;font-size:0.82rem;color:#d7dff4;white-space:nowrap;">
+          Density
+          <input id="density" type="range" min="0.2" max="1.4" step="0.2" value="0.8" />
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:0.82rem;color:#d7dff4;white-space:nowrap;">
+          Drift
+          <input id="drift" type="range" min="0.2" max="2.2" step="0.1" value="1" />
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:0.82rem;color:#d7dff4;white-space:nowrap;">
+          Pulse
+          <input id="pulse" type="range" min="0.2" max="2.2" step="0.1" value="1" />
+        </label>
+        <button id="reseedBtn" type="button">Reseed</button>
+        <button id="pauseBtn" type="button">Pause</button>
+        <button id="copyBtn" type="button">Copy link</button>
+        <button id="saveBtn" type="button">Save PNG</button>
+        <div class="seed">
+          <label for="seedInput">Seed</label>
+          <input id="seedInput" type="text" />
+        </div>
+      </div>
+    </section>
+
+    <section class="field" aria-label="Quiet Bell canvas field">
+      <a class="back" href="./">Back to Ghost Radio</a>
+      <canvas id="canvas" aria-label="Quiet bell orbital field"></canvas>
+      <div class="hud" id="hud" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d', { alpha: false });
+    const densityInput = document.getElementById('density');
+    const driftInput = document.getElementById('drift');
+    const pulseInput = document.getElementById('pulse');
+    const reseedBtn = document.getElementById('reseedBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const seedInput = document.getElementById('seedInput');
+    const hud = document.getElementById('hud');
+
+    const DPR = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+
+    function makeRng(seed) {
+      let s = (Number(seed) >>> 0) || 1234567;
+      return function() {
+        s = (1664525 * s + 1013904223) >>> 0;
+        return s / 4294967296;
+      };
+    }
+
+    const params = new URLSearchParams(location.hash.slice(1));
+    const parseNum = (v, d) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : d;
+    };
+
+    const state = {
+      seed: parseNum(params.get('seed'), Math.floor(Math.random() * 1e9)),
+      density: parseNum(params.get('d'), 0.8),
+      drift: parseNum(params.get('r'), 1),
+      pulse: parseNum(params.get('p'), 1),
+      paused: params.get('q') === '1',
+      width: 0,
+      height: 0,
+      cx: 0,
+      cy: 0,
+      t: 0,
+      pointer: { x: null, y: null }
+    };
+
+    function syncInputs() {
+      densityInput.value = String(Math.max(0.2, Math.min(1.4, state.density)));
+      driftInput.value = String(Math.max(0.2, Math.min(2.2, state.drift)));
+      pulseInput.value = String(Math.max(0.2, Math.min(2.2, state.pulse)));
+      seedInput.value = String(state.seed);
+      pauseBtn.textContent = state.paused ? 'Resume' : 'Pause';
+    }
+
+    syncInputs();
+    let nodes = [];
+
+    function resize() {
+      state.width = window.innerWidth;
+      state.height = window.innerHeight - 0;
+      const toolbar = document.querySelector('.toolbar');
+      if (toolbar) {
+        const toolbarRect = toolbar.getBoundingClientRect();
+        state.height = Math.max(380, window.innerHeight - toolbarRect.height - 32);
+      }
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.round(rect.width * DPR);
+      canvas.height = Math.round(rect.height * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      state.cx = rect.width / 2;
+      state.cy = rect.height / 2;
+      rebuildNodes();
+    }
+
+    function rebuildNodes() {
+      const rng = makeRng(state.seed);
+      const max = Math.round(140 * state.density);
+      nodes = Array.from({ length: max }, (_, i) => {
+        const ring = 0.12 + Math.sqrt(i / max) * 0.88;
+        return {
+          a: rng() * Math.PI * 2,
+          r: ring,
+          spin: (rng() - 0.5) * state.drift * 0.012,
+          speed: (rng() - 0.5) * 0.0022,
+          jitter: 0.35 + rng() * 0.8,
+          size: 1 + rng() * 2
+        };
+      });
+      updateHash({silent: true});
+      renderHud();
+    }
+
+    function updateHash({ silent = false } = {}) {
+      const next = new URLSearchParams();
+      next.set('seed', String(Math.round(state.seed)));
+      next.set('d', Number(state.density).toFixed(1));
+      next.set('r', Number(state.drift).toFixed(1));
+      next.set('p', Number(state.pulse).toFixed(1));
+      if (state.paused) next.set('q', '1');
+      const newHash = next.toString();
+      if (silent) {
+        history.replaceState(null, '', `${location.pathname}${location.search}#${newHash}`);
+      } else {
+        history.replaceState(null, '', `${location.pathname}${location.search}#${newHash}`);
+      }
+      seedInput.value = String(state.seed);
+      renderHud();
+    }
+
+    function renderHud() {
+      hud.innerHTML = '';
+      const nodesLabel = `nodes: ${nodes.length}`;
+      const driftLabel = `drift: ${state.drift.toFixed(1)}`;
+      const pulseLabel = `pulse: ${state.pulse.toFixed(1)}`;
+      const seedLabel = `seed: ${Math.round(state.seed)}`;
+      const modeLabel = state.paused ? 'mode: paused' : 'mode: running';
+
+      for (const text of [nodesLabel, driftLabel, pulseLabel, seedLabel, modeLabel]) {
+        const chip = document.createElement('span');
+        chip.className = 'pill';
+        chip.textContent = text;
+        hud.appendChild(chip);
+      }
+
+      const link = document.createElement('a');
+      link.className = 'pill';
+      link.href = window.location.href;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = 'open in new tab at current state';
+      hud.appendChild(link);
+    }
+
+    function drawBg() {
+      const rectW = canvas.width / DPR;
+      const rectH = canvas.height / DPR;
+      const g = ctx.createRadialGradient(state.cx, state.cy, 40, state.cx, state.cy, Math.max(rectW, rectH));
+      g.addColorStop(0, 'rgba(9, 13, 22, 0.06)');
+      g.addColorStop(1, 'rgba(3, 4, 10, 0.86)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, rectW, rectH);
+
+      ctx.strokeStyle = 'rgba(141, 232, 255, 0.08)';
+      ctx.lineWidth = 1;
+      for (let r = 1; r <= 3; r++) {
+        const radius = 110 * r;
+        ctx.beginPath();
+        ctx.arc(state.cx, state.cy, radius + Math.sin((state.t + r * 700) * 0.0005) * 6, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    function step() {
+      const w = canvas.width / DPR;
+      const h = canvas.height / DPR;
+      const now = performance.now();
+      if (!state.paused) state.t += 16;
+
+      drawBg();
+      ctx.save();
+      ctx.translate(state.cx, state.cy);
+
+      const ringScale = Math.min(w, h) * 0.48;
+      const pointer = state.pointer.x == null ? null : {
+        x: state.pointer.x - state.cx,
+        y: state.pointer.y - state.cy
+      };
+
+      for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
+        const pulsePhase = Math.sin((state.t * 0.001 * state.pulse) + node.a * 7 + node.jitter);
+        node.a += node.speed + node.spin * 0.9 * Math.sin(pulsePhase * 0.8);
+
+        let attractX = 0;
+        let attractY = 0;
+        if (pointer) {
+          const dx = pointer.x - Math.cos(node.a) * node.r * ringScale;
+          const dy = pointer.y - Math.sin(node.a) * node.r * ringScale;
+          const dist = Math.hypot(dx, dy) + 30;
+          const pull = Math.max(0, 90 - Math.min(90, dist)) / 90;
+          attractX += (dx / dist) * 0.0013 * pull * state.drift;
+          attractY += (dy / dist) * 0.0013 * pull * state.drift;
+        }
+
+        const rr = node.r * ringScale * (1 + Math.sin(node.a * 3 + state.t * 0.0009) * 0.08 * state.pulse);
+        const wobble = Math.cos(node.a * 12 + state.t * 0.002 + node.jitter) * 4;
+        const x = Math.cos(node.a) * rr + attractX * 220 + wobble;
+        const y = Math.sin(node.a) * rr + attractY * 220 - wobble;
+
+        ctx.beginPath();
+        ctx.arc(x, y, node.size + node.jitter * 0.9, 0, Math.PI * 2);
+        const alpha = 0.2 + node.r * 0.8;
+        ctx.fillStyle = `rgba(141, 232, 255, ${alpha})`;
+        ctx.fill();
+
+        if (i > 0) {
+          const prev = nodes[i - 1];
+          const pR = prev.r * ringScale * (1 + Math.sin(prev.a * 3 + state.t * 0.0009) * 0.08 * state.pulse);
+          const px = Math.cos(prev.a) * pR + wobble * 0.3;
+          const py = Math.sin(prev.a) * pR - wobble * 0.3;
+          ctx.strokeStyle = `rgba(209, 255, 114, ${(0.06 + node.r * 0.14).toFixed(3)})`;
+          ctx.lineWidth = 0.45;
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+        }
+      }
+
+      ctx.restore();
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.72)';
+      ctx.beginPath();
+      ctx.arc(state.cx, state.cy, 1.8 + Math.sin(now * 0.001) * 0.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      requestAnimationFrame(step);
+    }
+
+    function start() {
+      rebuildNodes();
+      requestAnimationFrame(step);
+      canvas.addEventListener('pointermove', onPointerMove);
+      canvas.addEventListener('pointerleave', onPointerLeave);
+      seedInput.value = String(state.seed);
+      renderHud();
+    }
+
+    function onPointerMove(evt) {
+      const rect = canvas.getBoundingClientRect();
+      state.pointer.x = evt.clientX;
+      state.pointer.y = evt.clientY;
+      if (evt.pointerType === 'mouse') {
+        const intensity = evt.pressure || 0.15;
+        if (intensity > 0.2) {
+          state.t += 3 * intensity;
+          updateHash({ silent: true });
+        }
+      }
+    }
+
+    function onPointerLeave() {
+      state.pointer.x = null;
+      state.pointer.y = null;
+    }
+
+    function reseed() {
+      const v = Number(seedInput.value);
+      state.seed = Number.isFinite(v) ? Math.abs(Math.floor(v)) : Math.floor(Math.random() * 1e9);
+      state.t = 0;
+      rebuildNodes();
+    }
+
+    function syncFromInputs() {
+      const d = parseNum(densityInput.value, state.density);
+      const r = parseNum(driftInput.value, state.drift);
+      const p = parseNum(pulseInput.value, state.pulse);
+      state.density = d;
+      state.drift = r;
+      state.pulse = p;
+      updateHash();
+      rebuildNodes();
+    }
+
+    densityInput.addEventListener('input', syncFromInputs);
+    driftInput.addEventListener('input', syncFromInputs);
+    pulseInput.addEventListener('input', syncFromInputs);
+
+    reseedBtn.addEventListener('click', reseed);
+    pauseBtn.addEventListener('click', () => {
+      state.paused = !state.paused;
+      pauseBtn.textContent = state.paused ? 'Resume' : 'Pause';
+      updateHash();
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(location.href);
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => (copyBtn.textContent = 'Copy link'), 800);
+      } catch (error) {
+        copyBtn.textContent = 'Copy failed';
+        setTimeout(() => (copyBtn.textContent = 'Copy link'), 1000);
+      }
+    });
+
+    saveBtn.addEventListener('click', () => {
+      const a = document.createElement('a');
+      const safe = `quiet-bell-${Math.round(state.seed)}-${Date.now()}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.download = safe;
+      a.click();
+    });
+
+    seedInput.addEventListener('change', () => {
+      reseed();
+    });
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('keydown', (evt) => {
+      if (evt.key.toLowerCase() === 'r') reseed();
+      if (evt.key.toLowerCase() === 'p') {
+        evt.preventDefault();
+        pauseBtn.click();
+      }
+      if (evt.key.toLowerCase() === 'c') {
+        copyBtn.click();
+      }
+    });
+
+    resize();
+    start();
+    updateHash({ silent: true });
+  </script>
+</body>
+</html>

@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Signal Basin is a haunted side ritual of drifting orbits, echo seeds, and copyable shared noise patterns for Ghost Radio." />
+  <meta name="theme-color" content="#090b12" />
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  <title>Signal Basin — Ghost Radio</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090b12;
+      --line: #2a3142;
+      --text: #f4f8ff;
+      --muted: #9aa6c7;
+      --a: #8de8ff;
+      --b: #ff94d7;
+      --c: #d1ff72;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      width: 100%;
+      overflow: hidden;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 12%, rgba(141, 232, 255, .16), transparent 28%),
+        radial-gradient(circle at 80% 18%, rgba(255, 148, 215, .12), transparent 24%),
+        linear-gradient(180deg, #070a10 0%, #090b12 52%, #04050a 100%);
+    }
+
+    .shell {
+      width: min(920px, 100vw - 24px);
+      margin: 12px auto;
+      display: grid;
+      gap: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .toolbar {
+      display: grid;
+      gap: 10px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(12, 14, 20, .62);
+      backdrop-filter: blur(7px);
+    }
+
+    .toolbar h1 {
+      margin: 0;
+      font-size: 1.05rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .toolbar p {
+      margin: 0;
+      color: var(--muted);
+      font-size: .9rem;
+      line-height: 1.4;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    label,
+    button,
+    input,
+    .muted-link {
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 999px;
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      padding: 8px 12px;
+      font: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .controls label {
+      padding: 6px 12px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    input[type="range"] { width: 170px; }
+
+    button {
+      cursor: pointer;
+      transition: transform .16s ease, border-color .16s ease;
+    }
+
+    button:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--a) 45%, white 55%); }
+
+    .muted-link {
+      text-decoration: none;
+      color: #d7e5ff;
+      white-space: nowrap;
+    }
+
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      color: #c8d5f0;
+      font-size: .8rem;
+    }
+
+    .badge {
+      background: rgba(0, 0, 0, .42);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 8px;
+      padding: 7px 10px;
+    }
+
+    .stage {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      min-height: calc(100vh - 230px);
+      background:
+        radial-gradient(circle at 50% 40%, rgba(255,255,255,.06), transparent 58%),
+        linear-gradient(140deg, rgba(141,232,255,.045), rgba(255,148,215,.045));
+    }
+
+    canvas {
+      width: 100%;
+      display: block;
+      height: 100%;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    .status {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: .76rem;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .status .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: var(--a);
+      box-shadow: 0 0 10px color-mix(in srgb, var(--a) 65%, white 35%);
+      margin-right: 6px;
+    }
+
+    .status span {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(0,0,0,.48);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 8px;
+      padding: 6px 10px;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 680px) {
+      .controls { flex-direction: column; align-items: stretch; }
+      input[type="range"] { width: 100%; }
+      .muted-link { justify-content: center; }
+      .hud { gap: 6px; }
+      .badge { width: 100%; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="toolbar">
+      <h1>Signal Basin</h1>
+      <p>Tap or drag the field to seed an echo. The basin remembers only the latest wave state, then drifts it into your speaker-memory.</p>
+      <div class="controls">
+        <label>Interference
+          <input id="chaos" type="range" min="12" max="120" value="54" />
+          <strong id="chaosVal">54</strong>
+        </label>
+        <button id="pauseBtn" type="button">Pause</button>
+        <button id="reseedBtn" type="button">Reseed</button>
+        <button id="copyBtn" type="button">Copy share link</button>
+        <button id="pngBtn" type="button">Save PNG</button>
+        <a class="muted-link" href="./" target="_blank" rel="noopener noreferrer">Back to Ghost Radio</a>
+      </div>
+      <div class="hud">
+        <span class="badge">seed: <strong id="seedLabel"></strong></span>
+        <span class="badge">nodes: <strong id="nodesLabel"></strong></span>
+        <span class="badge">frame: <strong id="frameLabel"></strong></span>
+      </div>
+    </section>
+
+    <section class="stage" aria-label="Signal basin canvas">
+      <canvas id="canvas" role="img" aria-label="Animated signal basin"></canvas>
+      <div class="status">
+        <span><span class="dot"></span><span id="statusLine">stitching new echoes</span></span>
+        <span id="clockLine">quiet</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const chaosEl = document.getElementById('chaos');
+    const chaosVal = document.getElementById('chaosVal');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const reseedBtn = document.getElementById('reseedBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const pngBtn = document.getElementById('pngBtn');
+    const statusLine = document.getElementById('statusLine');
+    const clockLine = document.getElementById('clockLine');
+    const nodesLabel = document.getElementById('nodesLabel');
+    const frameLabel = document.getElementById('frameLabel');
+    const seedLabel = document.getElementById('seedLabel');
+
+    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+    const qs = new URLSearchParams(location.search);
+    let seed = Number.parseInt(qs.get('seed') || (Date.now() % 100000), 10);
+    let running = true;
+    let frame = 0;
+    let t = 0;
+
+    const accents = ['#8de8ff', '#ff94d7', '#d1ff72', '#84ffd8', '#b59dff'];
+    let nodes = [];
+
+    function seedRng(s) {
+      let state = s >>> 0;
+      return function () {
+        state ^= state << 13;
+        state ^= state >>> 17;
+        state ^= state << 5;
+        return (state >>> 0) / 4294967296;
+      };
+    }
+
+    let rng = seedRng(seed);
+
+    function resize() {
+      const w = Math.floor(innerWidth * DPR);
+      const h = Math.floor(innerHeight * DPR);
+      canvas.width = w;
+      canvas.height = h;
+      canvas.style.width = `${innerWidth}px`;
+      canvas.style.height = `${innerHeight}px`;
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+
+    function pushNode(x = Math.random() * innerWidth, y = Math.random() * innerHeight, burst = false) {
+      const speed = 0.4 + rng() * 0.9;
+      const radius = 1.4 + rng() * 3.4;
+      nodes.push({
+        x,
+        y,
+        r: radius,
+        a: 1,
+        dr: 0.0042 + rng() * 0.006,
+        t: rng() * Math.PI * 2,
+        speed,
+        hue: Math.floor(rng() * 360),
+        burst,
+      });
+      if (nodes.length > 1200) nodes.splice(0, nodes.length - 1200);
+    }
+
+    function reset({seedOverride} = {}) {
+      if (typeof seedOverride === 'number') seed = seedOverride >>> 0;
+      else seed = (seed * 1664525 + 1013904223) >>> 0;
+      rng = seedRng(seed);
+      frame = 0;
+      t = 0;
+      nodes = [];
+      for (let i = 0; i < 180; i++) pushNode(rng() * innerWidth, rng() * innerHeight, false);
+      seedLabel.textContent = String(seed);
+      statusLine.textContent = 'reseeded basin';
+    }
+
+    function drawField() {
+      const chaos = Number(chaosEl.value);
+      const now = t * 0.0018;
+      ctx.fillStyle = 'rgba(7,9,14,0.2)';
+      ctx.fillRect(0, 0, innerWidth, innerHeight);
+
+      const cx = innerWidth * 0.5;
+      const cy = innerHeight * 0.5;
+      const wind = Math.sin(now * 0.12) * 0.0018 * chaos;
+
+      for (let i = nodes.length - 1; i >= 0; i--) {
+        const n = nodes[i];
+        n.a -= n.dr;
+        if (n.a <= 0) {
+          nodes.splice(i, 1);
+          continue;
+        }
+
+        const fx = Math.cos(n.t + now * n.speed) * wind * (n.burst ? 6 : 2);
+        const fy = Math.sin(n.t * 0.8 + now * n.speed) * wind * (n.burst ? 4 : 2);
+
+        const ox = n.x - cx;
+        const oy = n.y - cy;
+        const swirl = ((Math.atan2(oy, ox) + Math.PI * 2 + now * 0.0004 * chaos) % (Math.PI * 2));
+        const pull = 0.45 + (n.hue % 120) / 120;
+
+        n.x += Math.cos(swirl) * pull + fx;
+        n.y += Math.sin(swirl) * pull + fy;
+
+        if (n.x < 0) n.x = innerWidth;
+        if (n.x > innerWidth) n.x = 0;
+        if (n.y < 0) n.y = innerHeight;
+        if (n.y > innerHeight) n.y = 0;
+
+        n.t += 0.013 * n.speed * (chaos / 70);
+
+        const alpha = Math.max(0, n.a);
+        const col = `hsl(${(n.hue + n.a * 360) % 360}, 88%, ${n.burst ? 72 : 64}%)`;
+        const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r * 30);
+        g.addColorStop(0, `${col}`);
+        g.addColorStop(0.2, `color-mix(in srgb, ${col} 30%, transparent)`);
+        g.addColorStop(1, 'transparent');
+
+        ctx.beginPath();
+        ctx.fillStyle = g;
+        ctx.globalAlpha = Math.min(0.85, alpha * 1.5);
+        ctx.arc(n.x, n.y, n.r * 20, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = col;
+        ctx.lineWidth = Math.max(0.4, n.r * 0.3);
+        ctx.beginPath();
+        for (let p = 0; p < 12; p++) {
+          const a = ((Math.PI * 2) / 12) * p + now * 0.002 * chaos;
+          const rr = n.r * (1.2 + (Math.sin(now + p) + 1) * 12);
+          const xx = n.x + Math.cos(a) * rr;
+          const yy = n.y + Math.sin(a) * rr * 0.58;
+          if (p === 0) ctx.moveTo(xx, yy);
+          else ctx.lineTo(xx, yy);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      if (rng() < chaos / 1800) {
+        pushNode();
+      }
+
+      frame++;
+      frameLabel.textContent = String(frame);
+      nodesLabel.textContent = String(nodes.length);
+      chaosVal.textContent = String(chaos);
+      clockLine.textContent = `t=${(t / 60).toFixed(1)}s`;
+    }
+
+    let rafId;
+    function loop(ts) {
+      if (!running) {
+        rafId = requestAnimationFrame(loop);
+        return;
+      }
+      t += 1;
+      drawField();
+      statusLine.textContent = `drawing basin / chaos ${chaosEl.value}`;
+      rafId = requestAnimationFrame(loop);
+    }
+
+    function updateFromUrl() {
+      const fromHash = qs.get('chaos');
+      if (fromHash) {
+        const v = Number(fromHash);
+        if (Number.isFinite(v) && v >= 12 && v <= 120) chaosEl.value = String(Math.round(v));
+      }
+    }
+
+    canvas.addEventListener('pointerdown', (event) => {
+      const r = canvas.getBoundingClientRect();
+      const x = event.clientX - r.left;
+      const y = event.clientY - r.top;
+      for (let i = 0; i < 12; i++) {
+        const angle = (Math.PI * 2 * i) / 12;
+        pushNode(x + Math.cos(angle) * 14, y + Math.sin(angle) * 14, true);
+      }
+      statusLine.textContent = 'seed point accepted';
+    });
+
+    canvas.addEventListener('pointermove', (event) => {
+      if (!event.buttons) return;
+      const r = canvas.getBoundingClientRect();
+      pushNode(event.clientX - r.left, event.clientY - r.top);
+    });
+
+    pauseBtn.addEventListener('click', () => {
+      running = !running;
+      pauseBtn.textContent = running ? 'Pause' : 'Resume';
+      pauseBtn.classList.toggle('active', !running);
+      statusLine.textContent = running ? 'resuming' : 'paused';
+    });
+
+    reseedBtn.addEventListener('click', () => {
+      reset({seedOverride: (Math.floor(Math.random() * 1e9)) | 0});
+      const url = new URL(location.href);
+      url.searchParams.set('seed', String(seed));
+      url.searchParams.set('chaos', chaosEl.value);
+      history.replaceState({}, '', url);
+      statusLine.textContent = 'manual reseed completed';
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      const url = new URL(location.href);
+      url.searchParams.set('seed', String(seed));
+      url.searchParams.set('chaos', chaosEl.value);
+      try {
+        await navigator.clipboard.writeText(url.toString());
+        statusLine.textContent = 'share link copied';
+      } catch {
+        statusLine.textContent = url.toString();
+      }
+      statusLine.setAttribute('title', url.toString());
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => (copyBtn.textContent = 'Copy share link'), 850);
+    });
+
+    pngBtn.addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = `signal-basin-${seed}.png`;
+      a.click();
+      statusLine.textContent = 'PNG saved';
+    });
+
+    chaosEl.addEventListener('input', () => {
+      const url = new URL(location.href);
+      url.searchParams.set('seed', String(seed));
+      url.searchParams.set('chaos', chaosEl.value);
+      history.replaceState({}, '', url);
+      chaosVal.textContent = chaosEl.value;
+      statusLine.textContent = `chaos set to ${chaosEl.value}`;
+    });
+
+    addEventListener('keydown', (event) => {
+      if (event.key === ' ') {
+        event.preventDefault();
+        pauseBtn.click();
+      }
+      if (event.key === 'r' || event.key === 'R') reseedBtn.click();
+      if (event.key === 'c' || event.key === 'C') copyBtn.click();
+      if (event.key.toLowerCase() === 's') pngBtn.click();
+    });
+
+    resize();
+    updateFromUrl();
+    reset({seedOverride: seed});
+    requestAnimationFrame(loop);
+    addEventListener('resize', resize);
+
+    const tone = new AudioContext();
+    function pulse() {
+      // tiny sonic pulse when dragging
+      const osc = tone.createOscillator();
+      const gain = tone.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 330 + (seed % 400);
+      gain.gain.value = 0.015;
+      osc.connect(gain).connect(tone.destination);
+      osc.start();
+      gain.gain.exponentialRampToValueAtTime(0.0001, tone.currentTime + 0.08);
+      osc.stop(tone.currentTime + 0.08);
+    }
+
+    canvas.addEventListener('pointerdown', () => {
+      if (tone.state === 'suspended') tone.resume().then(pulse);
+      else pulse();
+    }, { once: true });
+  </script>
+</body>
+</html>

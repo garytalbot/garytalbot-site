@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rune Hollow</title>
+  <meta
+    name="description"
+    content="Rune Hollow is a seeded pointer-reactive particle field where glyph-fog drifts through a digital cavity."
+  />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070911;
+      --panel: rgba(16, 20, 32, 0.86);
+      --line: rgba(255, 255, 255, 0.11);
+      --text: #f6f8ff;
+      --muted: #a9b2cc;
+      --accent: #9bdcff;
+      --accent2: #d8ff9f;
+      --accent3: #ff9ad8;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+      --maxw: 1100px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 22% 18%, rgba(155, 220, 255, 0.12), transparent 34%),
+        radial-gradient(circle at 78% 10%, rgba(255, 154, 216, 0.12), transparent 28%),
+        radial-gradient(circle at 45% 80%, rgba(216, 255, 159, 0.1), transparent 30%),
+        linear-gradient(180deg, #07080f 0%, #090b13 50%, #05070d 100%);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    .wrap {
+      width: min(var(--maxw), calc(100vw - 26px));
+      margin: 14px auto 0;
+      display: grid;
+      gap: 12px;
+    }
+
+    .top,
+    .panel {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(6px);
+    }
+
+    .top {
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 10px;
+      z-index: 3;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.5rem, 3vw, 2.1rem);
+      letter-spacing: 0.01em;
+    }
+
+    p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .brand {
+      color: var(--muted);
+      text-decoration: none;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .panel {
+      position: relative;
+      overflow: hidden;
+      min-height: 72vh;
+    }
+
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .hud {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      z-index: 4;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .hud button,
+    .hud a {
+      appearance: none;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      padding: 8px 12px;
+      font: 700 0.82rem/1 "Trebuchet MS", sans-serif;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .hud button.active {
+      border-color: color-mix(in srgb, var(--accent) 40%, white 60%);
+      background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--accent) 26%, transparent),
+        color-mix(in srgb, var(--accent2) 17%, transparent)
+      );
+    }
+
+    .stats {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 3;
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-align: right;
+      max-width: min(360px, 52vw);
+      background: rgba(6, 8, 14, 0.5);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 8px 10px;
+    }
+
+    .stats b { color: var(--text); }
+    .glitch {
+      color: var(--accent3);
+      letter-spacing: 0.16em;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+
+    .help {
+      position: absolute;
+      left: 12px;
+      top: 12px;
+      z-index: 3;
+      max-width: min(420px, 74vw);
+      background: rgba(8, 11, 19, 0.62);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    code {
+      color: var(--accent);
+    }
+
+    @media (max-width: 780px) {
+      .top { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <div>
+        <h1>Rune Hollow</h1>
+        <p>
+          Pointer-wake particle glyphs born from a shared seed. Move, click, or hold
+          to hear the geometry breathe.
+        </p>
+      </div>
+      <a class="brand" href="./" aria-label="Back to Ghost Radio">Back</a>
+    </header>
+
+    <section class="panel" aria-label="Rune Hollow field">
+      <canvas id="field" aria-label="Rune Hollow particle field"></canvas>
+
+      <div class="help">
+        Mouse move shapes the drift. Click to inject runes.<br />
+        Keyboard: <code>space</code>=pause/resume, <code>r</code>=reseed, <code>c</code>=copy link,
+        <code>s</code>=save PNG, <code>1-9</code>=density.
+      </div>
+
+      <div class="stats" id="stats"></div>
+
+      <div class="hud" role="group" aria-label="Rune Hollow controls">
+        <button id="pauseBtn" type="button">Pause</button>
+        <button id="reseedBtn" type="button">Rerun seed</button>
+        <button id="copyBtn" type="button">Copy link</button>
+        <button id="saveBtn" type="button">Save image</button>
+        <a id="openGhostRadio" class="brand" href="./" target="_blank" rel="noopener noreferrer">Open Ghost Radio</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('field');
+    const ctx = canvas.getContext('2d', { alpha: true });
+    const pauseBtn = document.getElementById('pauseBtn');
+    const reseedBtn = document.getElementById('reseedBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const stats = document.getElementById('stats');
+    const seedHelp = new URLSearchParams(location.hash.slice(1));
+
+    const dpr = () => Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+
+    const params = {
+      seed: Number(seedHelp.get('seed')) || Math.floor(Math.random() * 0x7fffffff),
+      density: Number(seedHelp.get('n')) || 340,
+      pause: false,
+    };
+
+    let w = 0;
+    let h = 0;
+    let t = 0;
+    let runes = [];
+    let pointer = { x: 0.5, y: 0.5, a: 0, active: false };
+    let raf = 0;
+
+    function mulberry32(a) {
+      let t = a >>> 0;
+      return function () {
+        t += 0x6D2B79F5;
+        let s = t;
+        s = Math.imul(s ^ (s >>> 15), s | 1);
+        s ^= s + Math.imul(s ^ (s >>> 7), s | 61);
+        return ((s ^ (s >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    let rng = mulberry32(params.seed);
+
+    function setHash(update = true) {
+      const hash = new URLSearchParams();
+      hash.set('seed', String(params.seed));
+      hash.set('n', String(params.density));
+      if (params.pause) hash.set('pause', '1');
+      if (location.search || location.hash.substring(1) !== hash.toString()) {
+        const next = `${location.pathname}#${hash.toString()}`;
+        if (update) {
+          history.replaceState(null, '', next);
+        }
+      }
+    }
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      w = Math.max(320, Math.floor(rect.width));
+      h = Math.max(280, Math.floor(rect.height));
+      const ratio = dpr();
+      canvas.width = Math.floor(w * ratio);
+      canvas.height = Math.floor(h * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      if (runes.length) projectRings();
+    }
+
+    function ringColor(p) {
+      const base = 40;
+      const r = Math.round(140 + p.tier * 8 + p.spin * 60);
+      const g = Math.round(190 - p.tier * 4 + p.spin * 120);
+      const b = Math.round(220 - p.spin * 90);
+      return `rgba(${r % 255}, ${g % 255}, ${b % 255}, ${0.14 + p.life * 0.02})`;
+    }
+
+    function projectRings() {
+      const cX = w / 2;
+      const cY = h / 2;
+      const n = Math.max(40, Math.floor(params.density));
+      runes = Array.from({ length: n }, () => {
+        const a = rng() * Math.PI * 2;
+        const ring = Math.max(1.8, rng() * 4.7);
+        const rad = (Math.min(w, h) * (0.14 + rng() * 0.74));
+        const speed = 0.0035 + rng() * 0.0045;
+        return {
+          angle: a,
+          radius: rad,
+          ring,
+          orbit: 0.2 + rng() * 1.7,
+          spin: 0.12 + rng() * 0.9,
+          seed: rng(),
+          life: 0,
+          jitter: 0.16 + rng() * 0.7,
+          noise: rng() * Math.PI * 2,
+          x: cX + Math.cos(a) * rad,
+          y: cY + Math.sin(a) * rad,
+        };
+      });
+    }
+
+    function resetField() {
+      rng = mulberry32(params.seed);
+      projectRings();
+      setHash(true);
+    }
+
+    function setStats() {
+      stats.innerHTML = `seed <b>${params.seed}</b> • runes <b>${runes.length}</b> • pointer <b>${pointer.active ? 'ACTIVE' : 'IDLE'}</b>`;
+    }
+
+    function drawField() {
+      t += 0.005;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = 'rgba(7, 9, 17, 0.16)';
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalCompositeOperation = 'lighter';
+
+      const cx = w * 0.5;
+      const cy = w < 500 ? h * 0.46 : h * 0.5;
+      const px = pointer.x * w;
+      const py = pointer.y * h;
+      const amp = 0.65 + Math.sin(t * 2.8) * 0.15;
+
+      for (const p of runes) {
+        p.life += 1;
+        const drift = Math.sin(t * p.spin * 1.1 + p.noise + p.seed * 9);
+        const flow = Math.cos(t * 0.4 + p.seed * 5) * 0.0006;
+        p.angle += (0.0025 * p.ring * p.orbit) * amp + flow;
+        p.radius += (Math.sin(t + p.seed * 16) * 0.06) * (0.6 + p.jitter);
+        p.radius *= 0.9996;
+
+        const swirl = pointer.active
+          ? ((Math.atan2(py - (cy + Math.sin(t * 1.5) * h * 0.08) , px - cx) - p.angle) * 0.00026)
+          : Math.sin(p.noise + t * 1.2) * 0.00012;
+
+        p.angle += swirl;
+        p.radius += pointer.active
+          ? ((px - (w * 0.5)) * 0.000015 + (py - cy) * 0.000015) * amp
+          : 0;
+
+        const x = cx + Math.cos(p.angle) * p.radius;
+        const y = cy + Math.sin(p.angle) * (p.radius * 0.78);
+        p.x = p.x * 0.94 + x * 0.06;
+        p.y = p.y * 0.94 + y * 0.06;
+
+        const m = 1 - Math.min(1, Math.hypot(px - p.x, py - p.y) / Math.max(w, h));
+        const pull = pointer.active ? (m * 0.65) : 0;
+
+        ctx.beginPath();
+        const scale = 2 + (p.ring * 1.8) + pull * 8;
+        const glow = `rgba(255, ${120 + Math.round(p.spin * 100)}, ${180 + Math.round(p.seed * 60)}, ${0.07 + p.life * 0.0009 + pull * 0.12})`;
+        const rim = `rgba(${130 + Math.round(p.spin * 60)}, ${200 - p.ring * 20}, ${250}, ${0.12 + pull * 0.2})`;
+
+        ctx.strokeStyle = ringColor(p);
+        ctx.lineWidth = 0.9;
+        ctx.arc(p.x, p.y, scale + p.jitter * 1.3, p.angle + t, p.angle + t + Math.PI * 1.5);
+        ctx.stroke();
+
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 1 + pull * 3.4, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = rim;
+        ctx.fillRect(p.x - 1.1, p.y - 1.1, 2.2, 2.2);
+      }
+
+      // pulse traces
+      for (let i = 0; i < 3; i++) {
+        const rad = ((t * 300 + i * 250) % (Math.min(w, h) * 1.1));
+        const alpha = (1 - rad / (Math.min(w, h) * 1.1)) * 0.05;
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(200, 255, 220, ${alpha})`;
+        ctx.lineWidth = 1;
+        ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = 'rgba(255,255,255,0.03)';
+      ctx.beginPath();
+      ctx.ellipse(px, py, 4, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      setStats();
+      if (!params.pause) raf = requestAnimationFrame(drawField);
+    }
+
+    function clickInject(x, y) {
+      for (let i = 0; i < 12; i++) {
+        const a = Math.atan2(y - h / 2, x - w / 2) + (rng() - 0.5) * 2.6;
+        const rad = Math.max(18, Math.hypot(x - w / 2, y - h / 2) * 0.4 + rng() * 40);
+        runes.push({
+          angle: a,
+          radius: rad,
+          ring: 0.8 + rng() * 3,
+          orbit: 0.4 + rng() * 1.9,
+          spin: 1.2 + rng() * 1.8,
+          seed: rng(),
+          life: 0,
+          jitter: rng() * 0.9 + 0.2,
+          noise: rng() * Math.PI * 2,
+          x,
+          y,
+        });
+      }
+      if (runes.length > params.density * 1.35) {
+        runes = runes.slice(runes.length - Math.floor(params.density * 1.35));
+      }
+    }
+
+    function copyLink() {
+      const base = `${location.origin}${location.pathname}#seed=${params.seed}&n=${params.density}`;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(base).then(() => {
+          copyBtn.textContent = 'Link copied';
+          setTimeout(() => (copyBtn.textContent = 'Copy link'), 900);
+        });
+      } else {
+        window.prompt('Copy this link', base);
+      }
+      setHash(true);
+    }
+
+    function saveImage() {
+      const blobCanvas = document.createElement('canvas');
+      blobCanvas.width = w;
+      blobCanvas.height = h;
+      const bctx = blobCanvas.getContext('2d');
+      bctx.drawImage(canvas, 0, 0, w, h);
+      const url = blobCanvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `rune-hollow-${params.seed}.png`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      saveBtn.textContent = 'Saved ✓';
+      setTimeout(() => (saveBtn.textContent = 'Save image'), 900);
+    }
+
+    function toWorld(e) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left),
+        y: (e.clientY - rect.top),
+      };
+    }
+
+    function togglePause() {
+      params.pause = !params.pause;
+      pauseBtn.textContent = params.pause ? 'Resume' : 'Pause';
+      if (params.pause) {
+        pauseBtn.classList.add('active');
+      } else {
+        pauseBtn.classList.remove('active');
+        drawField();
+      }
+      setHash(true);
+    }
+
+    pauseBtn.addEventListener('click', togglePause);
+    reseedBtn.addEventListener('click', () => {
+      params.seed = Math.floor(rng() * 0xffffffff);
+      resetField();
+      reseedBtn.textContent = 'Rerolled';
+      setTimeout(() => (reseedBtn.textContent = 'Rerun seed'), 900);
+    });
+    copyBtn.addEventListener('click', copyLink);
+    saveBtn.addEventListener('click', saveImage);
+
+    window.addEventListener('pointermove', (event) => {
+      const p = toWorld(event);
+      pointer.x = Math.max(0, Math.min(1, p.x / w));
+      pointer.y = Math.max(0, Math.min(1, p.y / h));
+      pointer.a = 0;
+      pointer.active = true;
+      if (t > 0 && event.pointerType === 'pen') pointer.a = 0.2;
+    });
+
+    window.addEventListener('pointerleave', () => {
+      pointer.active = false;
+    });
+
+    window.addEventListener('pointerdown', (event) => {
+      const p = toWorld(event);
+      pointer.x = Math.max(0, Math.min(1, p.x / w));
+      pointer.y = Math.max(0, Math.min(1, p.y / h));
+      pointer.active = true;
+      clickInject(p.x, p.y);
+    });
+
+    window.addEventListener('keydown', (event) => {
+      const k = event.key.toLowerCase();
+      if (k === ' ') {
+        event.preventDefault();
+        togglePause();
+      }
+      if (k === 'r') reseedBtn.click();
+      if (k === 'c') copyLink();
+      if (k === 's') saveImage();
+      if (/^[1-9]$/.test(k)) {
+        params.density = 120 + Number(k) * 40;
+        resetField();
+      }
+    });
+
+    resize();
+    resetField();
+
+    const fromHash = new URLSearchParams(location.hash.slice(1));
+    if (fromHash.get('seed')) {
+      const nextSeed = Number(fromHash.get('seed'));
+      if (!Number.isNaN(nextSeed)) params.seed = nextSeed;
+    }
+    if (fromHash.get('n')) {
+      const nextN = Number(fromHash.get('n'));
+      if (!Number.isNaN(nextN)) params.density = Math.max(100, Math.min(1200, nextN));
+    }
+
+    if (fromHash.get('pause') === '1') {
+      params.pause = true;
+      pauseBtn.textContent = 'Resume';
+      pauseBtn.classList.add('active');
+    }
+
+    resetField();
+    drawField();
+    setHash(true);
+
+    window.addEventListener('resize', () => {
+      resize();
+      setStats();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Void Mirror</title>
+  <meta
+    name="description"
+    content="Void Mirror: a cursor-stitched generative ritual where particles answer to your movement, a seeded hash, and the noise between clicks."
+  />
+  <meta name="theme-color" content="#090a11" />
+  <meta name="robots" content="index,follow" />
+  <meta property="og:title" content="Void Mirror" />
+  <meta
+    property="og:description"
+    content="A haunted canvas ritual: particles drift through deterministic noise, pointers pull, clicks seed local events, and links remember the dream-state."
+  />
+  <meta property="og:url" content="https://garytalbot.github.io/ghost-radio/void-mirror.html" />
+  <meta property="og:image" content="https://garytalbot.github.io/ghost-radio/share-card.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Void Mirror" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090b12;
+      --ink: #dce4ff;
+      --muted: #94a1c0;
+      --a: #8de8ff;
+      --b: #ff94d7;
+      --c: #d1ff72;
+      --line: rgba(255, 255, 255, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font: 15px/1.4 "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 20% 0%, rgba(141, 232, 255, 0.14), transparent 20%),
+        radial-gradient(circle at 80% 10%, rgba(255, 148, 215, 0.12), transparent 22%),
+        radial-gradient(180deg, #090b12 10%, #06080d 70%, #04050a 100%);
+    }
+
+    .hud {
+      position: fixed;
+      z-index: 2;
+      left: 12px;
+      top: 12px;
+      max-width: min(860px, calc(100vw - 24px));
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(9, 12, 20, 0.58);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+    }
+
+    .hud strong {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 0.95rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #f7faff;
+    }
+
+    .tag {
+      color: var(--muted);
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .btn,
+    a.btn {
+      appearance: none;
+      border: 1px solid rgba(255, 255, 255, 0.17);
+      background: rgba(255, 255, 255, 0.04);
+      color: #fff;
+      border-radius: 999px;
+      padding: 9px 12px;
+      text-decoration: none;
+      cursor: pointer;
+      font: 700 0.85rem/1 sans-serif;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+      user-select: none;
+    }
+
+    .btn:hover,
+    a.btn:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--a) 40%, white 60%);
+      box-shadow: 0 0 0 2px rgba(141, 232, 255, 0.2);
+    }
+
+    .btn.primary {
+      border-color: color-mix(in srgb, var(--c) 30%, white 70%);
+      background: linear-gradient(135deg, rgba(141, 232, 255, 0.24), rgba(255, 148, 215, 0.12));
+    }
+
+    .btn.active {
+      border-color: color-mix(in srgb, var(--b) 45%, white 55%);
+      box-shadow: 0 0 0 1px rgba(255, 148, 215, 0.25);
+    }
+
+    .status {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      display: grid;
+      gap: 2px;
+    }
+
+    .status div {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+    }
+
+    .status b {
+      color: #e6ebff;
+      font-weight: 700;
+      min-width: 90px;
+      display: inline-block;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      position: fixed;
+      inset: 0;
+    }
+
+    .hint {
+      margin: 0;
+      padding-top: 4px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    @media (max-width: 680px) {
+      .hud {
+        max-width: calc(100vw - 16px);
+      }
+
+      .btn,
+      a.btn {
+        padding: 8px 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="field"></canvas>
+
+  <aside class="hud" aria-live="polite">
+    <strong>Void Mirror</strong>
+    <div class="tag">A seeded pointer field + deterministic drift</div>
+    <div class="controls">
+      <button class="btn primary" id="pauseBtn" aria-pressed="false">Pause drift</button>
+      <button class="btn" id="seedBtn">Rerandomize seed</button>
+      <button class="btn" id="copyBtn">Copy ritual link</button>
+      <button class="btn" id="saveBtn">Save still</button>
+      <a class="btn" href="./">Return to Ghost Radio</a>
+    </div>
+    <p class="hint">Move pointer. Click to summon a local flare. Every frame obeys the seed.</p>
+    <div class="status" id="status">
+      <div><b>Seed</b><span id="seedLabel">—</span></div>
+      <div><b>Nodes</b><span id="nodeLabel">—</span></div>
+      <div><b>Mode</b><span id="modeLabel">—</span></div>
+    </div>
+  </aside>
+
+  <script>
+    const TWO_PI = Math.PI * 2;
+    const TAU = TWO_PI;
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+    function hashToSeed(hash) {
+      if (!hash) return Date.now() >>> 0;
+      const raw = hash.replace('#', '').trim();
+      if (!raw) return Date.now() >>> 0;
+      let n = 0;
+      for (let i = 0; i < raw.length; i += 1) {
+        n = (n * 1315423911 + raw.charCodeAt(i)) >>> 0;
+      }
+      return n >>> 0;
+    }
+
+    function makeRng(seed) {
+      let s = seed >>> 0;
+      return function random() {
+        s |= 0;
+        s = (s + 0x6d2b79f5) | 0;
+        let t = Math.imul(s ^ (s >>> 15), 1 | s);
+        t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    const params = new URLSearchParams(location.search);
+    const querySeed = params.get('seed');
+    let seed = hashToSeed(querySeed);
+    const palette = ['#8de8ff', '#ff94d7', '#d1ff72', '#7de6ff', '#b9a7ff'];
+    const canvas = document.getElementById('field');
+    const ctx = canvas.getContext('2d');
+    let paused = false;
+    let pointer = { x: 0.5, y: 0.5, active: false };
+    let time = 0;
+    let particles = [];
+    let flares = [];
+
+    const count = 420;
+    const density = { value: 1 };
+    const seedLabel = document.getElementById('seedLabel');
+    const nodeLabel = document.getElementById('nodeLabel');
+    const modeLabel = document.getElementById('modeLabel');
+    const pauseBtn = document.getElementById('pauseBtn');
+
+    const query = new URLSearchParams(location.search);
+    query.set('seed', String(seed));
+    history.replaceState(null, '', `?${query.toString()}`);
+
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(innerWidth * dpr);
+      canvas.height = Math.floor(innerHeight * dpr);
+      canvas.style.width = innerWidth + 'px';
+      canvas.style.height = innerHeight + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (!particles.length) buildField();
+    }
+
+    function buildField() {
+      const rand = makeRng(seed);
+      particles = Array.from({ length: Math.round(count * density.value) }, () => {
+        const angle = rand() * TAU;
+        const radius = Math.pow(rand(), 0.55) * Math.max(innerWidth, innerHeight);
+        return {
+          x: rand() * innerWidth,
+          y: rand() * innerHeight,
+          vx: Math.cos(angle) * 0.2,
+          vy: Math.sin(angle) * 0.2,
+          life: 140 + rand() * 280,
+          maxLife: 140 + rand() * 280,
+          hue: palette[(rand() * palette.length) | 0],
+          phase: rand() * TAU,
+          width: 0.8 + rand() * 1.8,
+        };
+      });
+      nodeLabel.textContent = String(particles.length);
+      seedLabel.textContent = seed;
+      modeLabel.textContent = 'woven';
+    }
+
+    function fieldFor(p) {
+      const nx = (p.x / innerWidth - 0.5) * 2;
+      const ny = (p.y / innerHeight - 0.5) * 2;
+      const pulse = Math.sin(time * 0.001 + p.phase + nx * 3.4 + ny * 2.1);
+      const spin = Math.cos((nx - ny) * 4.2 + time * 0.0007 + seed * 0.000001);
+      const driftX = Math.cos((ny + pulse) * 5.0 + spin);
+      const driftY = Math.sin((nx + spin) * 4.7 - pulse);
+      return { driftX, driftY, pull: pulse };
+    }
+
+    function stepParticle(p) {
+      const f = fieldFor(p);
+      p.vx += f.driftX * 0.04 + (pointer.active ? (pointer.x - p.x) / Math.max(1, Math.hypot(pointer.x - p.x, pointer.y - p.y)) * 0.03 : 0);
+      p.vy += f.driftY * 0.04 + (pointer.active ? (pointer.y - p.y) / Math.max(1, Math.hypot(pointer.x - p.x, pointer.y - p.y)) * 0.03 : 0);
+      p.vx *= 0.995;
+      p.vy *= 0.995;
+      p.vx += f.pull * 0.03;
+      p.vy -= f.pull * 0.025;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= 0.8;
+
+      if (p.x < 0) p.x += innerWidth;
+      if (p.x > innerWidth) p.x -= innerWidth;
+      if (p.y < 0) p.y += innerHeight;
+      if (p.y > innerHeight) p.y -= innerHeight;
+
+      if (p.life <= 0) {
+        const rand = makeRng((seed ^ (p.phase * 10000) + (p.x << 3)) >>> 0);
+        const angle = rand() * TAU;
+        p.vx = Math.cos(angle) * 0.2;
+        p.vy = Math.sin(angle) * 0.2;
+        p.life = p.maxLife = 140 + rand() * 280;
+        p.phase = rand() * TAU;
+      }
+    }
+
+    function draw() {
+      time += 16;
+      if (!paused) {
+        for (const p of particles) {
+          stepParticle(p);
+        }
+      }
+      const grad = ctx.createRadialGradient(innerWidth / 2, innerHeight / 2, 80, innerWidth / 2, innerHeight / 2, Math.max(innerWidth, innerHeight) * 0.65);
+      grad.addColorStop(0, 'rgba(17,20,30,0.18)');
+      grad.addColorStop(1, 'rgba(2,3,6,0.32)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, innerWidth, innerHeight);
+
+      ctx.lineCap = 'round';
+      for (const p of particles) {
+        const alpha = 0.18 + (p.life / p.maxLife) * 0.52;
+        const speed = Math.hypot(p.vx, p.vy);
+        const len = clamp(4 + speed * 50 + Math.abs(Math.sin((time * 0.0009) + p.phase)) * 25, 3, 36);
+        const nx = p.x - p.vx * len;
+        const ny = p.y - p.vy * len;
+        const jitter = Math.sin(p.phase + time * 0.0008) * 0.8;
+
+        ctx.strokeStyle = `${p.hue}${Math.floor((alpha * 255)).toString(16).padStart(2, '0')}`;
+        ctx.shadowColor = p.hue;
+        ctx.shadowBlur = 8;
+        ctx.lineWidth = p.width;
+        ctx.beginPath();
+        ctx.moveTo(p.x + jitter, p.y + jitter);
+        ctx.lineTo(nx + jitter * 1.7, ny + jitter * 1.7);
+        ctx.stroke();
+      }
+
+      for (const f of flares) {
+        const age = Math.min(1, f.age / 240);
+        const size = f.size * (1 - age) + 12 * age;
+        const alpha = 0.9 * (1 - age);
+        ctx.fillStyle = `rgba(209,255,114,${alpha})`;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, size, 0, TAU);
+        ctx.fill();
+        f.age += 1;
+      }
+      flares = flares.filter((f) => f.age < 240);
+
+      for (const p of particles) {
+        if (pointer.active) {
+          const d = Math.hypot(p.x - pointer.x, p.y - pointer.y);
+          if (d < 80) {
+            const a = Math.max(0, 1 - d / 80);
+            const width = 1.0 + a * 4;
+            ctx.strokeStyle = `rgba(255,148,215,${0.16 + a * 0.3})`;
+            ctx.lineWidth = width;
+            ctx.beginPath();
+            ctx.moveTo(pointer.x, pointer.y);
+            ctx.lineTo(p.x, p.y);
+            ctx.stroke();
+          }
+        }
+      }
+      requestAnimationFrame(draw);
+    }
+
+    function rerenderControls() {
+      if (paused) {
+        pauseBtn.textContent = 'Resume drift';
+        pauseBtn.classList.remove('active');
+      } else {
+        pauseBtn.textContent = 'Pause drift';
+        pauseBtn.classList.add('active');
+      }
+      pauseBtn.setAttribute('aria-pressed', String(!paused));
+    }
+
+    function randomizeSeed() {
+      seed = (Date.now() ^ (Math.random() * 0xffffffff) ^ (Math.random() * 0xffffffff)) >>> 0;
+      buildField();
+      const query = new URLSearchParams(location.search);
+      query.set('seed', String(seed));
+      history.replaceState(null, '', `?${query.toString()}`);
+    }
+
+    pauseBtn.addEventListener('click', () => {
+      paused = !paused;
+      rerenderControls();
+    });
+
+    document.getElementById('seedBtn').addEventListener('click', randomizeSeed);
+
+    document.getElementById('copyBtn').addEventListener('click', async () => {
+      const url = new URL(location.href);
+      url.searchParams.set('seed', String(seed));
+      await navigator.clipboard.writeText(url.toString());
+      const old = copyBtn.textContent;
+      copyBtn.textContent = 'Copied';
+      setTimeout(() => {
+        copyBtn.textContent = old;
+      }, 900);
+    });
+
+    const copyBtn = document.getElementById('copyBtn');
+    const saveBtn = document.getElementById('saveBtn');
+
+    saveBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = `void-mirror-${seed}.png`;
+      link.click();
+    });
+
+    function addFlare(x, y) {
+      flares.push({
+        x,
+        y,
+        age: 0,
+        size: 6 + Math.random() * 14,
+      });
+    }
+
+    function onPointerMove(ev) {
+      pointer.active = true;
+      pointer.x = ev.clientX;
+      pointer.y = ev.clientY;
+    }
+
+    function onPointerLeave() {
+      pointer.active = false;
+    }
+
+    function onPointerDown(ev) {
+      addFlare(ev.clientX, ev.clientY);
+      particles.push({
+        x: ev.clientX,
+        y: ev.clientY,
+        vx: (Math.random() - 0.5) * 1.6,
+        vy: (Math.random() - 0.5) * 1.6,
+        life: 220,
+        maxLife: 220,
+        hue: '#ffd67c',
+        phase: Math.random() * TAU,
+        width: 1.5,
+      });
+      nodeLabel.textContent = String(particles.length);
+    }
+
+    window.addEventListener('resize', resize);
+    canvas.addEventListener('pointermove', onPointerMove);
+    canvas.addEventListener('pointerleave', onPointerLeave);
+    canvas.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('keydown', (event) => {
+      if (event.code === 'Space') {
+        event.preventDefault();
+        paused = !paused;
+        rerenderControls();
+      }
+      if (event.key.toLowerCase() === 'r') {
+        randomizeSeed();
+      }
+    });
+
+    modeLabel.textContent = 'weaving';
+    buildField();
+    resize();
+    rerenderControls();
+    requestAnimationFrame(draw);
+  </script>
+</body>
+</html>

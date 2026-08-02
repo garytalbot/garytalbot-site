@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Static Loom is a haunted generator from Ghost Radio: woven frequency particles drift through a luminous fog and respond to pointer noise." />
+  <meta name="theme-color" content="#090b12" />
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  <title>Ghost Radio — Static Loom</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070912;
+      --line: rgba(255, 255, 255, 0.14);
+      --text: #f2f5ff;
+      --muted: #a7b3d1;
+      --a: #8de8ff;
+      --b: #ff94d7;
+      --c: #d1ff72;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 20% 12%, rgba(141, 232, 255, .15), transparent 28%),
+        radial-gradient(circle at 78% 78%, rgba(255, 148, 215, .09), transparent 26%),
+        linear-gradient(180deg, #070a10 0%, #090b12 52%, #04050a 100%);
+      color: var(--text);
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      overflow: hidden;
+    }
+
+    .shell {
+      width: min(1100px, 100vw - 24px);
+      margin: 10px auto;
+      display: grid;
+      gap: 10px;
+      min-height: calc(100vh - 20px);
+    }
+
+    .toolbar {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(14, 16, 24, 0.6);
+      backdrop-filter: blur(8px);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .heading h1 {
+      margin: 0;
+      font-size: 1.05rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #ecf4ff;
+    }
+
+    .heading p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      max-width: 62ch;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+
+    .toolbar .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    label, button, input, .ghost-link {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      border-radius: 999px;
+      font: inherit;
+      padding: 8px 10px;
+    }
+
+    input[type="range"] {
+      width: 130px;
+      border-radius: 8px;
+      padding: 0;
+      accent-color: var(--a);
+    }
+
+    button {
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform .18s ease, border-color .18s ease;
+    }
+
+    button:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--a) 45%, white 55%); }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .ghost-link {
+      text-decoration: none;
+      color: #d2e2ff;
+      white-space: nowrap;
+    }
+
+    .stage {
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 14px;
+      overflow: hidden;
+      min-height: calc(100vh - 210px);
+      background:
+        radial-gradient(circle at 50% 40%, rgba(255, 255, 255, .06), transparent 62%),
+        linear-gradient(140deg, rgba(141,232,255,.05), rgba(255,148,215,.05));
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    .status {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      z-index: 2;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: space-between;
+      pointer-events: none;
+      font-size: .78rem;
+      color: #d2dcf6;
+    }
+
+    .pill {
+      background: rgba(0, 0, 0, .5);
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 8px;
+      padding: 6px 10px;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 800px) {
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+      .toolbar .actions {
+        justify-content: flex-start;
+      }
+      input[type="range"] {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="toolbar" aria-label="Static Loom controls">
+      <div class="heading">
+        <h1>Static Loom</h1>
+        <p>
+          A spectral weaving toy: particles are pulled by a phase field, then bent by your pointer.
+          Seed it, then leave and return to the same static by copy-pasting the haunt link.
+        </p>
+      </div>
+      <div class="actions">
+        <label class="pill" for="resonance">Resonance</label>
+        <input id="resonance" type="range" min="0.1" max="2.4" value="1.15" step="0.05" />
+        <label class="pill" for="drift">Drift</label>
+        <input id="drift" type="range" min="0.1" max="2.2" value="1.05" step="0.05" />
+        <label class="pill" for="entropy">Entropy</label>
+        <input id="entropy" type="range" min="0.2" max="3.2" value="1.4" step="0.1" />
+        <button type="button" id="pauseBtn">Pause</button>
+        <button type="button" id="reseedBtn">Rerandomize</button>
+        <button type="button" id="copyBtn">Copy share link</button>
+        <button type="button" id="saveBtn">Save PNG</button>
+      </div>
+      <div class="btn-row">
+        <a class="ghost-link" href="./">← Back to Ghost Radio</a>
+        <a class="ghost-link" href="./frequency-veil.html" target="_blank" rel="noopener noreferrer">Frequency Veil</a>
+        <a class="ghost-link" href="./signal-basin.html" target="_blank" rel="noopener noreferrer">Signal Basin</a>
+      </div>
+    </section>
+
+    <section class="stage" aria-label="Static Loom chamber">
+      <canvas id="loom"></canvas>
+      <div class="status" aria-live="polite">
+        <span class="pill" id="seedLine">seed: loading</span>
+        <span class="pill" id="fpsLine">fps: —</span>
+        <span class="pill" id="stateLine">state: initializing</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    const canvas = document.getElementById('loom');
+    const ctx = canvas.getContext('2d');
+
+    const resonanceInput = document.getElementById('resonance');
+    const driftInput = document.getElementById('drift');
+    const entropyInput = document.getElementById('entropy');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const reseedBtn = document.getElementById('reseedBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const seedLine = document.getElementById('seedLine');
+    const fpsLine = document.getElementById('fpsLine');
+    const stateLine = document.getElementById('stateLine');
+
+    let seed = Math.floor(Math.random() * 999999);
+    let paused = false;
+    let running = false;
+    let pointer = null;
+    let t = 0;
+    let lastTime = performance.now();
+
+    const params = {
+      density: 520,
+      speed: 0.95,
+      softness: 0.17,
+    };
+
+    const particles = [];
+
+    function parseSeedFromHash() {
+      const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      const s = params.get('seed');
+      const value = Number(s);
+      return Number.isFinite(value) ? Math.abs(value) : null;
+    }
+
+    function setSeed(value) {
+      seed = Math.max(1, Math.floor(Math.abs(value || 1)));
+      if (seed === 0 || Number.isNaN(seed)) seed = 1;
+      seedLine.textContent = `seed: ${seed}`;
+      rebuildHash();
+    }
+
+    function rebuildHash() {
+      const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      hash.set('seed', String(seed));
+      const newHash = `#${hash.toString()}`;
+      if (window.location.hash !== newHash) {
+        window.history.replaceState(null, '', newHash);
+      }
+    }
+
+    function xorShift32(x) {
+      let state = x >>> 0;
+      return function () {
+        state ^= state << 13;
+        state ^= state >>> 17;
+        state ^= state << 5;
+        return (state >>> 0) / 4294967296;
+      };
+    }
+
+    let random = xorShift32(seed);
+
+    function reseed(newSeed) {
+      setSeed(newSeed || Math.floor(Math.random() * 999999));
+      random = xorShift32(seed);
+      buildParticles();
+      stateLine.textContent = 'state: rethreaded';
+    }
+
+    function buildParticles() {
+      particles.length = 0;
+      const density = params.density;
+      for (let i = 0; i < density; i++) {
+        particles.push({
+          x: random() * canvas.width,
+          y: random() * canvas.height,
+          vx: (random() - 0.5) * 0.6,
+          vy: (random() - 0.5) * 0.6,
+          phase: random() * Math.PI * 2,
+          life: 120 + random() * 220,
+          hue: 170 + random() * 100,
+        });
+      }
+    }
+
+    function resize() {
+      canvas.width = Math.floor(canvas.clientWidth * DPR);
+      canvas.height = Math.floor(canvas.clientHeight * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      buildParticles();
+    }
+
+    function field(x, y, tt, scale) {
+      const p = scale * 0.001;
+      const a = Math.sin((x * p) + tt) + Math.cos((y * p * 0.8) - tt * 0.8);
+      const b = Math.cos((y * p) - tt * 1.2) + Math.sin((x * p * 0.7) + tt);
+      return { x: a, y: b };
+    }
+
+    function update() {
+      const ent = Number(entropyInput.value);
+      const res = Number(resonanceInput.value);
+      const dr = Number(driftInput.value);
+      t += 0.0035 * res;
+      const w = canvas.width / DPR;
+      const h = canvas.height / DPR;
+      const now = performance.now();
+      const dt = Math.min(0.033, (now - lastTime) / 1000);
+      lastTime = now;
+
+      ctx.save();
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = 'rgba(6,8,13,0.09)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+
+      ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const f = field(p.x, p.y, t, ent);
+        const pullX = f.x * 0.55 * res;
+        const pullY = f.y * 0.55 * res;
+
+        if (pointer) {
+          const dx = pointer.x - p.x;
+          const dy = pointer.y - p.y;
+          const dist = Math.hypot(dx, dy) + 0.1;
+          const influence = (0.7 / (dist + 16)) * Math.min(180, dr * 32);
+          p.vx += (dx / dist) * influence;
+          p.vy += (dy / dist) * influence;
+        }
+
+        p.vx = p.vx * 0.94 + pullX * 0.02;
+        p.vy = p.vy * 0.94 + pullY * 0.02;
+        p.x += p.vx * (dr * 1.9);
+        p.y += p.vy * (dr * 1.9);
+        p.phase += 0.02 + random() * 0.008;
+        p.life -= dt;
+
+        if (p.x < 0 || p.x > w || p.y < 0 || p.y > h || p.life < 0) {
+          p.x = random() * w;
+          p.y = random() * h;
+          p.vx *= 0;
+          p.vy *= 0;
+          p.life = 150 + random() * 220;
+        }
+
+        const brightness = 58 + 90 * Math.max(0, Math.sin(p.phase + t * 0.5));
+        const alpha = 0.22 + 0.35 * ((Math.sin(t + p.phase) + 1) / 2);
+        ctx.fillStyle = `hsla(${(p.hue + brightness) % 360},82%,65%,${alpha.toFixed(3)})`;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 1.25 + (Math.sin(p.phase + t) + 1) * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      fpsLine.textContent = `fps: ${Math.round(1 / Math.max(1e-4, dt))}`;
+      stateLine.textContent = `state: ${paused ? 'paused' : 'weaving'}`;
+      requestAnimationFrame(tick);
+    }
+
+    function tick() {
+      if (!running || paused) return;
+      update();
+    }
+
+    function resume() {
+      if (running) return;
+      running = true;
+      requestAnimationFrame(() => {
+        lastTime = performance.now();
+        tick();
+      });
+    }
+
+    pauseBtn.addEventListener('click', () => {
+      paused = !paused;
+      pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+      stateLine.textContent = paused ? 'state: paused' : 'state: weaving';
+      if (!paused) {
+        running = true;
+        lastTime = performance.now();
+        tick();
+      }
+    });
+
+    reseedBtn.addEventListener('click', () => {
+      reseed();
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      const share = `${window.location.origin}${window.location.pathname}#seed=${seed}`;
+      try {
+        await navigator.clipboard.writeText(share);
+        stateLine.textContent = 'state: share link copied';
+      } catch {
+        stateLine.textContent = `state: ${share}`;
+      }
+    });
+
+    saveBtn.addEventListener('click', () => {
+      const url = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = `static-loom-${seed}.png`;
+      link.href = url;
+      link.click();
+    });
+
+    const stage = canvas.closest('.stage');
+    stage.addEventListener('pointermove', (e) => {
+      const rect = stage.getBoundingClientRect();
+      pointer = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      };
+    });
+
+    stage.addEventListener('pointerleave', () => {
+      pointer = null;
+    });
+
+    function init() {
+      resize();
+      const initialSeed = parseSeedFromHash();
+      reseed(initialSeed || Math.floor(Math.random() * 999999));
+      pauseBtn.disabled = false;
+      running = true;
+      tick();
+    }
+
+    window.addEventListener('resize', () => {
+      resize();
+    });
+
+    window.addEventListener('blur', () => {
+      if (!paused) {
+        pauseBtn.textContent = 'Resume';
+        paused = true;
+      }
+    });
+
+    window.addEventListener('focus', () => {
+      if (paused) {
+        pauseBtn.textContent = 'Pause';
+        paused = false;
+        running = true;
+        tick();
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>

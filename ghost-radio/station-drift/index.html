@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Station Drift: a tiny haunted frequency-surface toy. Drag, click, and tune the ether with your cursor." />
+  <title>Station Drift — Ghost Radio</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0a0b12;
+      --ink: #eaf0ff;
+      --faint: #9ab1ff;
+      --line: #2a3142;
+      --a: #8de8ff;
+      --b: #ff94d7;
+      --c: #d1ff72;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; }
+    body {
+      background: radial-gradient(circle at 20% 12%, rgba(141,232,255,.15), transparent 28%),
+                  radial-gradient(circle at 80% 24%, rgba(255,148,215,.14), transparent 24%),
+                  var(--bg);
+      color: var(--ink);
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      overflow: hidden;
+    }
+
+    .hud {
+      position: fixed;
+      inset: 16px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 12px;
+      pointer-events: none;
+      z-index: 3;
+      font-size: 12px;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+      color: var(--faint);
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      background: rgba(10,12,20,.56);
+      padding: 8px 12px;
+      border-radius: 999px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 14px 50px rgba(0,0,0,.25);
+      pointer-events: auto;
+      max-width: 65ch;
+    }
+
+    .panel {
+      justify-self: end;
+      font-size: 11px;
+      opacity: .9;
+      max-width: 36ch;
+    }
+
+    button {
+      pointer-events: auto;
+      cursor: pointer;
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--ink);
+      padding: 8px 12px;
+      font: inherit;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    button:hover { border-color: color-mix(in hsl, var(--a), #fff 30%); }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="hud">
+    <div class="pill" id="state">Station Drift — click to seed echoes. Drag to braid current lines. Space toggles warp.</div>
+    <div class="pill" id="counter"></div>
+    <div class="panel">
+      <button id="clearBtn">Clear</button>
+    </div>
+  </div>
+
+  <canvas id="c"></canvas>
+
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const stateText = document.getElementById('state');
+    const counterText = document.getElementById('counter');
+
+    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+    let w = 0, h = 0;
+    const pts = [];
+    const trails = [];
+
+    const warpField = { active: false, angle: 0 };
+    let seed = Date.now() & 0xffffffff;
+    const palette = ['#8de8ff', '#ff94d7', '#d1ff72', '#82fff4', '#ffd8ff'];
+
+    function resize() {
+      w = canvas.width = Math.floor(innerWidth * DPR);
+      h = canvas.height = Math.floor(innerHeight * DPR);
+      canvas.style.width = `${innerWidth}px`;
+      canvas.style.height = `${innerHeight}px`;
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+
+    function hash(n) {
+      return Math.sin(n * 12.9898) * 43758.5453123 % 1;
+    }
+
+    function rng() {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      return seed / 4294967296;
+    }
+
+    function jitterColor(base = 0) {
+      const c = palette[Math.floor(rng() * palette.length)];
+      return base ? `color-mix(in srgb, ${c}, white ${base}%)` : c;
+    }
+
+    function createPulse(x, y, burst = 1) {
+      const p = {
+        x, y, r: 2 + rng() * 4, life: 1,
+        speed: 0.0055 + rng() * 0.008,
+        phase: rng() * Math.PI * 2,
+        orbit: (rng() - 0.5) * 2.2,
+        col: jitterColor(),
+        burst,
+      };
+      pts.push(p);
+      return p;
+    }
+
+    function addTrail(x, y) {
+      const t = {
+        x, y, path: [{x,y}], age: 1, hue: 210 + rng() * 100, alpha: 0.88,
+      };
+      trails.push(t);
+    }
+
+    function field(x, y, t) {
+      const nx = Math.sin((x * 0.0003) + (warpField.angle * 0.4) + t * 0.0007);
+      const ny = Math.cos((y * 0.00034) + (warpField.angle * 0.6) - t * 0.0005);
+      return {
+        dx: nx * 0.35 + Math.sin(t * 0.0009 + y * 0.0012) * 0.15,
+        dy: ny * 0.35 + Math.cos(t * 0.0008 + x * 0.0009) * 0.15,
+      };
+    }
+
+    let last = performance.now();
+
+    function step() {
+      const now = performance.now();
+      const dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+
+      if (warpField.active) warpField.angle += dt * 0.6;
+
+      // slow matte wash
+      ctx.fillStyle = 'rgba(10,11,18,0.18)';
+      ctx.fillRect(0, 0, innerWidth, innerHeight);
+
+      // ambient seed noise
+      for (let i = 0; i < 9; i++) {
+        const seedX = rng() * innerWidth;
+        const seedY = rng() * innerHeight;
+        createPulse(seedX, seedY, 0.35);
+      }
+
+      // move and draw pulses
+      for (let i = pts.length - 1; i >= 0; i--) {
+        const p = pts[i];
+        p.life -= p.speed;
+        if (p.life <= 0) {
+          pts.splice(i, 1);
+          continue;
+        }
+
+        const f = field(p.x, p.y, now);
+        const pull = (Math.sin(now * 0.001 + p.phase) * p.orbit) * 0.45;
+        p.x += (f.dx + pull * 0.08) * dt * 80;
+        p.y += (f.dy + pull * 0.08) * dt * 80;
+
+        // wrap
+        if (p.x < -20) p.x = innerWidth + 20;
+        if (p.x > innerWidth + 20) p.x = -20;
+        if (p.y < -20) p.y = innerHeight + 20;
+        if (p.y > innerHeight + 20) p.y = -20;
+
+        const alpha = Math.max(0, p.life);
+        const grad = ctx.createRadialGradient(p.x, p.y, p.r * 0.2, p.x, p.y, p.r * 7);
+        grad.addColorStop(0, `${p.col}`);
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+
+        ctx.beginPath();
+        ctx.fillStyle = `color-mix(in hsl, ${p.col} ${alpha * 100}%, transparent)`;
+        ctx.shadowColor = p.col;
+        ctx.shadowBlur = 12;
+        ctx.arc(p.x, p.y, p.r * 3 * (0.3 + (1 - p.life)), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = grad;
+        ctx.globalAlpha = 0.7 * p.life;
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, p.r * 7, p.r * 1.8, Math.sin(p.phase + now * 0.003), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+
+        if ((i % 5) === 0 && p.life > 0.18) {
+          ctx.strokeStyle = `color-mix(in hsl, ${p.col} ${alpha * 100}%, transparent)`;
+          ctx.lineWidth = 0.6;
+          ctx.beginPath();
+          const span = 24 + Math.sin(now * 0.002 + p.phase) * 8;
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p.x + Math.cos(now * 0.0008 + p.phase) * span, p.y + Math.sin(now * 0.0009 + p.phase * 1.5) * span);
+          ctx.stroke();
+        }
+      }
+
+      // long trails
+      for (let i = trails.length - 1; i >= 0; i--) {
+        const t = trails[i];
+        t.age -= dt * 0.14;
+        if (t.age <= 0) { trails.splice(i, 1); continue; }
+
+        t.path.push({ x: t.x + (Math.random() - 0.5) * 4, y: t.y + (Math.random() - 0.5) * 4 });
+        if (t.path.length > 300) t.path.shift();
+
+        if (t.path.length > 2) {
+          ctx.strokeStyle = `color-mix(in hsl, hsl(${t.hue},88%,70%) ${t.age * 95}%, transparent)`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(t.path[0].x, t.path[0].y);
+          for (let j = 1; j < t.path.length; j++) {
+            const cur = t.path[j];
+            const prev = t.path[j - 1];
+            ctx.lineTo(cur.x, cur.y);
+          }
+          ctx.globalAlpha = 0.45 * Math.max(0.1, t.age);
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+      }
+
+      if (Math.random() < 0.012) addTrail(Math.random() * innerWidth, Math.random() * innerHeight);
+
+      // starfield pins
+      for (let i = 0; i < 20; i++) {
+        const x = (hash(seed + i + now * 0.0003) * innerWidth) % innerWidth;
+        const y = (hash(seed + i * 97 + now * 0.00009) * innerHeight) % innerHeight;
+        const flicker = (Math.sin(now * 0.002 + i) + 1) * 0.5;
+        const alpha = flicker * 0.08;
+        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+        ctx.fillRect(x, y, 1, 1);
+      }
+
+      ctx.save();
+      ctx.globalAlpha = 0.35;
+      ctx.strokeStyle = 'rgba(141,232,255,0.12)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const base = innerWidth * i / 6;
+        ctx.moveTo(base, 0);
+        ctx.lineTo(innerWidth - base * 0.08, innerHeight);
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      counterText.textContent = `particles ${pts.length} · trails ${trails.length} · seed ${seed}`;
+      requestAnimationFrame(step);
+    }
+
+    let pointer = { x: innerWidth / 2, y: innerHeight / 2, down: false };
+
+    canvas.addEventListener('pointerdown', (e) => {
+      pointer.down = true;
+      const p = getPos(e);
+      for (let i = 0; i < 26; i++) {
+        createPulse(p.x, p.y, 1);
+      }
+      addTrail(p.x, p.y);
+      stateText.textContent = 'Burst seeded. Hold or move to keep braiding.';
+    });
+
+    canvas.addEventListener('pointermove', (e) => {
+      pointer = { ...pointer, ...getPos(e), down: (e.buttons & 1) === 1 };
+      if (!pointer.down) return;
+      for (let i = 0; i < 3; i++) {
+        const p = getPos(e);
+        p.x += (Math.random() - .5) * 30;
+        p.y += (Math.random() - .5) * 30;
+        createPulse(p.x, p.y, 0.5);
+      }
+    });
+
+    canvas.addEventListener('pointerup', () => {
+      pointer.down = false;
+      stateText.textContent = 'Station Drift — click to seed echoes. Drag to braid current lines. Space toggles warp.';
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      pts.length = 0;
+      trails.length = 0;
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+    });
+
+    window.addEventListener('resize', resize);
+
+    function getPos(e) {
+      return {
+        x: e.clientX,
+        y: e.clientY,
+      };
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.code === 'Space') {
+        warpField.active = !warpField.active;
+        stateText.textContent = warpField.active
+          ? 'Warp on — the field folds and twists around cursor ghosts.'
+          : 'Warp off — particles drift in gentler weather.';
+        return;
+      }
+      if (e.key.toLowerCase() === 'c') {
+        pts.length = 0;
+        trails.length = 0;
+      }
+      if (e.key.toLowerCase() === 'r') {
+        seed = Date.now() & 0xffffffff;
+      }
+      if (e.key.toLowerCase() === 's') {
+        const link = document.createElement('a');
+        link.download = `station-drift-${Date.now()}.png`;
+        link.href = document.querySelector('canvas').toDataURL('image/png');
+        link.click();
+      }
+    });
+
+    resize();
+    for (let i = 0; i < 90; i++) {
+      createPulse(Math.random() * innerWidth, Math.random() * innerHeight, Math.random() * 0.7);
+    }
+    requestAnimationFrame(step);
+  </script>
+</body>
+</html>

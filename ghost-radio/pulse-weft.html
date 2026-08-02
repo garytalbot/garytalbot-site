@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pulse Weft</title>
+  <meta
+    name="description"
+    content="Pulse Weft — a seeded, cursor-sensitive thread-field sketch where lines weave into a living lattice, with deterministic seeds, mode switching, copy-link sharing, and still-frame export."
+  />
+  <meta name="theme-color" content="#090b12" />
+  <meta name="robots" content="index,follow" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Pulse Weft" />
+  <meta
+    property="og:description"
+    content="A haunted pointer-driven thread field from the Ghost Radio family: seeded, deterministic, and strange."
+  />
+  <meta property="og:url" content="https://garytalbot.github.io/ghost-radio/pulse-weft.html" />
+  <meta property="og:image" content="https://garytalbot.github.io/ghost-radio/share-card.svg" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090b12;
+      --ink: #eaf2ff;
+      --muted: #99a5bf;
+      --a: #8de8ff;
+      --b: #ff94d7;
+      --c: #d1ff72;
+      --line: rgba(255, 255, 255, 0.15);
+      --panel: rgba(12, 16, 24, 0.86);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      color: var(--ink);
+      font: 14px/1.45 "Trebuchet MS", "Segoe UI", sans-serif;
+      background: radial-gradient(circle at 22% 8%, rgba(141, 232, 255, 0.14), transparent 34%),
+        radial-gradient(circle at 82% 12%, rgba(255, 148, 215, 0.11), transparent 34%),
+        radial-gradient(circle at 50% 74%, rgba(209, 255, 114, 0.09), transparent 44%),
+        var(--bg);
+    }
+
+    canvas {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+
+    .hud {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      max-width: min(960px, calc(100vw - 24px));
+      margin: 0 auto;
+      z-index: 3;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.48);
+      display: grid;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    h1 {
+      margin: 0;
+      font: 700 18px/1.2 "Trebuchet MS", "Segoe UI", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #f7fbff;
+      pointer-events: none;
+    }
+
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      max-width: 74ch;
+      pointer-events: none;
+    }
+
+    .btn,
+    .dot,
+    .field {
+      pointer-events: auto;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid rgba(255, 255, 255, 0.19);
+      border-radius: 999px;
+      padding: 7px 11px;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+      text-decoration: none;
+      font: 700 12px/1 sans-serif;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+      user-select: none;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--a) 40%, white 60%);
+      box-shadow: 0 0 0 1px rgba(141, 232, 255, 0.22);
+    }
+
+    .btn.active {
+      border-color: color-mix(in srgb, var(--b) 45%, white 55%);
+      box-shadow: 0 0 0 1px rgba(255, 148, 215, 0.24);
+    }
+
+    .chip {
+      color: var(--muted);
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--a);
+      box-shadow: 0 0 10px rgba(141, 232, 255, 0.8);
+      display: inline-block;
+    }
+
+    .field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #f5f8ff;
+      font-size: 12px;
+      pointer-events: auto;
+    }
+
+    label {
+      width: 82px;
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    input[type="range"] {
+      width: 160px;
+    }
+
+    output {
+      width: 44px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: #f4f7ff;
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .return {
+      position: fixed;
+      right: 12px;
+      top: 12px;
+      z-index: 4;
+      pointer-events: auto;
+    }
+
+    .hint {
+      position: fixed;
+      bottom: 12px;
+      left: 12px;
+      z-index: 4;
+      color: rgba(230, 237, 255, 0.9);
+      background: rgba(10, 13, 20, 0.66);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      opacity: 0.96;
+      backdrop-filter: blur(8px);
+      pointer-events: none;
+    }
+
+    @media (max-width: 780px) {
+      .hud {
+        left: 8px;
+        right: 8px;
+      }
+
+      h1 {
+        font-size: 16px;
+      }
+
+      .lead {
+        max-width: unset;
+      }
+
+      label {
+        width: 62px;
+      }
+
+      input[type="range"] {
+        width: 108px;
+      }
+
+      .hint {
+        left: 8px;
+        right: 8px;
+        bottom: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="btn return" href="./">Return to Ghost Radio</a>
+
+  <aside class="hud" aria-live="polite">
+    <h1>Pulse Weft</h1>
+    <p class="lead">A deterministic thread field where seed, pointer pressure, and field drift braid into a moving lattice. Move your pointer to stitch temporary channels through the static.</p>
+    <div class="row">
+      <button class="btn" id="pauseBtn">Pause drift</button>
+      <button class="btn" id="seedBtn">Rerandomize</button>
+      <button class="btn" id="clearBtn">Clear field</button>
+      <button class="btn" id="copyBtn">Copy ritual link</button>
+      <button class="btn" id="saveBtn">Save still</button>
+      <button class="btn" id="modeRift" data-mode="rift">Mode: rift</button>
+      <button class="btn" id="modeVeil" data-mode="veil">Mode: veil</button>
+      <button class="btn" id="modeBloom" data-mode="bloom">Mode: bloom</button>
+    </div>
+    <div class="row chip">
+      <span class="dot"></span>
+      <span id="seedVal">Seed: —</span>
+      <span>Mode: <b id="modeVal">rift</b></span>
+      <span>Pointer: <b id="ptrVal">idle</b></span>
+      <span>Lines: <b id="lineVal">0</b></span>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="density">Density</label>
+        <input id="density" type="range" min="180" max="860" value="360" step="20" />
+        <output id="densityOut">360</output>
+      </div>
+      <div class="field">
+        <label for="drift">Drift</label>
+        <input id="drift" type="range" min="0.2" max="2.2" value="0.95" step="0.05" />
+        <output id="driftOut">0.95</output>
+      </div>
+      <div class="field">
+        <label for="resonance">Resonance</label>
+        <input id="resonance" type="range" min="0.2" max="2.8" value="1.25" step="0.05" />
+        <output id="resonanceOut">1.25</output>
+      </div>
+    </div>
+  </aside>
+
+  <div class="hint">space: pause · r: reseed · m: mode cycle · s: save still · c: copy link</div>
+
+  <canvas id="weft"></canvas>
+
+  <script>
+    const canvas = document.getElementById('weft');
+    const ctx = canvas.getContext('2d');
+
+    const seedEl = document.getElementById('seedVal');
+    const modeEl = document.getElementById('modeVal');
+    const ptrEl = document.getElementById('ptrVal');
+    const lineEl = document.getElementById('lineVal');
+    const densityInput = document.getElementById('density');
+    const densityOut = document.getElementById('densityOut');
+    const driftInput = document.getElementById('drift');
+    const driftOut = document.getElementById('driftOut');
+    const resonanceInput = document.getElementById('resonance');
+    const resonanceOut = document.getElementById('resonanceOut');
+
+    const pauseBtn = document.getElementById('pauseBtn');
+    const seedBtn = document.getElementById('seedBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const modeButtons = [
+      document.getElementById('modeRift'),
+      document.getElementById('modeVeil'),
+      document.getElementById('modeBloom')
+    ];
+
+    const MODES = ['rift', 'veil', 'bloom'];
+
+    const query = new URLSearchParams(window.location.search);
+    let seed = parseInt(query.get('seed') || '', 10);
+    if (!Number.isFinite(seed)) seed = Math.floor(Math.random() * 0xffffffff);
+
+    let mode = query.get('mode');
+    if (!MODES.includes(mode)) mode = 'rift';
+
+    let density = clamp(parseInt(query.get('density') || '360', 10), 180, 860);
+    let drift = clamp(parseFloat(query.get('drift') || '0.95'), 0.2, 2.2);
+    let resonance = clamp(parseFloat(query.get('resonance') || '1.25'), 0.2, 2.8);
+
+    const palette = {
+      dusk: ['#8de8ff', '#b0a5ff', '#ff8ed8', '#f5ff9e'],
+      veil: ['#ff9ee5', '#8ec9ff', '#a8f2ff', '#f0ffb0'],
+      bloom: ['#f2ff90', '#9dffdd', '#94d8ff', '#ff9ed3'],
+    };
+
+    let pointer = { x: 0, y: 0, active: false };
+    let running = true;
+    let t = 0;
+    let dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+
+    let lines = [];
+    let rng = mulberry32(seed >>> 0);
+
+    const TWO_PI = Math.PI * 2;
+
+    function clamp(v, lo, hi) {
+      return Math.max(lo, Math.min(hi, v));
+    }
+
+    function mulberry32(a) {
+      return function () {
+        a |= 0;
+        a = (a + 0x6d2b79f5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function randSeeded(min = 1, max = 0) {
+      return min + rng() * (max - min);
+    }
+
+    function setStateFromControls() {
+      density = parseInt(densityInput.value, 10);
+      drift = parseFloat(driftInput.value);
+      resonance = parseFloat(resonanceInput.value);
+      densityOut.textContent = String(density);
+      driftOut.textContent = drift.toFixed(2);
+      resonanceOut.textContent = resonance.toFixed(2);
+      seedEl.textContent = `Seed: ${seed}`;
+      modeEl.textContent = mode;
+      updateModeButtons();
+      updateQuery();
+      buildLines();
+      refreshCounts();
+    }
+
+    function updateModeButtons() {
+      modeButtons.forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+        btn.textContent = `Mode: ${btn.dataset.mode}`;
+      });
+    }
+
+    function updateQuery() {
+      const params = new URLSearchParams(window.location.search);
+      params.set('seed', String(seed));
+      params.set('mode', mode);
+      params.set('density', String(density));
+      params.set('drift', drift.toFixed(2));
+      params.set('resonance', resonance.toFixed(2));
+      history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
+    }
+
+    function resize() {
+      dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      canvas.width = Math.floor(innerWidth * dpr);
+      canvas.height = Math.floor(innerHeight * dpr);
+      canvas.style.width = `${innerWidth}px`;
+      canvas.style.height = `${innerHeight}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = 'rgba(9,11,18,1)';
+      ctx.fillRect(0, 0, innerWidth, innerHeight);
+      buildLines();
+    }
+
+    function buildLines() {
+      rng = mulberry32(seed >>> 0);
+      lines = new Array(density).fill(0).map(() => {
+        const p = Math.sqrt(rng()) * Math.max(innerWidth, innerHeight) * 0.6;
+        const a = rng() * TWO_PI;
+        const phase = rng() * TWO_PI;
+        return {
+          x: innerWidth * 0.5 + Math.cos(a) * p,
+          y: innerHeight * 0.5 + Math.sin(a) * p,
+          prevX: 0,
+          prevY: 0,
+          vx: 0,
+          vy: 0,
+          hue: 240 + rng() * 80,
+          phase,
+          life: 1 + rng() * 0.7,
+          len: 10 + rng() * 120
+        };
+      });
+      lines.forEach((line) => {
+        line.prevX = line.x;
+        line.prevY = line.y;
+      });
+      refreshCounts();
+    }
+
+    function refreshCounts() {
+      lineEl.textContent = String(lines.length);
+    }
+
+    function field(px, py, elapsed) {
+      const nx = px / Math.max(innerWidth, innerHeight);
+      const ny = py / Math.max(innerWidth, innerHeight);
+      const base = Math.sin((nx * 10 + elapsed * 0.00028) * 6.1) + Math.cos((ny * 10 - elapsed * 0.00016) * 5.4);
+      const swirl = Math.sin((nx * 4.1 + ny * 3.2 + t * 0.00022) * 2 + elapsed * 0.00007) * 0.7;
+      const pinch = Math.cos((nx * 11.5 - ny * 8.4 + t * 0.00012));
+      return {
+        a: (base + swirl + pinch) * 0.35 + Math.atan2(py - pointer.y, px - pointer.x) * 0.22,
+        n: Math.abs(Math.sin((nx * 7.4 + ny * 9.1 + t * 0.00013) * 3.8)),
+      };
+    }
+
+    function lineColor(idx, idxMode) {
+      const cset = palette[idxMode];
+      return cset[idx % cset.length];
+    }
+
+    function stepLine(line) {
+      const flow = field(line.x, line.y, t);
+      const pullX = pointer.active ? (pointer.x - line.x) * (0.06 * resonance) : 0;
+      const pullY = pointer.active ? (pointer.y - line.y) * (0.06 * resonance) : 0;
+
+      let ang = flow.a;
+      const spin = line.phase * 0.55 + t * 0.0001;
+      let speed = 0.55 + flow.n * 2.8;
+
+      if (mode === 'rift') {
+        ang += spin;
+        speed *= (0.95 + Math.sin(line.phase + t * 0.00019) * 0.35);
+      }
+      if (mode === 'veil') {
+        const wrap = Math.cos((line.phase + t * 0.00011) * 1.6);
+        ang += wrap * 0.4;
+        speed *= 0.9 + (wrap + 1) * 0.25;
+      }
+      if (mode === 'bloom') {
+        speed *= 0.5 + Math.max(0, flow.n) * 2.0;
+        ang += Math.sin(line.len * 0.02 + t * 0.0002 + line.phase);
+      }
+
+      const accX = Math.cos(ang) * speed * drift + pullX;
+      const accY = Math.sin(ang) * speed * drift + pullY;
+
+      line.vx += accX * 0.12;
+      line.vy += accY * 0.12;
+      line.vx *= 0.985;
+      line.vy *= 0.985;
+      line.vx = clamp(line.vx, -8, 8);
+      line.vy = clamp(line.vy, -8, 8);
+
+      line.x += line.vx;
+      line.y += line.vy;
+      line.len -= 0.5;
+
+      if (line.len <= 0 || line.x < 0 || line.x > innerWidth || line.y < 0 || line.y > innerHeight) {
+        const a = rng() * TWO_PI;
+        const p = Math.sqrt(rng()) * Math.min(innerWidth, innerHeight) * 0.42;
+        line.x = innerWidth * 0.5 + Math.cos(a) * p;
+        line.y = innerHeight * 0.5 + Math.sin(a) * p;
+        line.prevX = line.x;
+        line.prevY = line.y;
+        line.vx = 0;
+        line.vy = 0;
+        line.phase = rng() * TWO_PI;
+        line.len = 30 + rng() * 150;
+      }
+
+      const m = Math.cos(line.phase + t * 0.0003);
+      const alpha = 0.5 + m * 0.5;
+      const width = 0.8 + Math.max(0, line.len / 120) * 1.2;
+      const hue = (line.hue + line.phase * 35 + t * 0.008) % 360;
+
+      ctx.strokeStyle = mode === 'veil'
+        ? `color-mix(in srgb, ${lineColor(2, 'veil')} 44%, rgba(209, 255, 114, ${alpha.toFixed(3)}))`
+        : mode === 'bloom'
+          ? `color-mix(in srgb, ${lineColor(0, 'bloom')} ${55 + m * 30}%, rgba(141, 232, 255, ${alpha.toFixed(3)}))`
+          : `color-mix(in srgb, ${lineColor(0, 'dusk')} ${50 + m * 25}%, hsla(${hue}, 85%, 72%, ${alpha.toFixed(3)}))`;
+
+      ctx.strokeStyle = `hsla(${hue}, 85%, 72%, ${alpha})`;
+      ctx.lineWidth = width;
+      ctx.beginPath();
+      ctx.moveTo(line.prevX, line.prevY);
+      ctx.bezierCurveTo(line.prevX + m * 20, line.prevY, line.x, line.y, line.x, line.y);
+      ctx.stroke();
+      line.prevX = line.x;
+      line.prevY = line.y;
+    }
+
+    function drawFrame() {
+      if (!running) {
+        requestAnimationFrame(drawFrame);
+        return;
+      }
+
+      t += 1;
+
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = 'rgba(7, 10, 18, 0.14)';
+      ctx.fillRect(0, 0, innerWidth, innerHeight);
+
+      ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < lines.length; i++) {
+        stepLine(lines[i]);
+      }
+      ctx.globalCompositeOperation = 'source-over';
+      requestAnimationFrame(drawFrame);
+    }
+
+    function cycleMode() {
+      const i = MODES.indexOf(mode);
+      mode = MODES[(i + 1) % MODES.length];
+      setStateFromControls();
+      ptrEl.textContent = mode;
+    }
+
+    function seedRandom() {
+      seed = Math.floor(Math.random() * 0xffffffff);
+      setStateFromControls();
+      ptrEl.textContent = 'fresh';
+    }
+
+    async function copyLink() {
+      const href = `${window.location.origin}${window.location.pathname}?${new URLSearchParams(window.location.search).toString()}`;
+      const text = `Pulse Weft ritual: ${href}`;
+      try {
+        await navigator.clipboard.writeText(text);
+        copyBtn.textContent = 'Copied';
+        setTimeout(() => (copyBtn.textContent = 'Copy ritual link'), 1400);
+      } catch (error) {
+        window.prompt('Copy ritual link', text);
+      }
+    }
+
+    function saveStill() {
+      const a = document.createElement('a');
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+      a.href = canvas.toDataURL('image/png');
+      a.download = `pulse-weft-${stamp}.png`;
+      a.click();
+    }
+
+    function clearField() {
+      ctx.fillStyle = 'rgba(9, 11, 18, 1)';
+      ctx.fillRect(0, 0, innerWidth, innerHeight);
+      buildLines();
+      ptrEl.textContent = 'cleared';
+    }
+
+    function onPointerMove(event) {
+      const rect = canvas.getBoundingClientRect();
+      pointer.x = event.clientX;
+      pointer.y = event.clientY;
+      pointer.active = event.buttons > 0;
+      ptrEl.textContent = event.buttons > 0 ? 'drawing' : 'hover';
+    }
+
+    function onPointerLeave() {
+      pointer.active = false;
+      ptrEl.textContent = 'idle';
+    }
+
+    pauseBtn.addEventListener('click', () => {
+      running = !running;
+      pauseBtn.textContent = running ? 'Pause drift' : 'Resume drift';
+      ptrEl.textContent = running ? 'running' : 'paused';
+      if (running) requestAnimationFrame(drawFrame);
+    });
+
+    seedBtn.addEventListener('click', seedRandom);
+    clearBtn.addEventListener('click', clearField);
+    copyBtn.addEventListener('click', copyLink);
+    saveBtn.addEventListener('click', saveStill);
+
+    modeButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        mode = btn.dataset.mode;
+        setStateFromControls();
+      });
+    });
+
+    densityInput.addEventListener('input', setStateFromControls);
+    driftInput.addEventListener('input', setStateFromControls);
+    resonanceInput.addEventListener('input', setStateFromControls);
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', () => {
+      pointer.active = false;
+      ptrEl.textContent = 'idle';
+    });
+    canvas.addEventListener('pointerleave', onPointerLeave);
+    canvas.addEventListener('pointerdown', onPointerMove);
+    canvas.addEventListener('pointerout', onPointerLeave);
+
+    window.addEventListener('keydown', (event) => {
+      if (event.key === ' ') {
+        event.preventDefault();
+        pauseBtn.click();
+      }
+      if (event.key === 'r' || event.key === 'R') seedRandom();
+      if (event.key === 's' || event.key === 'S') saveStill();
+      if (event.key === 'c' || event.key === 'C') copyLink();
+      if (event.key === 'm' || event.key === 'M') cycleMode();
+    });
+
+    densityInput.value = String(density);
+    driftInput.value = String(drift);
+    resonanceInput.value = String(resonance);
+    modeButtons.forEach((btn) => (btn.dataset.mode === mode ? btn.classList.add('active') : btn.classList.remove('active')));
+
+    resize();
+    setStateFromControls();
+    requestAnimationFrame(drawFrame);
+  </script>
+</body>
+</html>

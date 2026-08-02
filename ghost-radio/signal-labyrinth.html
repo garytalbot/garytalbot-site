@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#090b12" />
+  <meta name="description" content="Signal Labyrinth — a live interactive sketch from Ghost Radio. Move, click, and whisper in the silence as phase ghosts spawn, drift, and braid into new harmonics." />
+  <title>Ghost Radio — Signal Labyrinth</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #05070d;
+      --text: #f2f6ff;
+      --muted: #b0bacf;
+      --a1: #8de8ff;
+      --a2: #ff94d7;
+      --a3: #d1ff72;
+      --line: rgba(255,255,255,.1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 10%, rgba(141,232,255,.20), transparent 36%),
+        radial-gradient(circle at 80% 20%, rgba(209,255,114,.12), transparent 38%),
+        radial-gradient(circle at 50% 82%, rgba(255,148,215,.10), transparent 42%),
+        linear-gradient(180deg, #060812 0%, #090b12 45%, #05060a 100%);
+    }
+
+    #hud {
+      position: fixed;
+      inset: 14px auto auto 14px;
+      z-index: 2;
+      max-width: min(640px, calc(100vw - 28px));
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      background: rgba(8,10,16,.7);
+      box-shadow: 0 20px 80px rgba(0,0,0,.3);
+    }
+
+    #hud h1 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #dbe5ff;
+    }
+
+    #hud p {
+      margin: 6px 0 10px;
+      color: var(--muted);
+      font-size: .9rem;
+      line-height: 1.35;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    button, a {
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform .16s ease, border-color .16s ease;
+    }
+
+    button:hover, a:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--a1) 52%, white 48%);
+    }
+
+    .state {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 8px;
+      font-size: .8rem;
+      color: #dbe4ff;
+      letter-spacing: .02em;
+    }
+
+    .pill {
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: rgba(0,0,0,.28);
+    }
+
+    .is-live {
+      color: var(--a3);
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    canvas {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      position: fixed;
+      inset: 0;
+    }
+
+    @media (max-width: 640px) {
+      #hud {
+        inset: 10px auto auto 10px;
+        width: calc(100vw - 20px);
+      }
+      .state {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stage" aria-label="Signal Labyrinth stage"></canvas>
+
+  <section id="hud" role="region" aria-label="Signal Labyrinth controls">
+    <h1>Signal Labyrinth</h1>
+    <p>Move through the cursor fog and watch phase-hulls braid around the perimeter of your touch. Click, drag, or hover to pull new labyrinth paths into being.</p>
+    <div class="toolbar">
+      <button id="seedBtn" type="button">Re-seed</button>
+      <button id="pauseBtn" type="button">Pause</button>
+      <button id="muteBtn" type="button">Mute</button>
+      <button id="clearBtn" type="button">Clear</button>
+      <button id="stillBtn" type="button">Save still</button>
+      <button id="linkBtn" type="button">Copy link</button>
+      <a href="./" title="Return to ghost-radio home">Back to radio</a>
+    </div>
+    <div class="state">
+      <span class="pill">seed: <strong id="seedText">—</strong></span>
+      <span class="pill">entities: <strong id="countText">0</strong></span>
+      <span class="pill is-live">status: <strong id="statusText">live</strong></span>
+    </div>
+  </section>
+
+  <script>
+    const canvas = document.getElementById('stage');
+    const ctx = canvas.getContext('2d');
+    const dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+
+    const seedBtn = document.getElementById('seedBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const muteBtn = document.getElementById('muteBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const stillBtn = document.getElementById('stillBtn');
+    const linkBtn = document.getElementById('linkBtn');
+    const seedText = document.getElementById('seedText');
+    const countText = document.getElementById('countText');
+    const statusText = document.getElementById('statusText');
+
+    const state = {
+      paused: false,
+      silent: false,
+      t: 0,
+      stars: [],
+      touches: [],
+      maxStars: 900,
+      seed: randomSeed(6),
+      rng: null,
+      audio: null,
+      gain: 0.05,
+      pulse: 0,
+    };
+
+    const url = new URL(window.location.href);
+    const fromUrl = url.searchParams.get('seed');
+    if (fromUrl && /^[a-zA-Z0-9_-]{2,24}$/.test(fromUrl)) {
+      state.seed = fromUrl;
+    }
+
+    function randomSeed(len = 6) {
+      const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+      let out = '';
+      for (let i = 0; i < len; i++) {
+        out += chars[Math.floor(Math.random() * chars.length)];
+      }
+      return out;
+    }
+
+    function xmur3(str) {
+      let h = 1779033703 ^ str.length;
+      for (let i = 0; i < str.length; i++) {
+        h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+        h = (h << 13) | (h >>> 19);
+      }
+      return function() {
+        h = Math.imul(h ^ (h >>> 16), 2246822507);
+        h = Math.imul(h ^ (h >>> 13), 3266489909);
+        return (h ^= h >>> 16) >>> 0;
+      };
+    }
+
+    function mulberry32(a) {
+      return function() {
+        a |= 0; a = a + 0x6D2B79F5 | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    function rand() { return state.rng ? state.rng() : Math.random(); }
+
+    function mkColor() {
+      const p = rand();
+      if (p < 0.35) return 'rgba(141,232,255,0.78)';
+      if (p < 0.7) return 'rgba(255,148,215,0.72)';
+      return 'rgba(209,255,114,0.72)';
+    }
+
+    function seedRng(seed) {
+      const h = xmur3(seed)();
+      state.rng = mulberry32(h);
+    }
+
+    function resize() {
+      canvas.width = Math.floor(innerWidth * dpr);
+      canvas.height = Math.floor(innerHeight * dpr);
+      canvas.style.width = innerWidth + 'px';
+      canvas.style.height = innerHeight + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function randomEntity() {
+      const phase = rand() * Math.PI * 2;
+      const speed = 0.08 + rand() * 0.22;
+      return {
+        x: rand() * innerWidth,
+        y: rand() * innerHeight,
+        phase,
+        orbit: 28 + rand() * 170,
+        amp: 0.4 + rand() * 0.55,
+        omega: (rand() - 0.5) * 0.04,
+        size: 1.2 + rand() * 4,
+        life: 260 + rand() * 520,
+        color: mkColor(),
+      };
+    }
+
+    function emit(cx, cy, burst = 2) {
+      for (let i = 0; i < burst; i++) {
+        const p = randomEntity();
+        p.x = cx + (rand() - 0.5) * 24;
+        p.y = cy + (rand() - 0.5) * 24;
+        state.stars.push(p);
+      }
+      if (state.stars.length > state.maxStars) {
+        state.stars = state.stars.slice(state.stars.length - state.maxStars);
+      }
+      countText.textContent = state.stars.length;
+    }
+
+    function tick() {
+      if (state.paused) {
+        requestAnimationFrame(tick);
+        return;
+      }
+      state.t += 0.016;
+      state.pulse += 0.012;
+
+      const fade = 0.11 + rand() * 0.06;
+      ctx.fillStyle = `rgba(5,7,13,${fade})`;
+      ctx.fillRect(0, 0, innerWidth, innerHeight);
+
+      // ambient breathing glow from pointer memory
+      const m = state.touches[0] || { x: innerWidth / 2, y: innerHeight / 2 };
+      const gx = Math.sin(state.t * 0.5) * 80 + innerWidth * 0.5;
+      const gy = Math.cos(state.t * 0.44) * 110 + innerHeight * 0.5;
+      const lx = m ? m.x : gx;
+      const ly = m ? m.y : gy;
+      const grad = ctx.createRadialGradient(lx, ly, 20, lx, ly, Math.min(innerWidth, innerHeight) * 0.45);
+      grad.addColorStop(0, 'rgba(141,232,255,0.09)');
+      grad.addColorStop(0.35, 'rgba(255,148,215,0.05)');
+      grad.addColorStop(1, 'rgba(5,7,13,0.15)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, innerWidth, innerHeight);
+
+      ctx.lineCap = 'round';
+      const baseSpeed = 0.0018 + state.touches.length * 0.0004;
+
+      for (let i = state.stars.length - 1; i >= 0; i--) {
+        const s = state.stars[i];
+        s.phase += s.omega;
+        s.life -= 0.45;
+
+        const drift = Math.sin(state.pulse * 1.2 + s.phase * 2.7) * s.amp;
+        const swirl = Math.cos(state.t * 0.13 + s.phase) * 0.55;
+
+        const tx = m ? m.x : innerWidth / 2;
+        const ty = m ? m.y : innerHeight / 2;
+        const dx = tx - s.x;
+        const dy = ty - s.y;
+        const d = Math.hypot(dx, dy) || 1;
+        s.x += (dx / d) * (s.amp * 0.9) + Math.cos(s.phase * 1.2 + baseSpeed * s.orbit * 200) * 0.9;
+        s.y += (dy / d) * (s.amp * 0.9) + Math.sin(s.phase * 1.3 + baseSpeed * s.orbit * 260) * 0.8 + Math.sin(s.phase + drift) * s.amp;
+
+        s.orbit += swirl * 0.22;
+        s.omega += ((rand() - 0.5) * 0.0009) * 0.35;
+
+        const a = Math.max(0.05, Math.min(1, s.life / 820));
+        const glow = 0.2 + Math.sin(state.t + s.phase) * 0.1;
+        ctx.strokeStyle = s.color;
+        ctx.shadowBlur = 10 + s.size * 3;
+        ctx.shadowColor = s.color;
+        ctx.lineWidth = 1 + s.size * 0.4;
+
+        const cx = s.x + Math.cos(s.phase) * s.amp * 18 + Math.cos(state.t * 2 + s.phase * 3) * s.amp * 6;
+        const cy = s.y + Math.sin(s.phase) * s.amp * 18 + Math.sin(state.t * 2 + s.phase * 4) * s.amp * 6;
+        const rr = s.orbit + Math.sin(state.t * (0.7 + s.amp) + s.phase) * 18;
+
+        ctx.beginPath();
+        ctx.moveTo(cx + rr, cy);
+        for (let a2 = 0; a2 <= Math.PI * 2 + 0.02; a2 += 0.22) {
+          const jitter = (rand() - 0.5) * 2.1;
+          const x = cx + Math.cos(a2) * (rr + jitter);
+          const y = cy + Math.sin(a2) * (rr + jitter * 0.6);
+          ctx.strokeStyle = `${s.color.slice(0,-1)},${(a * glow).toFixed(3)})`;
+          ctx.quadraticCurveTo(
+            x + Math.cos(a2 + s.phase) * 0.35, y + Math.sin(a2 + s.phase * 1.3) * 0.32,
+            x, y
+          );
+          ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        if (s.life <= 0) state.stars.splice(i,1);
+      }
+
+      if (!state.silent && state.t % 0.08 < 0.002) {
+        toneTick();
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    function toneTick() {
+      if (!state.audio) return;
+      const osc = state.audio.createOscillator();
+      const gain = state.audio.createGain();
+      const idx = (state.stars.length % 4);
+      const hz = [120, 177, 228, 303][idx] + (state.stars.length % 12);
+      osc.type = ['sine', 'triangle', 'sine', 'triangle'][idx];
+      osc.frequency.setValueAtTime(hz + (state.t * 8), state.audio.currentTime);
+      gain.gain.setValueAtTime(0, state.audio.currentTime);
+      gain.gain.linearRampToValueAtTime(state.gain, state.audio.currentTime + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.0001, state.audio.currentTime + 0.15);
+      osc.connect(gain);
+      gain.connect(state.audio.destination);
+      osc.start();
+      osc.stop(state.audio.currentTime + 0.18);
+    }
+
+    function setHash() {
+      const u = new URL(window.location.href);
+      u.searchParams.set('seed', state.seed);
+      history.replaceState({}, '', u);
+    }
+
+    function boot() {
+      seedRng(state.seed);
+      seedText.textContent = state.seed;
+      resize();
+      for (let i = 0; i < 190; i++) emit(innerWidth/2, innerHeight/2, 1);
+      setHash();
+      countText.textContent = state.stars.length;
+      requestAnimationFrame(tick);
+    }
+
+    function reseed() {
+      state.stars = [];
+      state.seed = randomSeed(6);
+      seedRng(state.seed);
+      state.pulse = 0;
+      for (let i = 0; i < 220; i++) emit(innerWidth/2, innerHeight/2, 1);
+      setHash();
+      seedText.textContent = state.seed;
+      countText.textContent = state.stars.length;
+      state.audio && state.audio.resume();
+    }
+
+    function togglePause() {
+      state.paused = !state.paused;
+      pauseBtn.textContent = state.paused ? 'Resume' : 'Pause';
+      statusText.textContent = state.paused ? 'paused' : 'live';
+    }
+
+    function toggleMute() {
+      state.silent = !state.silent;
+      muteBtn.textContent = state.silent ? 'Unmute' : 'Mute';
+      if (!state.silent && !state.audio) {
+        state.audio = new (window.AudioContext || window.webkitAudioContext)();
+        state.audio.resume();
+      }
+      if (state.silent && state.audio) {
+        state.audio.suspend();
+      }
+    }
+
+    function clearCanvas() {
+      state.stars = [];
+      countText.textContent = 0;
+      ctx.clearRect(0,0,innerWidth,innerHeight);
+    }
+
+    function copyLink() {
+      navigator.clipboard.writeText(window.location.href)
+        .then(() => {
+          linkBtn.textContent = 'Copied';
+          setTimeout(() => (linkBtn.textContent = 'Copy link'), 800);
+        })
+        .catch(() => {
+          linkBtn.textContent = 'Copy blocked';
+          setTimeout(() => (linkBtn.textContent = 'Copy link'), 1100);
+        });
+    }
+
+    function saveStill() {
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = `signal-labyrinth-${state.seed}.png`;
+      link.click();
+    }
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('mousemove', (ev) => {
+      state.touches[0] = { x: ev.clientX, y: ev.clientY };
+      if (Math.random() < 0.28) emit(ev.clientX, ev.clientY, 1);
+    });
+    window.addEventListener('touchmove', (ev) => {
+      const t = ev.touches[0];
+      if (!t) return;
+      state.touches[0] = { x: t.clientX, y: t.clientY };
+      if (Math.random() < 0.28) emit(t.clientX, t.clientY, 1);
+    }, { passive: true });
+    window.addEventListener('click', (ev) => {
+      emit(ev.clientX, ev.clientY, 14);
+      if (!state.silent && !state.audio) {
+        state.audio = new (window.AudioContext || window.webkitAudioContext)();
+        state.audio.resume();
+      }
+    });
+
+    seedBtn.addEventListener('click', reseed);
+    pauseBtn.addEventListener('click', togglePause);
+    muteBtn.addEventListener('click', toggleMute);
+    clearBtn.addEventListener('click', clearCanvas);
+    stillBtn.addEventListener('click', saveStill);
+    linkBtn.addEventListener('click', copyLink);
+    boot();
+  </script>
+</body>
+</html>

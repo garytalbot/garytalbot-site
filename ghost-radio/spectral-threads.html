@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Spectral Threads is an eerie canvas side chamber for Ghost Radio: particles move through a phase-drift field and fold around the pointer like spectral static under a dark sky." />
+  <meta name="theme-color" content="#090b12" />
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  <title>Ghost Radio — Spectral Threads</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #06080f;
+      --line: rgba(255, 255, 255, 0.14);
+      --text: #f0f4ff;
+      --muted: #a8b3cf;
+      --a: #8de8ff;
+      --b: #ff94d7;
+      --c: #d1ff72;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 12%, rgba(141, 232, 255, .16), transparent 29%),
+        radial-gradient(circle at 78% 78%, rgba(255, 148, 215, .09), transparent 25%),
+        linear-gradient(180deg, #070a10 0%, #090b12 50%, #04050a 100%);
+      overflow: hidden;
+    }
+
+    .shell {
+      width: min(1100px, 100vw - 24px);
+      margin: 10px auto;
+      display: grid;
+      gap: 10px;
+      min-height: calc(100vh - 20px);
+    }
+
+    .toolbar {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(14, 16, 24, 0.6);
+      backdrop-filter: blur(8px);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .heading h1 {
+      margin: 0;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #ecf4ff;
+    }
+
+    .heading p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      max-width: 62ch;
+      font-size: .85rem;
+      line-height: 1.4;
+    }
+
+    .toolbar .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .control,
+    button,
+    .ghost-link {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      border-radius: 999px;
+      font: inherit;
+      padding: 8px 10px;
+    }
+
+    input[type="range"] {
+      width: 132px;
+      border-radius: 8px;
+      padding: 0;
+      accent-color: var(--a);
+      border: 1px solid rgba(255,255,255,.2);
+    }
+
+    button {
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform .18s ease, border-color .18s ease;
+    }
+
+    button:hover,
+    .ghost-link:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--a) 45%, white 55%);
+    }
+
+    .ghost-link {
+      text-decoration: none;
+      color: #d2e2ff;
+      white-space: nowrap;
+    }
+
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .links .ghost-link { font-size: .88rem; }
+
+    .stage {
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 14px;
+      overflow: hidden;
+      min-height: calc(100vh - 205px);
+      background:
+        radial-gradient(circle at 50% 40%, rgba(255, 255, 255, .06), transparent 63%),
+        linear-gradient(140deg, rgba(141,232,255,.05), rgba(255,148,215,.05));
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .status {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      z-index: 2;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: space-between;
+      pointer-events: none;
+      font-size: .78rem;
+      color: #d2dcf6;
+    }
+
+    .pill {
+      background: rgba(0, 0, 0, .5);
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 8px;
+      padding: 6px 10px;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 800px) {
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+      .toolbar .actions {
+        justify-content: flex-start;
+      }
+      input[type="range"] {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="toolbar" aria-label="Spectral Threads controls">
+      <div class="heading">
+        <h1>Spectral Threads</h1>
+        <p>
+          A haunted thread field where particles inherit a deterministic seed, respond to pointer tension,
+          and fold into new static shapes as the drift shifts.
+        </p>
+      </div>
+
+      <div class="actions">
+        <label class="control" for="tension">Tension</label>
+        <input id="tension" type="range" min="0.1" max="3.0" value="1.2" step="0.05" />
+
+        <label class="control" for="drift">Drift</label>
+        <input id="drift" type="range" min="0.2" max="2.8" value="1.1" step="0.05" />
+
+        <label class="control" for="chaos">Chaos</label>
+        <input id="chaos" type="range" min="0.2" max="3.5" value="1.4" step="0.1" />
+
+        <button type="button" id="toggleBtn">Pause</button>
+        <button type="button" id="reseedBtn">Rerandomize</button>
+        <button type="button" id="copyBtn">Copy share link</button>
+        <button type="button" id="saveBtn">Save PNG</button>
+      </div>
+
+      <div class="links">
+        <a class="ghost-link" href="./">← Back to Ghost Radio</a>
+        <a class="ghost-link" href="./frequency-veil.html" target="_blank" rel="noopener noreferrer">Frequency Veil</a>
+        <a class="ghost-link" href="./signal-basin.html" target="_blank" rel="noopener noreferrer">Signal Basin</a>
+      </div>
+    </section>
+
+    <section class="stage" aria-label="Spectral Threads chamber">
+      <canvas id="threads"></canvas>
+      <div class="status" aria-live="polite">
+        <span class="pill" id="seedLine">seed: loading</span>
+        <span class="pill" id="fpsLine">fps: —</span>
+        <span class="pill" id="stateLine">state: initializing</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    const canvas = document.getElementById('threads');
+    const ctx = canvas.getContext('2d');
+
+    const tensionInput = document.getElementById('tension');
+    const driftInput = document.getElementById('drift');
+    const chaosInput = document.getElementById('chaos');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const reseedBtn = document.getElementById('reseedBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const saveBtn = document.getElementById('saveBtn');
+
+    const seedLine = document.getElementById('seedLine');
+    const fpsLine = document.getElementById('fpsLine');
+    const stateLine = document.getElementById('stateLine');
+
+    const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    let seed = Number(params.get('seed')) || Math.floor(Math.random() * 999999);
+    let paused = false;
+    let pointer = null;
+    let time = 0;
+    let raf = 0;
+
+    let particles = [];
+    const count = 900;
+
+    function mulberry32(n) {
+      return function () {
+        n |= 0;
+        n = (n + 0x6d2b79f5) | 0;
+        let t = Math.imul(n ^ (n >>> 15), 1 | n);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    let rand = mulberry32(seed);
+
+    const defaults = {
+      tension: Number(params.get('tension')) || 1.2,
+      drift: Number(params.get('drift')) || 1.1,
+      chaos: Number(params.get('chaos')) || 1.4,
+    };
+
+    tensionInput.value = defaults.tension;
+    driftInput.value = defaults.drift;
+    chaosInput.value = defaults.chaos;
+
+    function setSeed(value) {
+      const parsed = Number(value);
+      seed = Number.isFinite(parsed) ? Math.abs(Math.floor(parsed)) || 1 : Math.floor(Math.random() * 999999);
+      seedLine.textContent = `seed: ${seed}`;
+      rand = mulberry32(seed);
+      rebuildHash();
+      buildParticles();
+    }
+
+    function rebuildHash() {
+      const hash = new URLSearchParams();
+      hash.set('seed', String(seed));
+      hash.set('tension', tensionInput.value);
+      hash.set('drift', driftInput.value);
+      hash.set('chaos', chaosInput.value);
+      const next = `#${hash.toString()}`;
+      if (location.hash !== next) {
+        history.replaceState(null, '', next);
+      }
+    }
+
+    function buildParticles() {
+      particles = [];
+      const w = canvas.width / DPR;
+      const h = canvas.height / DPR;
+      for (let i = 0; i < count; i++) {
+        const angle = rand() * Math.PI * 2;
+        const radius = Math.sqrt(rand()) * Math.min(w, h) * 0.5;
+        particles.push({
+          x: rand() * w,
+          y: rand() * h,
+          vx: Math.cos(angle) * 0.3,
+          vy: Math.sin(angle) * 0.3,
+          age: rand() * 500,
+          hue: rand() * 360,
+        });
+      }
+      stateLine.textContent = `state: reseeded (${particles.length} threads)`;
+    }
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.max(1, Math.floor(rect.width * DPR));
+      canvas.height = Math.max(1, Math.floor(rect.height * DPR));
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      buildParticles();
+    }
+
+    function fieldAt(x, y) {
+      const t = time;
+      const s = Number(tensionInput.value);
+      const d = Number(driftInput.value);
+      const c = Number(chaosInput.value);
+
+      const f1 = Math.sin((x * 0.0016 * d) + t * s) + Math.cos((y * 0.0017 * d) - t * 0.9 * s);
+      const f2 = Math.cos((x * 0.0013 * d) - t * 1.1) + Math.sin((y * 0.0011 * c) + t * 0.7);
+      const f3 = Math.cos((x + y) * 0.0009 + t * c);
+
+      let ax = f1 + f3 * 0.6;
+      let ay = f2 + f3 * 0.5;
+
+      if (pointer) {
+        const dx = pointer.x - x;
+        const dy = pointer.y - y;
+        const dist2 = Math.max(dx * dx + dy * dy, 1);
+        const force = 25000 / dist2;
+        ax += (dx / Math.sqrt(dist2)) * force * c * 0.018;
+        ay += (dy / Math.sqrt(dist2)) * force * c * 0.018;
+      }
+
+      return {
+        x: ax * 0.045,
+        y: ay * 0.045,
+      };
+    }
+
+    let lastFrame = performance.now();
+    let frameCount = 0;
+    let fpsTimer = lastFrame;
+
+    function tick(now) {
+      raf = requestAnimationFrame(tick);
+      if (paused) return;
+
+      const delta = Math.min(60, now - lastFrame);
+      lastFrame = now;
+      time += delta * 0.0018;
+
+      frameCount++;
+      if (now - fpsTimer >= 600) {
+        fpsLine.textContent = `fps: ${(frameCount / ((now - fpsTimer) / 1000)).toFixed(1)}`;
+        frameCount = 0;
+        fpsTimer = now;
+      }
+
+      const w = canvas.width / DPR;
+      const h = canvas.height / DPR;
+
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = 'rgba(7, 10, 16, 0.14)';
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const oldX = p.x;
+        const oldY = p.y;
+
+        const force = fieldAt(p.x, p.y);
+        p.vx = (p.vx * 0.96) + force.x;
+        p.vy = (p.vy * 0.96) + force.y;
+
+        p.x += p.vx;
+        p.y += p.vy;
+        p.age++;
+
+        const outX = p.x < 0 || p.x > w;
+        const outY = p.y < 0 || p.y > h;
+        if (outX || outY) {
+          p.x = ((p.x % w) + w) % w;
+          p.y = ((p.y % h) + h) % h;
+        }
+
+        const alpha = Math.max(0.14, 0.45 - p.age / 1200);
+        const hue = (p.hue + p.age * 0.35) % 360;
+        ctx.strokeStyle = `hsla(${hue}, 84%, 72%, ${alpha})`;
+        ctx.lineWidth = 1.1;
+        ctx.beginPath();
+        ctx.moveTo(oldX, oldY);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+      }
+
+      rebuildHash();
+    }
+
+    function pointerFromEvent(event) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+      };
+    }
+
+    function reseed() {
+      setSeed(Math.floor(rand() * 999999));
+    }
+
+    function copyLink() {
+      const link = `${location.origin}${location.pathname}${location.hash}`;
+      navigator.clipboard.writeText(link).then(() => {
+        stateLine.textContent = 'state: share link copied';
+      }).catch(() => {
+        window.prompt('Copy link', link);
+      });
+    }
+
+    function saveImage() {
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = `spectral-threads-${seed}.png`;
+      a.click();
+      stateLine.textContent = 'state: image saved';
+    }
+
+    function setPaused(next) {
+      paused = next;
+      toggleBtn.textContent = paused ? 'Resume' : 'Pause';
+      stateLine.textContent = paused ? 'state: paused' : 'state: running';
+    }
+
+    function init() {
+      seed = Math.max(1, seed);
+      seedLine.textContent = `seed: ${seed}`;
+      stateLine.textContent = 'state: ready';
+
+      resize();
+      addEventListener('resize', resize);
+
+      canvas.addEventListener('pointermove', (event) => {
+        pointer = pointerFromEvent(event);
+      });
+
+      canvas.addEventListener('pointerleave', () => {
+        pointer = null;
+      });
+
+      toggleBtn.addEventListener('click', () => setPaused(!paused));
+      reseedBtn.addEventListener('click', reseed);
+      copyBtn.addEventListener('click', copyLink);
+      saveBtn.addEventListener('click', saveImage);
+
+      [tensionInput, driftInput, chaosInput].forEach((el) => {
+        el.addEventListener('input', () => {
+          stateLine.textContent = `state: ${el.id} ${el.value}`;
+          rebuildHash();
+        });
+      });
+
+      buildParticles();
+      raf = requestAnimationFrame(tick);
+    }
+
+    init();
+  </script>
+</body>
+</html>

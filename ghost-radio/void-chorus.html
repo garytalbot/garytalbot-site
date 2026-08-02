@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="description"
+    content="Void Chorus is a haunted side chamber where symbols drift like radio ghosts and align into accidental hymns."
+  />
+  <meta name="theme-color" content="#090b12" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Void Chorus — Ghost Radio" />
+  <meta
+    property="og:description"
+    content="A generative side chamber that turns mouse and touch into a self-healing swarm of glyphs."
+  />
+  <meta property="og:url" content="https://garytalbot.github.io/ghost-radio/void-chorus.html" />
+  <meta property="og:image" content="https://garytalbot.github.io/ghost-radio/share-card.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  <title>Void Chorus — Ghost Radio</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090b12;
+      --text: #f4f7ff;
+      --muted: #b0bdd5;
+      --accent: #8de8ff;
+      --accent-2: #ff94d7;
+      --line: rgba(255,255,255,.12);
+      --panel: rgba(11,14,24,.72);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+
+    body {
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 10%, rgba(141,232,255,.14), transparent 32%),
+        radial-gradient(circle at 80% 20%, rgba(255,148,215,.10), transparent 28%),
+        linear-gradient(180deg, #070913 0%, #090b12 52%, #05060b 100%);
+      overflow: hidden;
+    }
+
+    .shell {
+      width: min(1200px, 100vw - 18px);
+      margin: 10px auto;
+      display: grid;
+      gap: 10px;
+      min-height: calc(100vh - 20px);
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+      padding: 12px;
+    }
+
+    .topbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #ecf2ff;
+    }
+
+    .tag {
+      color: var(--muted);
+      font-size: .8rem;
+      margin: 0 0 4px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-left: auto;
+    }
+
+    button,
+    a,
+    input {
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 7px 11px;
+      font: inherit;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    label {
+      color: #dbe6ff;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: .75rem;
+    }
+
+    input[type="range"] { width: 120px; accent-color: var(--accent); }
+    button:hover, a:hover { border-color: color-mix(in srgb, var(--accent) 45%, white 55%); }
+
+    .stage {
+      position: relative;
+      overflow: hidden;
+      min-height: calc(100vh - 180px);
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background:
+        radial-gradient(circle at 50% 40%, rgba(255,255,255,.06), transparent 62%),
+        linear-gradient(130deg, rgba(141,232,255,.06), rgba(255,148,215,.05));
+    }
+
+    canvas { width: 100%; height: 100%; display: block; }
+
+    .hud {
+      position: absolute;
+      inset: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      pointer-events: none;
+      font-size: .76rem;
+      color: #c3d1ee;
+      mix-blend-mode: screen;
+    }
+
+    .hud span {
+      background: rgba(0,0,0,.5);
+      border: 1px solid rgba(255,255,255,.16);
+      padding: 4px 8px;
+      border-radius: 8px;
+      margin-left: 6px;
+      white-space: nowrap;
+    }
+
+    .sr-only {
+      position: absolute !important;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+    }
+
+    @media (max-width: 760px) {
+      .topbar { flex-direction: column; align-items: stretch; }
+      .controls { margin-left: 0; }
+      .controls button,
+      .controls a,
+      .controls input { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell" aria-label="Void Chorus chamber">
+    <section class="panel topbar">
+      <div>
+        <p class="tag">Void Chorus</p>
+        <h1>Void Chorus</h1>
+      </div>
+
+      <p class="tag" style="margin-top:4px">A live glyph storm that listens to your cursor and folds itself into prayer.</p>
+
+      <div class="controls" aria-label="Chamber controls">
+        <label for="drift">Drift
+          <input id="drift" type="range" min="0.3" max="3.6" step="0.1" value="1.7" />
+        </label>
+        <label for="density">Density
+          <input id="density" type="range" min="22" max="260" step="2" value="118" />
+        </label>
+        <button id="pulseBtn" type="button">Pulse Chorus</button>
+        <button id="clearBtn" type="button">Clear</button>
+        <button id="freezeBtn" type="button">Pause</button>
+        <button id="copyBtn" type="button">Copy link</button>
+        <a href="./">← Back to Ghost Radio</a>
+      </div>
+    </section>
+
+    <section class="stage" aria-label="Glyph field canvas">
+      <canvas id="altar" role="img" aria-label="Animated void chorus"></canvas>
+      <div class="hud" aria-live="polite">
+        <span id="sig">seed: 0</span>
+        <span id="count">glyphs: 0</span>
+      </div>
+    </section>
+
+    <div id="liveRegion" class="sr-only" aria-live="polite"></div>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('altar');
+    const ctx = canvas.getContext('2d');
+    const driftInput = document.getElementById('drift');
+    const densityInput = document.getElementById('density');
+    const pulseBtn = document.getElementById('pulseBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const freezeBtn = document.getElementById('freezeBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const sigEl = document.getElementById('sig');
+    const countEl = document.getElementById('count');
+    const liveRegion = document.getElementById('liveRegion');
+
+    const runes = ['◯','◑','◒','◉','⚬','✶','✧','∘','◈','◍','∴','⊹','◊','✧','✩','◌','⋆'];
+    const colors = ['#8de8ff', '#ff94d7', '#d1ff72', '#f4f7ff', '#a6aef7', '#f7b4ff'];
+
+    const state = {
+      seed: 1337,
+      particles: [],
+      running: true,
+      pointer: null,
+      t: 0,
+      lastSpawnAt: 0,
+      frame: 0,
+      paused: false
+    };
+
+    const hashState = new URLSearchParams(location.hash.replace(/^#/, ''));
+    const initialSeed = Number(hashState.get('seed') || Math.floor(Math.random() * 1000000));
+    const initialDensity = Number(hashState.get('n') || 118);
+    const initialDrift = Number(hashState.get('d') || 1.7);
+
+    state.seed = initialSeed;
+    densityInput.value = String(initialDensity);
+    driftInput.value = String(initialDrift);
+
+    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+    function reseed(seed = Math.floor(Math.random() * 4294967296)) {
+      state.seed = seed;
+      state.t = 0;
+      state.particles = [];
+      sigEl.textContent = `seed: ${state.seed}`;
+      liveRegion.textContent = `Reseeded with ${state.seed}`;
+      syncHash();
+      pulse();
+    }
+
+    function syncHash() {
+      const q = new URLSearchParams();
+      q.set('seed', String(state.seed));
+      q.set('n', densityInput.value);
+      q.set('d', driftInput.value);
+      if (!state.running) {
+        q.set('p', '1');
+      } else {
+        q.delete('p');
+      }
+      location.hash = q.toString();
+    }
+
+    function rand() {
+      state.seed ^= state.seed << 13;
+      state.seed ^= state.seed >>> 17;
+      state.seed ^= state.seed << 5;
+      return (state.seed >>> 0) / 4294967296;
+    }
+
+    function spawn(x = canvas.clientWidth / 2, y = canvas.clientHeight / 2) {
+      const count = Number(densityInput.value);
+      const n = Math.max(10, Math.round(count / 4));
+      for (let i = 0; i < n; i++) {
+        const angle = rand() * Math.PI * 2;
+        const spread = rand() ** 1.8 * 120;
+        state.particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * 0.22,
+          vy: Math.sin(angle) * 0.22,
+          age: 0,
+          life: 100 + rand() * 180,
+          size: 12 + rand() * 20,
+          rune: runes[Math.floor(rand() * runes.length)],
+          color: colors[Math.floor(rand() * colors.length)],
+          phase: rand() * Math.PI * 2,
+          drift: (rand() * 2 - 1) * Number(driftInput.value),
+          spin: (rand() * 2 - 1) * 0.05,
+          orbit: rand() * 0.7 + 0.3
+        });
+      }
+      const limit = Number(densityInput.value);
+      if (state.particles.length > limit * 4) {
+        state.particles.splice(0, state.particles.length - limit * 4);
+      }
+      countEl.textContent = `glyphs: ${state.particles.length}`;
+    }
+
+    function pulse() {
+      const x = state.pointer ? state.pointer.x : canvas.clientWidth * (0.35 + rand() * 0.3);
+      const y = state.pointer ? state.pointer.y : canvas.clientHeight * (0.35 + rand() * 0.3);
+      spawn(x, y);
+      syncHash();
+    }
+
+    function resize() {
+      canvas.width = Math.floor(canvas.clientWidth * DPR);
+      canvas.height = Math.floor(canvas.clientHeight * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+    }
+
+    function draw() {
+      if (!state.running) {
+        requestAnimationFrame(draw);
+        return;
+      }
+
+      state.frame++;
+      state.t += 0.012;
+      const cx = canvas.clientWidth / 2;
+      const cy = canvas.clientHeight / 2;
+      ctx.fillStyle = 'rgba(8, 10, 18, 0.22)';
+      ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+      if (state.frame - state.lastSpawnAt > 4) {
+        if (state.particles.length < Number(densityInput.value) * 3) {
+          spawn();
+          state.lastSpawnAt = state.frame;
+        }
+      }
+
+      const drift = Number(driftInput.value);
+      for (let i = state.particles.length - 1; i >= 0; i--) {
+        const p = state.particles[i];
+        p.age += 1;
+        p.phase += p.spin;
+        const swirl = Math.sin(state.t + p.phase) * drift * p.orbit;
+        const px = cx + (p.x - cx) * 0.999;
+        const py = cy + (p.y - cy) * 0.999;
+
+        if (state.pointer) {
+          const dx = state.pointer.x - p.x;
+          const dy = state.pointer.y - p.y;
+          const invDist = 1 / (Math.sqrt(dx * dx + dy * dy) / 100 + 1);
+          p.vx += dx * 0.00045 * invDist;
+          p.vy += dy * 0.00045 * invDist;
+        }
+
+        p.vx += Math.sin(p.phase + p.x * 0.002) * 0.003 + swirl * 0.0005;
+        p.vy += Math.cos(p.phase + p.y * 0.002) * 0.003 + p.drift * 0.0008;
+
+        p.vx *= 0.985;
+        p.vy *= 0.985;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        p.x = (p.x + canvas.clientWidth + 300) % (canvas.clientWidth + 300) - 150;
+        p.y = (p.y + canvas.clientHeight + 300) % (canvas.clientHeight + 300) - 150;
+
+        const ageFrac = p.age / p.life;
+        const alpha = Math.max(0, 1 - ageFrac);
+        const jitter = Math.sin(state.t * 14 + p.phase + p.age * 0.05) * 0.6;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        const pulse = 0.55 + 0.45 * Math.sin(state.t * 5 + p.phase + p.drift);
+        const size = (p.size * (1 - ageFrac * 0.65) + jitter) * pulse;
+        ctx.fillStyle = `${p.color}${Math.floor(alpha * 170).toString(16).padStart(2,'0')}`;
+        ctx.globalAlpha = alpha;
+        ctx.font = `${size.toFixed(2)}px Georgia, serif`;
+        ctx.rotate(state.t * p.spin * 8);
+        ctx.fillText(p.rune, 0, 0);
+        ctx.restore();
+
+        if (p.age > p.life) state.particles.splice(i, 1);
+      }
+
+      ctx.globalAlpha = 1;
+      countEl.textContent = `glyphs: ${state.particles.length}`;
+      requestAnimationFrame(draw);
+    }
+
+    function setPointer(x, y) {
+      if (x === null) {
+        state.pointer = null;
+        return;
+      }
+      state.pointer = { x, y };
+      if (Math.random() > 0.8) spawn(x, y);
+    }
+
+    function copyShare() {
+      const hash = new URLSearchParams(location.hash.replace('#', ''));
+      hash.set('seed', String(state.seed));
+      hash.set('n', densityInput.value);
+      hash.set('d', driftInput.value);
+      if (!state.running) hash.set('p', '1');
+      navigator.clipboard.writeText(`${location.href.split('#')[0]}#${hash.toString()}`).then(() => {
+        liveRegion.textContent = 'Void Chorus share link copied';
+      }).catch(() => {
+        liveRegion.textContent = 'Clipboard blocked; right-click → copy location manually';
+      });
+    }
+
+    resize();
+    reseed(state.seed);
+    window.addEventListener('resize', resize);
+
+    canvas.addEventListener('pointermove', (ev) => {
+      const rect = canvas.getBoundingClientRect();
+      setPointer(ev.clientX - rect.left, ev.clientY - rect.top);
+    });
+
+    canvas.addEventListener('pointerleave', () => setPointer(null, null));
+    canvas.addEventListener('pointerdown', (ev) => {
+      const rect = canvas.getBoundingClientRect();
+      setPointer(ev.clientX - rect.left, ev.clientY - rect.top);
+      pulse();
+    });
+
+    densityInput.addEventListener('input', syncHash);
+    driftInput.addEventListener('input', syncHash);
+    pulseBtn.addEventListener('click', pulse);
+    clearBtn.addEventListener('click', () => {
+      state.particles = [];
+      countEl.textContent = 'glyphs: 0';
+      liveRegion.textContent = 'Field cleared';
+    });
+
+    freezeBtn.addEventListener('click', () => {
+      state.running = !state.running;
+      freezeBtn.textContent = state.running ? 'Pause' : 'Play';
+      syncHash();
+      if (state.running) {
+        requestAnimationFrame(draw);
+        liveRegion.textContent = 'Chamber resumed';
+      } else {
+        liveRegion.textContent = 'Chamber paused';
+      }
+    });
+
+    copyBtn.addEventListener('click', copyShare);
+
+    requestAnimationFrame(draw);
+  </script>
+</body>
+</html>

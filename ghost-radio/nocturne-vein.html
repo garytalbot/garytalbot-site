@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#090b12" />
+  <meta
+    name="description"
+    content="Nocturne Vein — a deterministic, click-seeded canvas sketch from Ghost Radio. Drift in silence, reseed the vein, and braid your own ghostly routes."
+  />
+  <title>Ghost Radio — Nocturne Vein</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #06070e;
+      --text: #f2f7ff;
+      --muted: #b0b9d1;
+      --line: rgba(255,255,255,.12);
+      --a1: #8de8ff;
+      --a2: #ff94d7;
+      --a3: #d1ff72;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: #06070e;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      position: fixed;
+      inset: 0;
+    }
+
+    .panel {
+      position: fixed;
+      z-index: 2;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      width: min(740px, calc(100vw - 24px));
+      margin: 0;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      background: rgba(6, 8, 14, 0.72);
+      box-shadow: 0 18px 48px rgba(0,0,0,.42);
+      display: grid;
+      gap: 8px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.02rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #dce7ff;
+    }
+
+    p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      line-height: 1.35;
+      font-size: .92rem;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    button,
+    a,
+    input[type="range"] {
+      font: inherit;
+    }
+
+    button,
+    a {
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 12px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform .16s ease, border-color .16s ease;
+      white-space: nowrap;
+    }
+
+    button:hover,
+    a:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--a1) 50%, white 50%);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .pill {
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.24);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: .8rem;
+      color: #dce7ff;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    .value {
+      color: var(--a3);
+      font-weight: 700;
+      letter-spacing: .01em;
+      text-transform: none;
+    }
+
+    .grow {
+      flex: 1;
+      min-width: 140px;
+    }
+
+    label {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: .8rem;
+      color: #dbe5ff;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      margin-left: auto;
+    }
+
+    input[type="range"] {
+      width: 132px;
+      accent-color: var(--a1);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      clip: rect(0 0 0 0);
+      clip-path: inset(50%);
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 680px) {
+      .panel { width: calc(100vw - 24px); }
+      .stats { grid-template-columns: 1fr; }
+      label { width: 100%; justify-content: space-between; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stage" aria-label="Nocturne Vein sketch"></canvas>
+
+  <section class="panel" role="region" aria-label="Nocturne Vein controls">
+    <h1>Nocturne Vein</h1>
+    <p>Move the pointer or tap to spawn echoes. The field is seeded by URL: preserve seed in link, reseed for a new night.</p>
+
+    <div class="row">
+      <button id="pauseBtn" type="button">Pause</button>
+      <button id="reseedBtn" type="button">Reseed</button>
+      <button id="clearBtn" type="button">Clear</button>
+      <button id="copyBtn" type="button">Copy share link</button>
+      <button id="saveBtn" type="button">Save frame</button>
+      <a href="./" aria-label="Return to ghost radio home">Back to radio</a>
+      <label class="grow">Seed:
+        <span id="seedLabel" class="value">seed</span>
+      </label>
+    </div>
+
+    <div class="row">
+      <label>Chaos
+        <input id="chaosRange" type="range" min="0.2" max="2.8" step="0.05" value="1.1" />
+      </label>
+      <label>Threads
+        <input id="countRange" type="range" min="220" max="1400" step="60" value="760" />
+      </label>
+      <label>Trail
+        <input id="trailRange" type="range" min="5" max="35" step="1" value="13" />
+      </label>
+    </div>
+
+    <div class="stats">
+      <div class="pill">seed: <span id="seedStat" class="value">—</span></div>
+      <div class="pill">particles: <span id="countStat" class="value">—</span></div>
+      <div class="pill">status: <span id="statusStat" class="value">live</span></div>
+    </div>
+
+    <p id="note" class="sr-only" role="status" aria-live="polite">Nocturne Vein ready.</p>
+  </section>
+
+  <script>
+    const canvas = document.getElementById('stage');
+    const ctx = canvas.getContext('2d');
+
+    const pauseBtn = document.getElementById('pauseBtn');
+    const reseedBtn = document.getElementById('reseedBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const seedLabel = document.getElementById('seedLabel');
+    const seedStat = document.getElementById('seedStat');
+    const countStat = document.getElementById('countStat');
+    const statusStat = document.getElementById('statusStat');
+    const chaosRange = document.getElementById('chaosRange');
+    const countRange = document.getElementById('countRange');
+    const trailRange = document.getElementById('trailRange');
+    const note = document.getElementById('note');
+
+    const pointer = { x: window.innerWidth / 2, y: window.innerHeight / 2, alive: false };
+    const state = {
+      particles: [],
+      paused: false,
+      seed: randomSeed(8),
+      dpr: Math.min(2, window.devicePixelRatio || 1),
+      rng: null,
+      t: 0,
+      chaos: parseFloat(chaosRange.value),
+      count: parseInt(countRange.value, 10),
+      trail: parseInt(trailRange.value, 10),
+      hue: 165,
+    };
+
+    const url = new URL(window.location.href);
+    const qs = url.searchParams;
+    const fromSeed = qs.get('seed');
+    const fromChaos = parseFloat(qs.get('c') || chaosRange.value);
+    const fromCount = parseInt(qs.get('n') || countRange.value, 10);
+
+    if (fromSeed && /^[a-z0-9]{4,12}$/i.test(fromSeed)) {
+      state.seed = fromSeed.toLowerCase();
+    }
+    if (!Number.isNaN(fromChaos)) {
+      state.chaos = clamp(fromChaos, 0.2, 2.8);
+      chaosRange.value = state.chaos.toString();
+    }
+    if (Number.isFinite(fromCount)) {
+      state.count = clamp(Math.round(fromCount), 220, 1400);
+      countRange.value = state.count.toString();
+    }
+
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
+    }
+
+    function randomSeed(len = 8) {
+      const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+      let out = '';
+      for (let i = 0; i < len; i++) {
+        out += chars[Math.floor(Math.random() * chars.length)];
+      }
+      return out;
+    }
+
+    function xmur3(str) {
+      let h = 1779033703 ^ str.length;
+      for (let i = 0; i < str.length; i++) {
+        h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+        h = (h << 13) | (h >>> 19);
+      }
+      return function() {
+        h = Math.imul(h ^ (h >>> 16), 2246822507);
+        h = Math.imul(h ^ (h >>> 13), 3266489909);
+        return (h ^= h >>> 16) >>> 0;
+      }
+    }
+
+    function mulberry32(a) {
+      return function() {
+        a |= 0;
+        a = a + 0x6D2B79F5 | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      }
+    }
+
+    function random() {
+      return state.rng ? state.rng() : Math.random();
+    }
+
+    function seedRng(seed) {
+      state.rng = mulberry32(xmur3(seed)());
+    }
+
+    function resize() {
+      const { innerWidth, innerHeight } = window;
+      canvas.width = Math.floor(innerWidth * state.dpr);
+      canvas.height = Math.floor(innerHeight * state.dpr);
+      canvas.style.width = `${innerWidth}px`;
+      canvas.style.height = `${innerHeight}px`;
+      ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+      pointer.x = innerWidth / 2;
+      pointer.y = innerHeight / 2;
+      if (!state.particles.length) seedField();
+    }
+
+    function seedField() {
+      state.particles = [];
+      for (let i = 0; i < state.count; i++) {
+        state.particles.push(createParticle(Math.floor(random() * 3))
+        );
+      }
+      countStat.textContent = String(state.particles.length);
+    }
+
+    function createParticle(type = 0) {
+      const w = innerWidth;
+      const h = innerHeight;
+      const spread = (type === 2 ? 0.15 : (type === 1 ? 0.45 : 0.75));
+      return {
+        x: w * random() * spread + w * (1 - spread) * 0.5,
+        y: h * random() * spread + h * (1 - spread) * 0.5,
+        vx: random() * 2 - 1,
+        vy: random() * 2 - 1,
+        age: random() * 420,
+        life: 120 + random() * 240,
+        phase: random() * Math.PI * 2,
+        hue: 175 + random() * 80,
+      };
+    }
+
+    function paintFrame() {
+      if (state.paused) return requestAnimationFrame(paintFrame);
+      state.t += 0.015;
+      const fade = 0.05 + (trailRange.value / 255);
+      ctx.fillStyle = `rgba(4,6,11,${fade})`;
+      ctx.fillRect(0, 0, innerWidth, innerHeight);
+
+      const cx = innerWidth / 2;
+      const cy = innerHeight / 2;
+      const speed = 1.3 + (state.chaos * 0.8);
+      const focus = 1.1 + state.chaos * 1.1;
+      const spin = 0.005 + state.chaos * 0.0025;
+      const pointerPull = pointer.alive ? state.chaos * 0.7 : 0;
+
+      ctx.lineWidth = 0.75;
+
+      for (let i = 0; i < state.particles.length; i++) {
+        const p = state.particles[i];
+        const ox = p.x;
+        const oy = p.y;
+
+        const dx = p.x - cx;
+        const dy = p.y - cy;
+        const dxp = p.x - pointer.x;
+        const dyp = p.y - pointer.y;
+        const distp = Math.hypot(dxp, dyp) || 1;
+
+        const pullX = -dx * 0.0009 * focus;
+        const pullY = -dy * 0.0009 * focus;
+
+        const orbit = Math.sin(p.phase + state.t * 2.6 + (i % 9) * 0.4) * state.chaos;
+        const noise = Math.cos(state.t * 1.8 + (ox + oy) * 0.0008 + p.hue) * (0.6 + pointerPull * 0.2);
+
+        p.vx += pullX + Math.cos(orbit + noise) * 0.012 * state.chaos;
+        p.vy += pullY + Math.sin(orbit - noise) * 0.012 * state.chaos;
+        p.vx += (-dxp / distp) * 0.00018 * pointerPull;
+        p.vy += (-dyp / distp) * 0.00018 * pointerPull;
+
+        const rot = 1 + Math.sin(state.t * 1.8 + p.phase) * spin;
+        const vx = p.vx * rot - p.vy * 0.16;
+        const vy = p.vy * rot + p.vx * 0.16;
+
+        p.vx = vx * 0.985;
+        p.vy = vy * 0.985;
+        p.x += p.vx * speed;
+        p.y += p.vy * speed;
+
+        if (p.x < -40) p.x = innerWidth + 40;
+        if (p.x > innerWidth + 40) p.x = -40;
+        if (p.y < -40) p.y = innerHeight + 40;
+        if (p.y > innerHeight + 40) p.y = -40;
+
+        const lifeNorm = (p.age % p.life) / p.life;
+        const alpha = 0.15 + Math.sin(lifeNorm * Math.PI * 2) * 0.14;
+        const sat = 65 + Math.sin(state.t + p.phase) * 30;
+        ctx.strokeStyle = `hsla(${p.hue + Math.sin(state.t * 0.9) * 12}, ${Math.max(30, sat).toFixed(1)}%, 62%, ${Math.max(0.02, alpha)})`;
+        ctx.beginPath();
+        ctx.moveTo(ox, oy);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+
+        p.age += 1;
+        p.phase += 0.014 + (state.chaos * 0.0018);
+        if (p.age > p.life * 1.3) {
+          state.particles[i] = createParticle(Math.floor(random() * 3));
+        }
+      }
+
+      state.hue += 0.02;
+      requestAnimationFrame(paintFrame);
+    }
+
+    function updateSeedText() {
+      seedLabel.textContent = state.seed;
+      seedStat.textContent = state.seed;
+    }
+
+    function rebuild() {
+      seedRng(state.seed);
+      state.count = parseInt(countRange.value, 10);
+      updateSeedText();
+      countStat.textContent = `${state.count}`;
+      seedField();
+    }
+
+    function setPaused(value) {
+      state.paused = value;
+      pauseBtn.textContent = state.paused ? 'Resume' : 'Pause';
+      statusStat.textContent = state.paused ? 'paused' : 'live';
+      if (!value) requestAnimationFrame(paintFrame);
+    }
+
+    function setUrlState() {
+      const href = new URL(window.location.href);
+      href.searchParams.set('seed', state.seed);
+      href.searchParams.set('c', state.chaos.toFixed(2));
+      href.searchParams.set('n', String(state.count));
+      history.replaceState(null, '', href);
+    }
+
+    pauseBtn.addEventListener('click', () => setPaused(!state.paused));
+
+    reseedBtn.addEventListener('click', () => {
+      state.seed = randomSeed(8);
+      state.hue = 165 + random() * 90;
+      updateSeedText();
+      setUrlState();
+      seedField();
+      note.textContent = `Reseeded to ${state.seed}`;
+    });
+
+    clearBtn.addEventListener('click', () => {
+      state.particles = [];
+      ctx.fillStyle = '#05060b';
+      ctx.fillRect(0, 0, innerWidth, innerHeight);
+      note.textContent = 'Canvas cleared.';
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      setUrlState();
+      const href = new URL(window.location.href);
+      await navigator.clipboard.writeText(href.toString());
+      note.textContent = 'Share link copied.';
+      const original = copyBtn.textContent;
+      copyBtn.textContent = 'Copied ✓';
+      setTimeout(() => {
+        copyBtn.textContent = original;
+      }, 900);
+    });
+
+    saveBtn.addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = `nocturne-vein-${state.seed}.png`;
+      a.click();
+      note.textContent = 'Frame saved.';
+    });
+
+    function syncRange() {
+      state.chaos = parseFloat(chaosRange.value);
+      state.trail = parseInt(trailRange.value, 10);
+      countRange.value = clamp(parseInt(countRange.value, 10), 220, 1400);
+      state.count = parseInt(countRange.value, 10);
+      trailRange.value = clamp(parseInt(trailRange.value, 10), 5, 35);
+      setUrlState();
+    }
+
+    chaosRange.addEventListener('input', () => {
+      state.chaos = parseFloat(chaosRange.value);
+      setUrlState();
+    });
+
+    trailRange.addEventListener('input', syncRange);
+
+    countRange.addEventListener('change', () => {
+      state.count = clamp(parseInt(countRange.value, 10), 220, 1400);
+      seedField();
+      setUrlState();
+    });
+
+    function pointerMove(e) {
+      const p = e.touches ? e.touches[0] : e;
+      pointer.x = p.clientX;
+      pointer.y = p.clientY;
+      pointer.alive = true;
+      const now = Date.now();
+      if (now % 2 === 0 && state.rng) {
+        state.particles[Math.floor(random() * state.particles.length)] = {
+          ...createParticle(2),
+          x: pointer.x,
+          y: pointer.y,
+          vx: random() * 2 - 1,
+          vy: random() * 2 - 1,
+          age: 0,
+          life: 180 + random() * 360,
+        };
+      }
+    }
+
+    function pointerLeave() {
+      pointer.alive = false;
+    }
+
+    window.addEventListener('pointermove', pointerMove);
+    window.addEventListener('pointerdown', pointerMove);
+    window.addEventListener('pointerleave', pointerLeave);
+    window.addEventListener('pointerout', pointerLeave);
+    window.addEventListener('resize', resize);
+
+    function boot() {
+      seedRng(state.seed);
+      updateSeedText();
+      chaosRange.value = String(state.chaos);
+      countRange.value = String(state.count);
+      trailRange.value = '13';
+      resize();
+      seedField();
+      setUrlState();
+      ctx.fillStyle = '#05060b';
+      ctx.fillRect(0,0,innerWidth,innerHeight);
+      requestAnimationFrame(paintFrame);
+      note.textContent = 'Nocturne Vein running.';
+    }
+
+    boot();
+  </script>
+</body>
+</html>

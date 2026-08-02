@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="description"
+    content="Hush Lattice is a generative side chamber for Ghost Radio: magnetic threads answer pointer gestures, drift in seeded patterns, and collapse into static silk when paused."
+  />
+  <meta name="theme-color" content="#090b12" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <title>Ghost Radio — Hush Lattice</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070912;
+      --line: rgba(255, 255, 255, 0.12);
+      --text: #f4f7ff;
+      --muted: #a7b4d1;
+      --a: #8de8ff;
+      --b: #ff94d7;
+      --c: #d1ff72;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(141, 232, 255, 0.15), transparent 30%),
+        radial-gradient(circle at 82% 82%, rgba(255, 148, 215, 0.09), transparent 28%),
+        linear-gradient(180deg, #070a10 0%, #090b12 52%, #04050a 100%);
+      color: var(--text);
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      overflow: hidden;
+    }
+
+    .shell {
+      width: min(1180px, 100vw - 24px);
+      margin: 10px auto;
+      display: grid;
+      gap: 10px;
+      min-height: calc(100vh - 20px);
+    }
+
+    .toolbar {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(14, 16, 24, 0.6);
+      backdrop-filter: blur(8px);
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1.2fr auto;
+      align-items: center;
+    }
+
+    .heading h1 {
+      margin: 0;
+      font-size: 1.08rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #ecf4ff;
+    }
+
+    .heading p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      max-width: 72ch;
+      font-size: 0.84rem;
+      line-height: 1.4;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    label,
+    button,
+    input,
+    .ghost-link {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      border-radius: 999px;
+      font: inherit;
+      padding: 8px 10px;
+    }
+
+    input[type="range"] {
+      width: 130px;
+      border-radius: 8px;
+      padding: 0;
+      accent-color: var(--a);
+    }
+
+    button {
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.18s ease, border-color 0.18s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--a) 45%, white 55%);
+    }
+
+    .ghost-link {
+      text-decoration: none;
+      color: #d2e2ff;
+      white-space: nowrap;
+    }
+
+    .row-links {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .stage {
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 14px;
+      overflow: hidden;
+      min-height: calc(100vh - 248px);
+      background:
+        radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.05), transparent 60%),
+        linear-gradient(140deg, rgba(141, 232, 255, 0.05), rgba(255, 148, 215, 0.05));
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      image-rendering: auto;
+    }
+
+    .status {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: space-between;
+      z-index: 2;
+      pointer-events: none;
+      font-size: 0.78rem;
+      color: #d2dcf6;
+    }
+
+    .pill {
+      background: rgba(0, 0, 0, 0.48);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 8px;
+      padding: 6px 10px;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 860px) {
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .controls {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="toolbar" aria-label="Hush Lattice controls">
+      <div class="heading">
+        <h1>Hush Lattice</h1>
+        <p>
+          Seed magnetic threads, then steer your pointer through the static. Each stroke opens a corridor,
+          twists it, and lets it hum for a few breaths before folding back into static.
+        </p>
+      </div>
+      <div class="controls">
+        <label class="pill" for="density">Density</label>
+        <input id="density" type="range" min="0.2" max="1.9" value="0.9" step="0.05" />
+        <label class="pill" for="drift">Drift</label>
+        <input id="drift" type="range" min="0.1" max="2.1" value="1.1" step="0.05" />
+        <button type="button" id="pauseBtn">Pause</button>
+        <button type="button" id="reseSeedBtn">Rerandomize</button>
+        <button type="button" id="copyBtn">Copy share link</button>
+        <button type="button" id="saveBtn">Save PNG</button>
+      </div>
+      <div class="row-links">
+        <a class="ghost-link" href="./">← Back to Ghost Radio</a>
+        <a class="ghost-link" href="./frequency-veil.html" target="_blank" rel="noopener noreferrer">Frequency Veil</a>
+        <a class="ghost-link" href="./signal-basin.html" target="_blank" rel="noopener noreferrer">Signal Basin</a>
+      </div>
+    </section>
+
+    <section class="stage" aria-label="Hush Lattice chamber">
+      <canvas id="lattice"></canvas>
+      <div class="status" aria-live="polite">
+        <span class="pill" id="seedLine">seed: loading</span>
+        <span class="pill" id="modeLine">mode: waking</span>
+        <span class="pill" id="threadsLine">threads: 0</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    const canvas = document.getElementById('lattice');
+    const ctx = canvas.getContext('2d');
+
+    const densityInput = document.getElementById('density');
+    const driftInput = document.getElementById('drift');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const reseedBtn = document.getElementById('reseSeedBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const seedLine = document.getElementById('seedLine');
+    const modeLine = document.getElementById('modeLine');
+    const threadsLine = document.getElementById('threadsLine');
+
+    const palette = ['#8de8ff', '#ff94d7', '#d1ff72', '#9fb7ff'];
+
+    let seed = seedFromHash() || readPersistedSeed() || randomSeed();
+    let paused = false;
+    let pointer = null;
+    let t = 0;
+    let raf = 0;
+
+    const state = {
+      nodes: [],
+      maxNodes: 900,
+      baseNodes: 260,
+      ageLimit: 140,
+      lastPointerX: 0,
+      lastPointerY: 0
+    };
+
+    function randomSeed() {
+      return (Math.floor(Math.random() * 2147483647) + 1) >>> 0;
+    }
+
+    function seedFromHash() {
+      const raw = new URLSearchParams(window.location.hash.slice(1));
+      const hashSeed = Number(raw.get('seed'));
+      if (Number.isFinite(hashSeed)) {
+        return Math.abs(hashSeed) % 2147483647;
+      }
+      return 0;
+    }
+
+    function readPersistedSeed() {
+      const saved = window.localStorage ? localStorage.getItem('ghost-radio-hush-lattice-seed') : null;
+      const value = Number(saved);
+      if (Number.isFinite(value)) {
+        return Math.abs(value);
+      }
+      return 0;
+    }
+
+    function storeSeed(next) {
+      seed = (next >>> 0) || 1;
+      if (window.localStorage) localStorage.setItem('ghost-radio-hush-lattice-seed', String(seed));
+    }
+
+    function saveShare() {
+      const params = new URLSearchParams({
+        seed,
+        density: densityInput.value,
+        drift: driftInput.value
+      });
+      history.replaceState({}, '', `${window.location.pathname}#${params.toString()}`);
+    }
+
+    function reseed(force) {
+      const nextSeed = force ? randomSeed() : seed;
+      seed = nextSeed || randomSeed();
+      rng.seed = seed;
+      buildField(true);
+      seedLine.textContent = `seed: ${seed}`;
+      saveShare();
+      announce(`Seed reset to ${seed}`);
+    }
+
+    function seedRNG(value) {
+      return {
+        state: (value || 1) >>> 0
+      };
+    }
+
+    const rng = seedRNG(seed);
+
+    function rand() {
+      let s = rng.state;
+      s ^= (s << 13) & 0xffffffff;
+      s ^= s >>> 17;
+      s ^= (s << 5) & 0xffffffff;
+      rng.state = s >>> 0;
+      return (s >>> 0) / 0x100000000;
+    }
+
+    function randomColor() {
+      const r = rand() * palette.length;
+      return palette[Math.floor(r)];
+    }
+
+    function buildField(reset) {
+      if (reset) {
+        state.nodes.length = 0;
+      }
+
+      const target = Math.floor(state.baseNodes * Number(densityInput.value));
+      while (state.nodes.length < target) {
+        state.nodes.push(
+          nodeTemplate({
+            x: rand() * canvas.width,
+            y: rand() * canvas.height,
+            radius: 2.2 + rand() * 2.4,
+            spin: (rand() - 0.5) * 1.8,
+            phase: rand() * Math.PI * 2,
+            c: randomColor()
+          })
+        );
+      }
+      threadsLine.textContent = `threads: ${state.nodes.length}`;
+    }
+
+    function nodeTemplate(overrides = {}) {
+      return {
+        x: 0,
+        y: 0,
+        vx: (rand() - 0.5) * 0.4,
+        vy: (rand() - 0.5) * 0.4,
+        age: Math.random() * state.ageLimit,
+        ttl: state.ageLimit + rand() * 40,
+        radius: 1.7,
+        spin: 0,
+        phase: 0,
+        c: randomColor(),
+        pulse: 0.6 + rand() * 0.6,
+        ...overrides
+      };
+    }
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.max(1, Math.floor(rect.width * DPR));
+      canvas.height = Math.max(1, Math.floor(rect.height * DPR));
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+
+    function seedFieldFromHash() {
+      const rawDensity = Number(new URLSearchParams(window.location.hash.slice(1)).get('density'));
+      const rawDrift = Number(new URLSearchParams(window.location.hash.slice(1)).get('drift'));
+      if (Number.isFinite(rawDensity)) densityInput.value = String(Math.min(1.9, Math.max(0.2, rawDensity)));
+      if (Number.isFinite(rawDrift)) driftInput.value = String(Math.min(2.1, Math.max(0.1, rawDrift)));
+    }
+
+    function drawBackdrop() {
+      const grd = ctx.createRadialGradient(
+        canvas.width / DPR * 0.5,
+        canvas.height / DPR * 0.5,
+        12,
+        canvas.width / DPR * 0.5,
+        canvas.height / DPR * 0.5,
+        Math.hypot(canvas.width, canvas.height) / DPR
+      );
+      grd.addColorStop(0, 'rgba(255,255,255,0.05)');
+      grd.addColorStop(1, 'rgba(7,9,18,0.82)');
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, canvas.width / DPR, canvas.height / DPR);
+    }
+
+    function drawNodes() {
+      ctx.lineCap = 'round';
+      ctx.globalCompositeOperation = 'lighter';
+      const h = canvas.height / DPR;
+      const w = canvas.width / DPR;
+
+      for (const p of state.nodes) {
+        const breath = Math.sin(p.age * 0.065 + p.phase) * 0.5 + 0.5;
+        const drift = Number(driftInput.value);
+
+        const nx = p.x + Math.cos(t * 0.001 + p.phase) * p.spin * 2.8 * drift;
+        const ny = p.y + Math.sin(t * 0.001 + p.phase) * p.spin * 2.8 * drift;
+
+        const cx = (nx + w + (p.x - nx) * breath) / 2;
+        const cy = (ny + h + (p.y - ny) * breath) / 2;
+
+        const alpha = Math.max(0, 1 - p.age / p.ttl);
+        const size = p.radius * (0.75 + breath);
+
+        ctx.strokeStyle = `${p.c}${Math.floor(alpha * 180).toString(16).padStart(2, '0')}`;
+        ctx.lineWidth = size;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.quadraticCurveTo(
+          p.x + (Math.sin(t * 0.001 + p.phase) * 60 * drift),
+          p.y + (Math.cos(t * 0.001 + p.phase) * 60 * drift),
+          nx,
+          ny
+        );
+        ctx.stroke();
+
+        p.x += p.vx * drift;
+        p.y += p.vy * drift;
+        p.age += 1;
+
+        if (p.age > p.ttl || !Number.isFinite(p.x) || !Number.isFinite(p.y)) {
+          Object.assign(p, nodeTemplate({
+            x: rand() * w,
+            y: rand() * h,
+            radius: 1.7 + rand() * 2.4,
+            spin: (rand() - 0.5) * 1.8,
+            phase: rand() * Math.PI * 2,
+            c: randomColor()
+          }));
+        }
+
+        if (pointer) {
+          const dx = p.x - pointer.x;
+          const dy = p.y - pointer.y;
+          const d = Math.hypot(dx, dy);
+          if (d > 0) {
+            const influence = Math.max(0, 80 - d) / 80;
+            const pull = influence * 0.12 * Number(densityInput.value);
+            p.vx += (-dx / (d + 1)) * pull;
+            p.vy += (-dy / (d + 1)) * pull;
+          }
+        }
+
+        p.vx *= 0.997;
+        p.vy *= 0.997;
+
+        const damping = 0.3 + Number(densityInput.value) * 0.4;
+        if (p.x < 0 || p.x > w) p.vx *= -damping;
+        if (p.y < 0 || p.y > h) p.vy *= -damping;
+        p.x = Math.max(0, Math.min(w, p.x));
+        p.y = Math.max(0, Math.min(h, p.y));
+      }
+
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    function addPulse(x, y) {
+      const w = canvas.width / DPR;
+      const h = canvas.height / DPR;
+      state.nodes.push(...Array.from({ length: 48 }, (_, idx) =>
+        nodeTemplate({
+          x,
+          y,
+          radius: 0.9 + (idx % 5) * 0.18,
+          phase: (idx / 48) * Math.PI * 2,
+          ttl: 120 + (idx % 8) * 5,
+          vx: Math.cos(((idx * 17) % 360) * Math.PI / 180) * (0.4 + Math.random() * 0.6),
+          vy: Math.sin(((idx * 11) % 360) * Math.PI / 180) * (0.4 + Math.random() * 0.6),
+          spin: (rand() - 0.5) * 2.8,
+          c: randomColor()
+        })
+      ));
+      state.nodes = state.nodes.slice(-state.maxNodes);
+      threadsLine.textContent = `threads: ${state.nodes.length}`;
+      state.lastPointerX = x;
+      state.lastPointerY = y;
+    }
+
+    function onPointerMove(event) {
+      const rect = canvas.getBoundingClientRect();
+      const x = (event.clientX - rect.left);
+      const y = (event.clientY - rect.top);
+      pointer = { x, y };
+    }
+
+    function onPointerLeave() {
+      pointer = null;
+    }
+
+    function render(ms) {
+      if (!paused) {
+        t = ms;
+        drawBackdrop();
+        drawNodes();
+      }
+      raf = requestAnimationFrame(render);
+    }
+
+    function announce(message) {
+      modeLine.textContent = `mode: ${message}`;
+    }
+
+    function copyShare() {
+      saveShare();
+      navigator.clipboard.writeText(window.location.href).then(
+        () => announce('mode: link copied')
+      ).catch(() => announce('mode: copy failed'));
+    }
+
+    function savePng() {
+      const link = document.createElement('a');
+      link.download = `hush-lattice-${seed}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function setupCanvasPointer() {
+      canvas.addEventListener('pointerdown', (event) => {
+        const rect = canvas.getBoundingClientRect();
+        addPulse(event.clientX - rect.left, event.clientY - rect.top);
+      });
+      canvas.addEventListener('pointermove', onPointerMove);
+      canvas.addEventListener('pointerleave', onPointerLeave);
+    }
+
+    function setup() {
+      resize();
+      seedFieldFromHash();
+      rng.seed = seed;
+      seedLine.textContent = `seed: ${seed}`;
+      buildField(true);
+      drawBackdrop();
+      drawNodes();
+      raf = requestAnimationFrame(render);
+      announce('mode: alive');
+
+      pauseBtn.addEventListener('click', () => {
+        paused = !paused;
+        pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+        announce(paused ? 'mode: paused' : 'mode: alive');
+      });
+
+      reseedBtn.addEventListener('click', () => reseed(true));
+      copyBtn.addEventListener('click', copyShare);
+      saveBtn.addEventListener('click', savePng);
+
+      densityInput.addEventListener('input', () => {
+        buildField(false);
+        saveShare();
+      });
+      driftInput.addEventListener('input', saveShare);
+
+      window.addEventListener('resize', () => {
+        resize();
+      });
+
+      setupCanvasPointer();
+
+      setInterval(() => {
+        if (!paused) {
+          buildField(false);
+        }
+      }, 130);
+    }
+
+    reseed();
+    setup();
+
+    window.addEventListener('keydown', (event) => {
+      if (event.key.toLowerCase() === ' ') {
+        paused = !paused;
+        pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+        announce(paused ? 'mode: paused' : 'mode: alive');
+      }
+      if (event.key.toLowerCase() === 'r') {
+        reseed(true);
+      }
+      if (event.key.toLowerCase() === 'c') {
+        copyShare();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ghost Radio — Void Hinge</title>
+  <meta
+    name="description"
+    content="Void Hinge is a generative art chamber in Ghost Radio: seeded bridge threads, cursor pressure, and a linkable state for shared moments."
+  />
+  <meta name="theme-color" content="#0f1220" />
+  <meta property="og:title" content="Ghost Radio — Void Hinge" />
+  <meta property="og:description" content="Seeded bridge-field art with cursor pressure and hash state sharing." />
+  <meta property="og:url" content="https://garytalbot.github.io/ghost-radio/void-hinge.html" />
+  <meta property="og:image" content="https://garytalbot.github.io/ghost-radio/share-card.svg" />
+  <link rel="canonical" href="https://garytalbot.github.io/ghost-radio/void-hinge.html" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070912;
+      --panel: rgba(12, 16, 28, 0.8);
+      --line: rgba(255, 255, 255, 0.1);
+      --ink: #e8edff;
+      --muted: #9eb0d4;
+      --a1: #8fe3ff;
+      --a2: #ff9ad9;
+      --a3: #bbf87f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 18% 14%, rgba(143, 227, 255, 0.22), transparent 26%),
+        radial-gradient(circle at 84% 18%, rgba(255, 154, 217, 0.18), transparent 24%),
+        linear-gradient(180deg, #070912 0%, #090b14 65%, #04050a 100%);
+      color: var(--ink);
+      font: 16px/1.5 "Segoe UI", system-ui, sans-serif;
+      display: grid;
+      place-items: center;
+      padding: 14px;
+    }
+    .shell {
+      width: min(1100px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      background: var(--panel);
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.45);
+      padding: 16px;
+      overflow: hidden;
+      display: grid;
+      gap: 12px;
+    }
+    header {
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    h1 {
+      margin: 0;
+      font: 700 1.5rem/1.1 "Georgia", "Times New Roman", serif;
+      letter-spacing: -0.04em;
+      text-wrap: balance;
+      max-width: 72ch;
+    }
+    .muted { color: var(--muted); font-size: 0.9rem; }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: end;
+    }
+    .control {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 9px 10px;
+      min-width: 220px;
+      color: #d4ddff;
+    }
+    .control label {
+      display: block;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 4px;
+      color: #d5dcff;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn {
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+      color: var(--ink);
+      padding: 8px 12px;
+      cursor: pointer;
+      font: 700 0.9rem/1 inherit;
+    }
+    .btn:hover { border-color: rgba(255,255,255,0.45); }
+    .btn.primary {
+      background: linear-gradient(135deg, rgba(143, 227, 255, 0.22), rgba(255, 154, 217, 0.2));
+      border-color: rgba(143, 227, 255, 0.45);
+    }
+
+    .canvas-wrap {
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 18px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #0a0d1a, #090b16);
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      height: auto;
+      display: block;
+      background:
+        radial-gradient(circle at 50% 55%, rgba(255,255,255,0.05), transparent 28%),
+        linear-gradient(180deg, rgba(9,11,18,.9), rgba(4,5,11,.9));
+    }
+
+    .legend {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 0.85rem;
+      color: #b8c3e7;
+      padding: 8px 2px;
+    }
+    input[type="range"] {
+      width: 150px;
+      accent-color: var(--a1);
+    }
+    .small { font-size: 0.82rem; color: #cdd5f5; }
+    a {
+      color: #8ed2ff;
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(142,210,255,.5);
+    }
+    a:hover { border-bottom-style: solid; }
+    .chip {
+      display: inline-flex;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 999px;
+      padding: 3px 10px;
+      margin-left: 6px;
+      color: #a5b4da;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div>
+        <h1>Void Hinge</h1>
+        <div class="muted">A seeded bridge-field tuned by your cursor and a stateful link.</div>
+      </div>
+      <div class="controls">
+        <button id="toggle" class="btn primary">Pause</button>
+        <button id="reseed" class="btn">Rerandomize seed</button>
+        <button id="save" class="btn">Save frame</button>
+        <button id="copy" class="btn">Copy link</button>
+        <a class="btn" href="./" target="_self">Back to home</a>
+      </div>
+    </header>
+
+    <div class="controls">
+      <div class="control">
+        <label for="density">Density</label>
+        <div class="row">
+          <input id="density" type="range" min="180" max="900" value="360" />
+          <span id="densityLabel" class="small">360</span>
+        </div>
+      </div>
+      <div class="control">
+        <label for="drift">Drift</label>
+        <div class="row">
+          <input id="drift" type="range" min="1" max="24" step="0.1" value="12" />
+          <span id="driftLabel" class="small">12.0</span>
+        </div>
+      </div>
+      <div class="control">
+        <label for="chaos">Chaotic pressure</label>
+        <div class="row">
+          <input id="chaos" type="range" min="0.1" max="2" step="0.01" value="0.74" />
+          <span id="chaosLabel" class="small">0.74</span>
+        </div>
+      </div>
+      <div class="control">
+        <label for="pressure">Cursor pressure</label>
+        <div class="row">
+          <span class="small">follows pointer</span>
+          <span id="pressure" class="small">0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="cv" width="1600" height="900" aria-label="Canvas with moving particle bridges"></canvas>
+    </div>
+
+    <div class="legend">
+      <div>
+        <span class="chip">seed</span>
+        <span id="seedDisplay" class="small">—</span>
+      </div>
+      <div class="small">
+        Hold click-drag to inject pressure, move slowly for braided folds, move fast for tears.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    const canvas = document.getElementById('cv');
+    const ctx = canvas.getContext('2d');
+
+    const densityEl = document.getElementById('density');
+    const driftEl = document.getElementById('drift');
+    const chaosEl = document.getElementById('chaos');
+    const pressureEl = document.getElementById('pressure');
+    const densityLabel = document.getElementById('densityLabel');
+    const driftLabel = document.getElementById('driftLabel');
+    const chaosLabel = document.getElementById('chaosLabel');
+    const seedDisplay = document.getElementById('seedDisplay');
+    const btnToggle = document.getElementById('toggle');
+    const btnReroll = document.getElementById('reseed');
+    const btnSave = document.getElementById('save');
+    const btnCopy = document.getElementById('copy');
+
+    const state = {
+      seed: Math.floor(Math.random() * 1e8),
+      w: 0,
+      h: 0,
+      particles: [],
+      running: true,
+      pointer: { x: null, y: null, px: 0, py: 0, down: false, pressure: 0 },
+      t: 0,
+      baseTimeScale: 1
+    };
+
+    function parseHash() {
+      const h = new URLSearchParams(location.hash.slice(1));
+      const seed = Number(h.get('seed'));
+      const density = Number(h.get('d'));
+      const drift = Number(h.get('k'));
+      const chaos = Number(h.get('c'));
+
+      return {
+        seed: Number.isFinite(seed) ? seed : state.seed,
+        density: Number.isFinite(density) ? density : Number(densityEl.value),
+        drift: Number.isFinite(drift) ? drift : Number(driftEl.value),
+        chaos: Number.isFinite(chaos) ? chaos : Number(chaosEl.value)
+      };
+    }
+
+    function updateHash() {
+      const q = new URLSearchParams({
+        seed: String(state.seed),
+        d: String(densityEl.value),
+        k: String(driftEl.value),
+        c: String(chaosEl.value)
+      });
+      location.hash = q.toString();
+      seedDisplay.textContent = `${state.seed}`;
+    }
+
+    function hashString(str) {
+      let h = 2166136261 >>> 0;
+      for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return h >>> 0;
+    }
+
+    function makeRng(seed) {
+      let a = (seed >>> 0) + 0x6D2B79F5;
+      return function rand() {
+        a |= 0;
+        a = a + 0x6D2B79F5 | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t ^= t + Math.imul(t ^ t >>> 7, 61 | t);
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    class Strand {
+      constructor(i, x, y, rand) {
+        this.id = i;
+        this.baseX = x;
+        this.baseY = y;
+        this.x = x;
+        this.y = y;
+        this.phase = rand() * Math.PI * 2;
+        this.amp = 4 + rand() * 9;
+        this.mass = 0.28 + rand() * 0.7;
+      }
+      step(dt) {
+        const px = state.pointer.x;
+        const py = state.pointer.y;
+        const chaos = Number(chaosEl.value);
+        const drift = Number(driftEl.value) * 0.8;
+
+        const sway = Math.sin((state.t * 0.001) + this.phase) * 0.75 + Math.cos((state.t * 0.0006) + this.id * 0.21);
+        let ax = Math.sin((this.y / state.h + state.t * 0.0004) * Math.PI * 2 + this.phase) * drift;
+        let ay = Math.cos((this.x / state.w + state.t * 0.00035) * Math.PI * 2 + this.phase) * drift;
+
+        if (px !== null && py !== null) {
+          const dx = this.x - px;
+          const dy = this.y - py;
+          const d = Math.hypot(dx, dy) + 0.001;
+          const pull = (1 - Math.min(d / 240, 1)) * state.pointer.pressure * chaos;
+          const nx = dx / d;
+          const ny = dy / d;
+          ax += nx * pull * 35;
+          ay += ny * pull * 35;
+          ax += sway * Math.sin(this.phase * 2.3) * 0.5;
+        }
+
+        this.x += Math.sin(ax) * this.mass;
+        this.y += Math.cos(ay) * this.mass;
+        this.x += (this.baseX - this.x) * 0.0045;
+        this.y += (this.baseY - this.y) * 0.0045;
+
+        this.x += Math.sin(this.phase + state.t * 0.001) * this.amp * 0.35;
+        this.y += Math.cos(this.phase + state.t * 0.0013) * this.amp * 0.35;
+
+        if (this.x < 0 || this.x > state.w) this.baseX = this.x = Math.min(state.w, Math.max(0, this.x));
+        if (this.y < 0 || this.y > state.h) this.baseY = this.y = Math.min(state.h, Math.max(0, this.y));
+      }
+    }
+
+    function seedParticles(seedOverride) {
+      const hash = parseHash();
+      if (Number.isFinite(seedOverride)) {
+        state.seed = seedOverride;
+      } else if (Number.isFinite(hash.seed)) {
+        state.seed = hash.seed;
+      }
+      densityEl.value = Math.min(900, Math.max(180, Math.round(hash.density)));
+      driftEl.value = Math.min(24, Math.max(1, hash.drift));
+      chaosEl.value = Math.min(2, Math.max(0.1, hash.chaos));
+      syncLabels();
+      syncResize();
+      const n = Number(densityEl.value);
+      const rand = makeRng(hash.seed);
+      state.particles = [];
+      for (let i = 0; i < n; i++) {
+        const x = rand() * state.w;
+        const y = rand() * state.h;
+        state.particles.push(new Strand(i, x, y, rand));
+      }
+      updateHash();
+    }
+
+    function syncLabels() {
+      densityLabel.textContent = densityEl.value;
+      driftLabel.textContent = Number(driftEl.value).toFixed(1);
+      chaosLabel.textContent = Number(chaosEl.value).toFixed(2);
+      seedDisplay.textContent = `${state.seed}`;
+    }
+
+    function syncResize() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.max(320, Math.floor(rect.width * DPR));
+      canvas.height = Math.max(180, Math.floor(canvas.getBoundingClientRect().height * DPR));
+      state.w = canvas.width;
+      state.h = canvas.height;
+    }
+
+    function draw() {
+      if (!state.running) {
+        requestAnimationFrame(draw);
+        return;
+      }
+
+      const now = performance.now();
+      const dt = Math.min(42, now - state.t || 16);
+      state.t = now;
+
+      state.pointer.pressure = Math.max(0, state.pointer.pressure - 0.02);
+      pressureEl.textContent = state.pointer.pressure.toFixed(2);
+
+      const g = ctx.createLinearGradient(0, 0, 0, state.h);
+      g.addColorStop(0, '#05080e');
+      g.addColorStop(1, '#090d17');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, state.w, state.h);
+
+      const n = state.particles.length;
+
+      for (let i = 0; i < n; i++) {
+        const p = state.particles[i];
+        p.step(dt);
+      }
+
+      // Draw strands connecting near particles.
+      for (let i = 0; i < n; i++) {
+        const a = state.particles[i];
+        const start = i * 17 % n;
+        const b = state.particles[start];
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const dist = Math.hypot(dx, dy);
+        const gate = 120 + Number(chaosEl.value) * 35;
+        if (dist < gate) {
+          const alpha = 1 - (dist / gate);
+          const hue = 180 + Math.sin((i + state.t * 0.0002) * 0.3) * 50;
+          ctx.strokeStyle = `hsla(${hue}, 80%, ${45 + Math.sin(i * 0.2 + state.t * 0.0009) * 8}%, ${0.11 + alpha * 0.4})`;
+          ctx.lineWidth = Math.max(0.4, 1.8 * alpha);
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
+        const pointerX = state.pointer.x;
+        if (pointerX !== null && state.pointer.y !== null) {
+          const pointerY = state.pointer.y;
+          const cx = a.x - pointerX;
+          const cy = a.y - pointerY;
+          const cd = Math.hypot(cx, cy);
+          if (cd < 190) {
+            const glow = 1 - cd / 190;
+            ctx.strokeStyle = `rgba(255,154,217,${0.05 + glow * 0.2})`;
+            ctx.lineWidth = 1 + glow * 1.7;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(pointerX + Math.sin(state.t * 0.002 + i) * 10, pointerY + Math.cos(state.t * 0.0018 + i) * 10);
+            ctx.stroke();
+          }
+        }
+      }
+
+      for (const p of state.particles) {
+        const v = (1 + Math.sin(p.phase + state.t * 0.001 + p.x * 0.003)) * 0.4;
+        const glow = 0.25 + v * 0.45;
+        ctx.fillStyle = `rgba(200, 220, 255, ${0.05 + glow * 0.26})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 1.4 + glow * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+
+
+    function onPointerMove(e) {
+      const r = canvas.getBoundingClientRect();
+      state.pointer.x = (e.clientX - r.left) * DPR;
+      state.pointer.y = (e.clientY - r.top) * DPR;
+      if (state.pointer.down) {
+        state.pointer.pressure = Math.min(2, state.pointer.pressure + 0.22);
+      }
+      if (!state.pointer.down) {
+        state.pointer.pressure = Math.max(0, state.pointer.pressure - 0.05);
+      }
+    }
+
+    function clearPointer() {
+      state.pointer.x = null;
+      state.pointer.y = null;
+      state.pointer.pressure = Math.max(0, state.pointer.pressure * 0.86);
+    }
+
+    function randomizeAndReseed() {
+      state.pointer.pressure = 0;
+      const freshSeed = Math.floor(Math.random() * 1e9);
+      seedParticles(freshSeed);
+    }
+
+    btnToggle.addEventListener('click', () => {
+      state.running = !state.running;
+      btnToggle.textContent = state.running ? 'Pause' : 'Resume';
+      if (state.running && !isNaN(state.t)) {
+        state.baseTimeScale = 1;
+        requestAnimationFrame(draw);
+      }
+    });
+
+    btnReroll.addEventListener('click', () => {
+      randomizeAndReseed();
+    });
+
+    btnSave.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = `void-hinge-${state.seed}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+
+    btnCopy.addEventListener('click', async () => {
+      updateHash();
+      const url = location.href;
+      await navigator.clipboard.writeText(url);
+      const old = btnCopy.textContent;
+      btnCopy.textContent = 'Copied';
+      setTimeout(() => { btnCopy.textContent = old; }, 1000);
+    });
+
+    densityEl.addEventListener('input', () => {
+      syncLabels();
+      seedParticles();
+    });
+    driftEl.addEventListener('input', () => {
+      syncLabels();
+      updateHash();
+    });
+    chaosEl.addEventListener('input', () => {
+      syncLabels();
+      updateHash();
+    });
+
+    window.addEventListener('resize', () => {
+      syncResize();
+      seedParticles();
+    });
+
+    canvas.addEventListener('pointerdown', (e) => {
+      state.pointer.down = true;
+      onPointerMove(e);
+      canvas.setPointerCapture(e.pointerId);
+      state.pointer.pressure = 2;
+    });
+    canvas.addEventListener('pointermove', onPointerMove);
+    canvas.addEventListener('pointerup', (e) => {
+      state.pointer.down = false;
+      if (canvas.hasPointerCapture(e.pointerId)) {
+        canvas.releasePointerCapture(e.pointerId);
+      }
+    });
+    canvas.addEventListener('pointerleave', clearPointer);
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); }, { passive: false });
+
+    syncResize();
+    const initial = parseHash();
+    if (Number.isFinite(initial.seed)) {
+      state.seed = initial.seed;
+    }
+    state.seed = Number.isFinite(state.seed) ? state.seed : Math.floor(Math.random() * 1e9);
+
+    densityEl.value = Math.round(Math.max(180, Math.min(900, initial.density)));
+    driftEl.value = Math.max(1, Math.min(24, initial.drift)).toFixed(1);
+    chaosEl.value = Math.max(0.1, Math.min(2, initial.chaos)).toFixed(2);
+
+    syncLabels();
+    seedParticles();
+    state.t = performance.now();
+    draw();
+  </script>
+</body>
+</html>

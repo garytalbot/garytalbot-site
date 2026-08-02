@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Echo Well</title>
+  <meta
+    name="description"
+    content="Echo Well is a haunted static well where clicks seed recursive signal nodes, lines trace frequency drift, and pointer pressure bends the broadcast into ghosts."
+  />
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      --bg: #05070d;
+      --panel: rgba(10, 12, 22, 0.82);
+      --ink: #f0f3ff;
+      --muted: #93a3c4;
+      --a: #88ddff;
+      --b: #d78dff;
+      --c: #ffe27b;
+      --d: #79ffb7;
+      --line: rgba(255, 255, 255, 0.15);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      background: radial-gradient(circle at 20% 10%, #13203d 0%, #05070d 58%, #03040a 100%);
+      color: var(--ink);
+      font: 14px/1.45 "Trebuchet MS", "Segoe UI", sans-serif;
+      overflow: hidden;
+    }
+
+    .well {
+      position: fixed;
+      inset: 0;
+    }
+
+    #wellCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: radial-gradient(circle at 60% 20%, #0d1a33 0%, #04050b 58%, #02030a 100%);
+      cursor: crosshair;
+    }
+
+    .hud {
+      position: fixed;
+      inset: 0.7rem;
+      display: grid;
+      gap: 0.65rem;
+      pointer-events: none;
+      align-content: start;
+    }
+
+    .panel {
+      pointer-events: auto;
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+      padding: 0.65rem 0.8rem;
+      background: var(--panel);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 14px 44px rgba(0, 0, 0, 0.45);
+      max-width: min(980px, calc(100vw - 24px));
+    }
+
+    .toolbar,
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      align-items: center;
+    }
+
+    .row {
+      margin-top: 0.45rem;
+      justify-content: space-between;
+      gap: 0.8rem;
+    }
+
+    button,
+    a,
+    input[type='range'],
+    label {
+      font: inherit;
+      color: var(--ink);
+    }
+
+    .btn {
+      border: 1px solid #4e5e82;
+      background: rgba(120, 130, 170, 0.18);
+      border-radius: 999px;
+      padding: 0.42rem 0.75rem;
+      color: var(--ink);
+      text-decoration: none;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .btn:hover,
+    .btn:focus-visible {
+      border-color: #9ea9d0;
+      outline: none;
+      background: rgba(150, 205, 255, 0.22);
+    }
+
+    .btn.primary {
+      border-color: #6ef1ff;
+      color: #defff7;
+      background: rgba(100, 240, 255, 0.16);
+    }
+
+    .label {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #afbddf;
+    }
+
+    .value {
+      font-size: 0.8rem;
+      color: var(--c);
+      margin-left: 0.3rem;
+    }
+
+    .stat {
+      margin-top: 0.35rem;
+      color: #d1daff;
+    }
+
+    .return {
+      justify-self: end;
+      opacity: 0.95;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      text-decoration: none;
+      border-radius: 999px;
+      padding: 0.38rem 0.72rem;
+      border: 1px solid #4d5f84;
+      background: rgba(20, 27, 54, 0.82);
+      color: #dce8ff;
+      font-size: 0.74rem;
+    }
+
+    .return:hover,
+    .return:focus-visible {
+      border-color: #8de8ff;
+      outline: none;
+    }
+
+    input[type='range'] {
+      width: 150px;
+      accent-color: #d0f3ff;
+    }
+
+    .seed {
+      word-break: break-all;
+      color: #deccff;
+      font-size: 0.72rem;
+      max-width: 68ch;
+    }
+
+    @media (max-width: 760px) {
+      .toolbar { gap: 0.36rem; }
+      .btn { padding: 0.37rem 0.68rem; }
+      input[type='range'] { width: 130px; }
+      .row { flex-direction: column; align-items: stretch; }
+      .seed { max-width: 96%; }
+      .return { justify-self: start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="well">
+    <canvas id="wellCanvas" aria-label="Echo Well canvas"></canvas>
+  </div>
+
+  <div class="hud">
+    <div class="panel">
+      <div class="toolbar">
+        <button class="btn primary" id="pauseBtn">pause: off</button>
+        <button class="btn" id="reseatBtn">reseat</button>
+        <button class="btn" id="reseedBtn">new seed</button>
+        <button class="btn" id="copyBtn">copy haunt link</button>
+        <button class="btn" id="snapshotBtn">save screenshot</button>
+        <a class="btn" href="./" target="_blank" rel="noopener noreferrer">return home</a>
+      </div>
+      <div class="row">
+        <span>
+          <span class="label">drift</span>
+          <span class="value" id="driftValue">0.65</span>
+          <input id="driftRange" type="range" min="0.2" max="1.8" step="0.01" value="0.65" />
+        </span>
+        <span>
+          <span class="label">chaos</span>
+          <span class="value" id="chaosValue">0.52</span>
+          <input id="chaosRange" type="range" min="0.1" max="1.1" step="0.01" value="0.52" />
+        </span>
+        <span>
+          <span class="label">density</span>
+          <span class="value" id="densityValue">260</span>
+          <input id="densityRange" type="range" min="120" max="360" step="1" value="260" />
+        </span>
+      </div>
+      <div class="stat seed" id="seedLabel">seed: ...</div>
+      <div class="stat" id="stateLine">status: building a well.</div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('wellCanvas');
+    const ctx = canvas.getContext('2d');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const reseatBtn = document.getElementById('reseatBtn');
+    const reseedBtn = document.getElementById('reseedBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const snapshotBtn = document.getElementById('snapshotBtn');
+    const driftRange = document.getElementById('driftRange');
+    const chaosRange = document.getElementById('chaosRange');
+    const densityRange = document.getElementById('densityRange');
+    const driftValue = document.getElementById('driftValue');
+    const chaosValue = document.getElementById('chaosValue');
+    const densityValue = document.getElementById('densityValue');
+    const stateLine = document.getElementById('stateLine');
+    const seedLabel = document.getElementById('seedLabel');
+
+    const params = new URLSearchParams(location.hash.replace(/^#/, ''));
+
+    let seed = parseHexSeed(params.get('seed'));
+    let rng = makeRng(seed);
+    const palette = ['#8de8ff', '#d78dff', '#ffe27b', '#79ffb7', '#ffffff', '#a5d6ff'];
+    let nodes = [];
+    let ghosts = [];
+    let running = true;
+    let pointer = { x: 0, y: 0, down: false, pressure: 0 };
+    let raf = 0;
+
+    let driftSpeed = Number(driftRange.value);
+    let chaos = Number(chaosRange.value);
+    let density = Number(densityRange.value);
+
+    const state = {
+      t: 0,
+      phase: Math.random() * Math.PI * 2,
+      width: 0,
+      height: 0,
+      dpr: 1,
+    };
+
+    function parseHexSeed(raw) {
+      if (!raw) {
+        const fallback = Math.floor((performance.now() * 1000 + Math.random() * 100000) % 0xffffffff);
+        return (fallback >>> 0);
+      }
+      const parsed = Number.parseInt(raw, 16);
+      return Number.isFinite(parsed) ? parsed >>> 0 : 0x5eafbead;
+    }
+
+    function makeRng(seedValue) {
+      let x = (seedValue >>> 0) || 0x1d2c3e4f;
+      return () => {
+        x ^= x << 13;
+        x ^= x >>> 17;
+        x ^= x << 5;
+        return ((x >>> 0) / 0x100000000);
+      };
+    }
+
+    function reseed() {
+      seed = (Math.random() * 0xffffffff) >>> 0;
+      rng = makeRng(seed);
+      seedLabel.textContent = `seed: ${seed.toString(16).padStart(8, '0')}`;
+      nodes = [];
+      ghosts = [];
+      for (let i = 0; i < density; i++) {
+        nodes.push(createNode(true));
+      }
+      state.t = 0;
+    }
+
+    function applyHashState() {
+      driftRange.value = params.get('drift') || driftRange.value;
+      chaosRange.value = params.get('chaos') || chaosRange.value;
+      densityRange.value = params.get('density') || densityRange.value;
+      driftSpeed = Number(driftRange.value);
+      chaos = Number(chaosRange.value);
+      density = Number(densityRange.value);
+      syncLabels();
+      const hashSeed = params.get('seed');
+      if (hashSeed) {
+        seed = parseHexSeed(hashSeed);
+        rng = makeRng(seed);
+      }
+      state.phase = Number(params.get('phase') || state.phase);
+      reseed();
+    }
+
+    function syncLabels() {
+      driftValue.textContent = Number(driftSpeed).toFixed(2);
+      chaosValue.textContent = Number(chaos).toFixed(2);
+      densityValue.textContent = density;
+    }
+
+    function createNode(silent = false) {
+      const cx = state.width * (0.15 + 0.7 * rng());
+      const cy = state.height * (0.15 + 0.7 * rng());
+      const r = 1 + rng() * 4;
+      const speed = 0.18 + rng() * 1.5;
+      const angle = rng() * Math.PI * 2;
+      return {
+        x: cx,
+        y: cy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 190 + Math.floor(rng() * 260),
+        age: 0,
+        radius: r,
+        width: 0.5 + rng() * 1.6,
+        color: palette[Math.floor(rng() * palette.length)],
+        anchor: rng(),
+        quiet: silent,
+      };
+    }
+
+    function createGhost(x, y) {
+      for (let i = 0; i < 4 + Math.floor(rng() * 7); i++) {
+        ghosts.push({
+          x,
+          y,
+          vx: (rng() - 0.5) * 4,
+          vy: (rng() - 0.5) * 4,
+          age: 0,
+          life: 30 + Math.floor(rng() * 50),
+          radius: 0.9 + rng() * 2.5,
+          hue: Math.floor(rng() * 360),
+        });
+      }
+      if (ghosts.length > density * 2) {
+        ghosts.splice(0, ghosts.length - density * 2);
+      }
+    }
+
+    function resize() {
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      state.dpr = dpr;
+      state.width = window.innerWidth;
+      state.height = window.innerHeight;
+      canvas.width = Math.floor(state.width * dpr);
+      canvas.height = Math.floor(state.height * dpr);
+      canvas.style.width = `${state.width}px`;
+      canvas.style.height = `${state.height}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (nodes.length === 0) reseed();
+    }
+
+    function stepNode(node) {
+      const p = pointer;
+      const tx = p.x - node.x;
+      const ty = p.y - node.y;
+      const dist = Math.hypot(tx, ty) || 1;
+      const pull = (Math.cos(node.anchor * 8 + state.phase) + 1.2) * 0.0025 * (node.x > 0 ? 1 : 1);
+      node.vx += (tx / dist) * chaos * 0.06 * pull;
+      node.vy += (ty / dist) * chaos * 0.06 * pull;
+      node.vx *= 0.985;
+      node.vy *= 0.985;
+      node.x += node.vx * driftSpeed;
+      node.y += node.vy * driftSpeed;
+
+      if (node.x < -40) node.x = state.width + 40;
+      if (node.x > state.width + 40) node.x = -40;
+      if (node.y < -40) node.y = state.height + 40;
+      if (node.y > state.height + 40) node.y = -40;
+
+      node.age++;
+      if (node.age > node.life || Math.abs(node.vx) + Math.abs(node.vy) < 0.15) {
+        Object.assign(node, createNode(true));
+        node.age = 0;
+      }
+    }
+
+    function update() {
+      const speed = driftSpeed;
+      state.t++;
+      state.phase += 0.003 + speed * 0.0007;
+
+      if (pointer.down && state.t % 3 === 0) {
+        pointer.pressure = Math.min(1, pointer.pressure + 0.05);
+        createGhost(pointer.x + (rng() - 0.5) * 8, pointer.y + (rng() - 0.5) * 8);
+      } else {
+        pointer.pressure = Math.max(0, pointer.pressure - 0.03);
+      }
+
+      if (!running) return;
+      for (let i = 0; i < nodes.length; i++) {
+        const n = nodes[i];
+        stepNode(n);
+        n.x += Math.sin(state.phase + n.anchor * 6) * chaos;
+        n.y += Math.cos(state.phase + n.anchor * 5) * chaos * 0.7;
+      }
+
+      for (let i = ghosts.length - 1; i >= 0; i--) {
+        const g = ghosts[i];
+        g.vx *= 0.99;
+        g.vy *= 0.99;
+        g.x += g.vx;
+        g.y += g.vy;
+        g.age++;
+        if (g.age > g.life) ghosts.splice(i, 1);
+      }
+    }
+
+    function render() {
+      ctx.fillStyle = 'rgba(6, 8, 15, 0.18)';
+      ctx.fillRect(0, 0, state.width, state.height);
+
+      for (let i = 0; i < nodes.length; i++) {
+        const a = nodes[i];
+        for (let j = i + 1; j < Math.min(nodes.length, i + 18); j++) {
+          const b = nodes[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < 130) {
+            const alpha = 1 - dist / 130;
+            const c = i % 2 === 0 ? palette[(i + Math.floor(state.phase * 12)) % palette.length] : palette[(j + 4) % palette.length];
+            ctx.strokeStyle = `${c}${Math.floor(alpha * 90).toString(16).padStart(2, '0')}`;
+            ctx.lineWidth = 0.45 + (1 - dist / 130) * 1.2;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.quadraticCurveTo(
+              (a.x + b.x) / 2 + Math.sin(state.phase + a.anchor * 10) * 9,
+              (a.y + b.y) / 2 + Math.cos(state.phase + b.anchor * 10) * 9,
+              b.x,
+              b.y
+            );
+            ctx.stroke();
+          }
+        }
+
+        const driftTrail = 0.75 + Math.sin(state.t * 0.01 + a.anchor * 16) * 0.25;
+        ctx.fillStyle = `${a.color}${Math.floor(150 * driftTrail).toString(16).padStart(2, '0')}`;
+        ctx.beginPath();
+        ctx.arc(a.x, a.y, a.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      for (let i = 0; i < ghosts.length; i++) {
+        const g = ghosts[i];
+        const k = 1 - g.age / g.life;
+        const size = g.radius * 4.2;
+        const grad = ctx.createRadialGradient(g.x, g.y, 0, g.x, g.y, size);
+        grad.addColorStop(0, `hsla(${g.hue}, 90%, 80%, ${0.24 * k})`);
+        grad.addColorStop(1, `hsla(${g.hue}, 90%, 60%, 0)`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(g.x, g.y, size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const pointerRadius = 10 + pointer.pressure * 18;
+      if (pointer.down) {
+        ctx.strokeStyle = `rgba(141,232,255,${0.16 + pointer.pressure * 0.25})`;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(pointer.x, pointer.y, pointerRadius, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#dce6ff';
+      ctx.font = '12px "Trebuchet MS", sans-serif';
+      ctx.fillText(`nodes ${nodes.length} • ghosts ${ghosts.length} • phase ${state.phase.toFixed(2)}`, 14, 18);
+    }
+
+    function loop() {
+      if (running) {
+        update();
+        render();
+      }
+      raf = requestAnimationFrame(loop);
+      if (!running) {
+        render();
+      }
+    }
+
+    function updateHash() {
+      const payload = {
+        seed: seed.toString(16),
+        drift: driftRange.value,
+        chaos: chaosRange.value,
+        density: densityRange.value
+      };
+      const next = new URLSearchParams(payload);
+      location.hash = `#${next.toString()}`;
+      seedLabel.textContent = `seed: ${payload.seed}`;
+      stateLine.textContent = 'status: state pinned to hash.';
+    }
+
+    function shareState() {
+      updateHash();
+      const text = `https://garytalbot.github.io/ghost-radio/echo-well.html${location.hash}`;
+      navigator.clipboard?.writeText(text).then(() => {
+        stateLine.textContent = 'status: haunt link copied.';
+      }).catch(() => {
+        stateLine.textContent = `status: copy blocked; link is ${text}`;
+      });
+    }
+
+    function saveFrame() {
+      const link = document.createElement('a');
+      link.download = `echo-well-${seed.toString(16).slice(0, 8)}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      stateLine.textContent = 'status: screenshot saved.';
+    }
+
+    function updateSeedFromInput() {
+      driftSpeed = Number(driftRange.value);
+      chaos = Number(chaosRange.value);
+      density = Number(densityRange.value);
+      syncLabels();
+      updateHash();
+
+      if (nodes.length < density) {
+        while (nodes.length < density) nodes.push(createNode(true));
+      } else {
+        nodes.length = density;
+      }
+    }
+
+    canvas.addEventListener('pointermove', (event) => {
+      pointer.x = event.clientX;
+      pointer.y = event.clientY;
+    });
+
+    canvas.addEventListener('pointerdown', (event) => {
+      pointer.down = true;
+      pointer.x = event.clientX;
+      pointer.y = event.clientY;
+      createGhost(pointer.x, pointer.y);
+      createGhost(pointer.x + 10, pointer.y - 8);
+      createGhost(pointer.x - 8, pointer.y + 10);
+    });
+
+    canvas.addEventListener('pointerup', () => {
+      pointer.down = false;
+    });
+
+    canvas.addEventListener('pointerleave', () => {
+      pointer.down = false;
+    });
+
+    pauseBtn.addEventListener('click', () => {
+      running = !running;
+      pauseBtn.textContent = running ? 'pause: off' : 'pause: on';
+      pauseBtn.classList.toggle('primary', !running);
+      stateLine.textContent = running ? 'status: reengaging signal flow.' : 'status: signal loop paused.';
+      if (running) {
+        updateHash();
+      }
+    });
+
+    reseatBtn.addEventListener('click', () => {
+      for (let i = 0; i < nodes.length; i += 1) {
+        nodes[i] = createNode(true);
+      }
+      stateLine.textContent = 'status: reseat complete.';
+    });
+
+    reseedBtn.addEventListener('click', () => {
+      reseed();
+      stateLine.textContent = 'status: new seed cast.';
+      updateHash();
+    });
+
+    copyBtn.addEventListener('click', shareState);
+    snapshotBtn.addEventListener('click', saveFrame);
+
+    driftRange.addEventListener('input', updateSeedFromInput);
+    chaosRange.addEventListener('input', updateSeedFromInput);
+    densityRange.addEventListener('input', updateSeedFromInput);
+
+    function seedPointer() {
+      pointer.x = window.innerWidth / 2;
+      pointer.y = window.innerHeight / 2;
+      pointer.down = false;
+      pointer.pressure = 0;
+    }
+
+    function start() {
+      applyHashState();
+      resize();
+      syncLabels();
+      seedLabel.textContent = `seed: ${seed.toString(16).padStart(8, '0')}`;
+      loop();
+      window.addEventListener('resize', resize);
+      stateLine.textContent = 'status: well active.';
+      updateHash();
+    }
+
+    start();
+  </script>
+</body>
+</html>

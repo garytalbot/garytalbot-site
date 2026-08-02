@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ghost Radio — Lumen Tide</title>
+  <meta
+    name="description"
+    content="A wave-laced pointer field where seeded glow-trails rise and fall like a tide of static in Ghost Radio."
+  />
+  <meta name="theme-color" content="#090b12" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070912;
+      --panel: rgba(12, 16, 28, 0.72);
+      --text: #eff2ff;
+      --muted: #acb4ce;
+      --line: rgba(255, 255, 255, 0.11);
+      --accent: #8de8ff;
+      --accent2: #d1ff72;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--text);
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      background: radial-gradient(circle at 20% 10%, rgba(141, 232, 255, 0.16), transparent 34%),
+        radial-gradient(circle at 82% 12%, rgba(209, 255, 114, 0.1), transparent 36%),
+        radial-gradient(circle at 50% 88%, rgba(255, 148, 215, 0.08), transparent 34%),
+        linear-gradient(180deg, #06070d 0%, #080b14 52%, #05060c 100%);
+      overflow: hidden;
+    }
+    .wrap {
+      width: min(980px, calc(100vw - 16px));
+      margin: 10px auto;
+      display: grid;
+      gap: 10px;
+    }
+    .toolbar {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 11px;
+      display: grid;
+      gap: 8px;
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+    }
+    .toolbar h1 {
+      margin: 4px 0 4px;
+      font-size: 1.1rem;
+    }
+    .toolbar p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+    .controls,
+    .hud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-start;
+      margin-top: 8px;
+    }
+    .controls label,
+    .hud span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #d4dbef;
+      font-size: 0.8rem;
+    }
+    .controls input[type="range"],
+    .controls button,
+    .controls input[type="text"] {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 10px;
+      padding: 7px 9px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      font: inherit;
+    }
+    .controls button {
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease;
+    }
+    .controls button:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--accent) 45%, white 55%);
+    }
+    .controls input[type="text"] {
+      min-width: 140px;
+    }
+    .hud {
+      color: #dde2f6;
+      font-size: 0.78rem;
+      flex-wrap: wrap;
+    }
+    .hud span {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 6px 8px;
+      background: rgba(0, 0, 0, 0.35);
+    }
+    .stage {
+      position: relative;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      overflow: hidden;
+      min-height: calc(100vh - 238px);
+      min-height: min(760px, calc(100vh - 238px));
+      height: min(780px, calc(100vh - 238px));
+      background: radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.05), transparent 48%),
+        linear-gradient(150deg, rgba(141, 232, 255, 0.05), rgba(255, 148, 215, 0.04));
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    a.home {
+      color: #d8deed;
+      text-decoration: none;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 10px;
+      padding: 7px 10px;
+    }
+    a.home:hover {
+      border-color: color-mix(in srgb, var(--accent) 45%, white 55%);
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="toolbar" aria-label="Lumen Tide controls">
+      <h1>Lumen Tide</h1>
+      <p>
+        Click, drag, and seed the field. A deterministic tide of glimmer-lines drifts beneath your pointer and slowly rewrites itself.
+      </p>
+      <div class="controls">
+        <button id="toggleBtn" type="button">Pause</button>
+        <label>
+          Density
+          <input id="density" type="range" min="40" max="180" value="110" />
+        </label>
+        <label>
+          Tide
+          <input id="tide" type="range" min="0.2" max="2.2" value="0.95" step="0.05" />
+        </label>
+        <button id="shuffleBtn" type="button">Reseed</button>
+        <button id="clearBtn" type="button">Clear</button>
+        <button id="copyBtn" type="button">Copy link</button>
+        <button id="saveBtn" type="button">Save PNG</button>
+      </div>
+      <div class="controls">
+        <label>Seed
+          <input id="seedInput" type="text" value="" aria-label="Seed" />
+        </label>
+        <a href="./" class="home" aria-label="Back to Ghost Radio">Back</a>
+      </div>
+      <div class="hud" aria-live="polite">
+        <span id="seedText">seed: waiting</span>
+        <span id="frameText">frame: 0</span>
+        <span id="nodeText">nodes: 0</span>
+        <span id="modeText">mode: drift</span>
+      </div>
+    </section>
+
+    <section class="stage" aria-label="Lumen Tide canvas">
+      <canvas id="canvas" aria-label="A flowing tide of luminescent lines"></canvas>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d', { alpha: false });
+    const densityInput = document.getElementById('density');
+    const tideInput = document.getElementById('tide');
+    const seedInput = document.getElementById('seedInput');
+    const copyBtn = document.getElementById('copyBtn');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const seedText = document.getElementById('seedText');
+    const frameText = document.getElementById('frameText');
+    const nodeText = document.getElementById('nodeText');
+    const modeText = document.getElementById('modeText');
+
+    const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    let running = true;
+    let frame = 0;
+    let pointer = { x: null, y: null };
+    let mode = 'drift';
+
+    let state = {
+      seed: parseSeed(readHash('seed')),
+      nodes: [],
+      pulses: [],
+      paused: false,
+    };
+
+    function parseSeed(raw) {
+      const n = Number(raw);
+      if (Number.isFinite(n)) return Math.abs(Math.floor(n)) || 1;
+      return Date.now() % 2147483647;
+    }
+
+    function parseFloatRange(name, fallback) {
+      const raw = readHash(name);
+      const num = Number(raw);
+      return Number.isFinite(num) ? num : fallback;
+    }
+
+    function readHash(name) {
+      const raw = location.hash.startsWith('#') ? location.hash.slice(1) : location.hash;
+      if (!raw) return null;
+      const params = new URLSearchParams(raw);
+      return params.get(name);
+    }
+
+    function writeHash() {
+      const next = new URLSearchParams();
+      next.set('seed', String(state.seed));
+      next.set('density', String(densityInput.value));
+      next.set('tide', String(tideInput.value));
+      history.replaceState({}, '', `${location.pathname}#${next.toString()}`);
+    }
+
+    function xorshift(seed) {
+      let s = seed || 123456789;
+      return function() {
+        s ^= s << 13;
+        s ^= s >>> 17;
+        s ^= s << 5;
+        return ((s >>> 0) / 4294967296);
+      };
+    }
+
+    let random = xorshift(state.seed);
+
+    const palette = ['#8de8ff', '#ff94d7', '#d1ff72', '#88ddff'];
+
+    function seedColor(i, v) {
+      const c = palette[i % palette.length];
+      const fade = 0.35 + v * 0.45;
+      return `hsla(${c}, ${20 + Math.floor(v * 60)}%, ${40 + Math.floor(v * 45)}%, ${fade})`;
+    }
+
+    function randomRange(min, max) {
+      return min + random() * (max - min);
+    }
+
+    function resize() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width * DPR);
+      canvas.height = Math.floor(rect.height * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      seed();
+    }
+
+    function seed(count = Number(densityInput.value)) {
+      state.nodes = [];
+      const rect = canvas.getBoundingClientRect();
+      for (let i = 0; i < count; i++) {
+        const angle = random() * Math.PI * 2;
+        const radius = Math.sqrt(random()) * Math.min(rect.width, rect.height) * 0.45;
+        const cx = rect.width / 2 + Math.cos(angle) * radius;
+        const cy = rect.height / 2 + Math.sin(angle) * radius * 0.6;
+        state.nodes.push({
+          x: cx,
+          y: cy,
+          vx: randomRange(-0.45, 0.45),
+          vy: randomRange(-0.45, 0.45),
+          phase: random() * Math.PI * 2,
+          amp: randomRange(0.5, 1.8),
+          scale: randomRange(1, 2.3),
+          flicker: randomRange(0.4, 1),
+        });
+      }
+      nodeText.textContent = `nodes: ${state.nodes.length}`;
+      seedText.textContent = `seed: ${state.seed}`;
+    }
+
+    function emitPulse(x, y) {
+      const rect = canvas.getBoundingClientRect();
+      for (let i = 0; i < 6; i++) {
+        const jitter = i * 2.6;
+        state.pulses.push({
+          x: x + randomRange(-jitter, jitter),
+          y: y + randomRange(-jitter, jitter),
+          life: 60,
+          maxLife: 60,
+          strength: randomRange(0.55, 1),
+        });
+      }
+      if (x > rect.width || x < 0 || y > rect.height || y < 0) return;
+    }
+
+    function updateNodes() {
+      const rect = canvas.getBoundingClientRect();
+      const tide = parseFloat(tideInput.value);
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      for (const n of state.nodes) {
+        const dx = n.x - centerX;
+        const dy = n.y - centerY;
+        const dist = Math.hypot(dx, dy) || 1;
+        const drift = 0.24 * Math.sin((frame * 0.003 + n.phase) * tide);
+        const pull = 0.00045 * (dist - Math.min(rect.width, rect.height) * 0.2);
+
+        n.vx += -dx * pull + drift * 0.015;
+        n.vy += -dy * pull + drift * 0.014;
+
+        if (pointer.x !== null) {
+          const px = pointer.x - n.x;
+          const py = pointer.y - n.y;
+          const pd = Math.hypot(px, py) || 1;
+          if (pd < 170) {
+            const pullPower = (170 - pd) / 170;
+            n.vx += (px / pd) * pullPower * 0.06;
+            n.vy += (py / pd) * pullPower * 0.06;
+          }
+        }
+
+        n.vx *= 0.985;
+        n.vy *= 0.985;
+        n.x += n.vx;
+        n.y += n.vy;
+        if (n.x < -20) n.x = rect.width + 20;
+        if (n.x > rect.width + 20) n.x = -20;
+        if (n.y < -20) n.y = rect.height + 20;
+        if (n.y > rect.height + 20) n.y = -20;
+      }
+
+      for (let i = 0; i < state.pulses.length; i += 1) {
+        const p = state.pulses[i];
+        p.life -= 1;
+        p.strength *= 0.965;
+        if (p.life <= 0) {
+          state.pulses.splice(i, 1);
+          i -= 1;
+        }
+      }
+    }
+
+    function draw() {
+      const rect = canvas.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      // drifted star-sky noise
+      const density = Number(densityInput.value) || 110;
+      for (let i = 0; i < Math.max(16, density / 2); i++) {
+        const x = randomRange(0, rect.width);
+        const y = randomRange(0, rect.height);
+        const a = random() * 0.15;
+        ctx.fillStyle = `rgba(255,255,255,${a})`;
+        ctx.fillRect(x, y, 1, 1);
+      }
+
+      // node traces
+      for (let i = 0; i < state.nodes.length; i++) {
+        const a = state.nodes[i];
+        for (let j = i + 1; j < state.nodes.length; j += 11) {
+          const b = state.nodes[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist > 210) continue;
+          const t = 1 - dist / 210;
+          const pulse = state.pulses.some((p) => {
+            const px = a.x - p.x;
+            const py = a.y - p.y;
+            const qx = b.x - p.x;
+            const qy = b.y - p.y;
+            return (Math.hypot(px, py) + Math.hypot(qx, qy)) / 2 < p.maxLife * 1.8;
+          });
+          const base = pulse ? 0.42 : 0.10;
+          const alpha = (base + t * 0.45) * (a.flicker + b.flicker) * 0.35;
+          ctx.strokeStyle = `rgba(141,232,255,${Math.min(1, alpha)})`;
+          ctx.lineWidth = 0.2 + t * 1.2;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          const midX = (a.x + b.x) / 2 + Math.sin(frame * 0.002 + dist * 0.02) * 8;
+          const midY = (a.y + b.y) / 2 + Math.cos(frame * 0.002 - dist * 0.02) * 8;
+          ctx.quadraticCurveTo(midX, midY, b.x, b.y);
+          ctx.stroke();
+        }
+      }
+
+      for (const node of state.nodes) {
+        const glow = Math.sin(frame * 0.01 + node.phase) * 0.5 + 0.5;
+        const radius = (node.scale + glow * 1.2) * (0.8 + node.amp * 0.8);
+        ctx.fillStyle = `rgba(209,255,114,${0.14 + glow * 0.16})`;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = `rgba(141,232,255,${0.5 + glow * 0.35})`;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, radius * 0.45, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      for (const p of state.pulses) {
+        const wave = p.life / p.maxLife;
+        const r = (1 - wave) * 70;
+        ctx.strokeStyle = `rgba(255,148,215,${p.strength * wave * 0.3})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    function loop() {
+      if (!state.paused) {
+        frame += 1;
+        updateNodes();
+        draw();
+        frameText.textContent = `frame: ${frame}`;
+      }
+      if (running) requestAnimationFrame(loop);
+    }
+
+    function syncInputsFromHash() {
+      const parsedDensity = readHash('density');
+      const parsedTide = readHash('tide');
+      if (parsedDensity) densityInput.value = String(Math.max(40, Math.min(180, Number(parsedDensity) || Number(densityInput.value))));
+      if (parsedTide) tideInput.value = String(Math.max(0.2, Math.min(2.2, Number(parsedTide) || Number(tideInput.value))));
+    }
+
+    function reseedFromInput() {
+      const parsedSeed = parseSeed(seedInput.value);
+      state.seed = parsedSeed;
+      random = xorshift(state.seed);
+      seed();
+      writeHash();
+    }
+
+    function copyLink() {
+      const href = `${location.origin}${location.pathname}#${new URLSearchParams({
+        seed: String(state.seed),
+        density: densityInput.value,
+        tide: tideInput.value,
+      }).toString()}`;
+      navigator.clipboard.writeText(href).then(() => {
+        modeText.textContent = 'mode: link copied';
+      }).catch(() => {
+        window.prompt('Copy this Lumen Tide link:', href);
+      });
+    }
+
+    function savePng() {
+      const url = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `lumen-tide-${state.seed}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    function onPointerMove(event) {
+      const rect = canvas.getBoundingClientRect();
+      pointer.x = event.clientX - rect.left;
+      pointer.y = event.clientY - rect.top;
+      if (mode !== 'drag') mode = 'drag';
+      if (event.buttons) {
+        emitPulse(pointer.x, pointer.y);
+      }
+    }
+
+    function onPointerLeave() {
+      pointer.x = null;
+      pointer.y = null;
+      mode = 'drift';
+    }
+
+    function onPointerDown(event) {
+      const rect = canvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      emitPulse(x, y);
+      modeText.textContent = 'mode: press';
+      mode = 'impulse';
+    }
+
+    function initFromHash() {
+      seedInput.value = state.seed;
+      syncInputsFromHash();
+      seed();
+      writeHash();
+    }
+
+    canvas.addEventListener('pointermove', onPointerMove);
+    canvas.addEventListener('pointerleave', onPointerLeave);
+    canvas.addEventListener('pointerdown', onPointerDown);
+    shuffleBtn.addEventListener('click', reseedFromInput);
+    clearBtn.addEventListener('click', () => {
+      state.nodes = [];
+      state.pulses = [];
+      draw();
+      nodeText.textContent = 'nodes: 0';
+      modeText.textContent = 'mode: cleared';
+    });
+    copyBtn.addEventListener('click', copyLink);
+    saveBtn.addEventListener('click', savePng);
+    toggleBtn.addEventListener('click', () => {
+      state.paused = !state.paused;
+      toggleBtn.textContent = state.paused ? 'Resume' : 'Pause';
+      modeText.textContent = state.paused ? 'mode: paused' : 'mode: drift';
+      if (!state.paused && !running) {
+        running = true;
+        requestAnimationFrame(loop);
+      }
+    });
+
+    densityInput.addEventListener('input', () => {
+      seed();
+      writeHash();
+      nodeText.textContent = `nodes: ${state.nodes.length}`;
+    });
+
+    tideInput.addEventListener('input', () => {
+      writeHash();
+    });
+
+    seedInput.addEventListener('change', reseedFromInput);
+
+    window.addEventListener('keydown', (event) => {
+      if (event.code === 'Space') {
+        event.preventDefault();
+        toggleBtn.click();
+      }
+      if (event.key.toLowerCase() === 'r') {
+        state.seed = parseSeed(Date.now());
+        seedInput.value = state.seed;
+        reseedFromInput();
+      }
+    });
+
+    window.addEventListener('hashchange', () => {
+      state.seed = parseSeed(readHash('seed'));
+      seedInput.value = state.seed;
+      syncInputsFromHash();
+      reseedFromInput();
+    });
+
+    window.addEventListener('resize', resize);
+    running = true;
+    initFromHash();
+    resize();
+    loop();
+  </script>
+</body>
+</html>

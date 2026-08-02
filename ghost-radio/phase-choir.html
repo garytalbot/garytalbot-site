@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ghost Radio — Phase Choir</title>
+  <meta
+    name="description"
+    content="A standalone interactive sketch for Ghost Radio: pointer-charged phase trails, seeded trajectories, and shareable state in one tiny graveyard of signal lines."
+  />
+  <meta name="theme-color" content="#090b12" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070912;
+      --line: rgba(255, 255, 255, 0.11);
+      --text: #f4f7ff;
+      --muted: #b3bbd3;
+      --a1: #8de8ff;
+      --a2: #ff94d7;
+      --a3: #d1ff72;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 20% 12%, rgba(141, 232, 255, 0.18), transparent 35%),
+        radial-gradient(circle at 78% 10%, rgba(255, 148, 215, 0.12), transparent 38%),
+        linear-gradient(180deg, #05070d 0%, #090b12 56%, #04050a 100%);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    .frame {
+      position: relative;
+      width: min(1200px, calc(100vw - 18px));
+      height: calc(100vh - 12px);
+      margin: 6px auto;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      background: rgba(8, 10, 16, 0.75);
+      box-shadow: 0 30px 90px rgba(0, 0, 0, .35);
+      backdrop-filter: blur(8px);
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    header {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      background: rgba(11, 14, 21, 0.84);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .title {
+      margin: 0;
+      font-size: 0.98rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #dce5ff;
+    }
+
+    .hint {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.4;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    button,
+    input[type="range"],
+    input[type="text"],
+    a {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      transition: transform 0.18s ease, border-color 0.18s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--a1) 48%, white 52%);
+    }
+
+    .btn-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .field {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      color: #dbe4ff;
+      font-size: 0.76rem;
+      min-height: 34px;
+    }
+
+    .field label {white-space: nowrap;}
+
+    #seed {
+      width: 190px;
+    }
+
+    .return {
+      text-decoration: none;
+      color: #dbe4ff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .stage {
+      position: relative;
+      isolation: isolate;
+    }
+
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+
+    .status {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      z-index: 1;
+      pointer-events: none;
+      justify-content: space-between;
+      color: #c8d2eb;
+      font-size: 0.74rem;
+    }
+
+    .pill {
+      background: rgba(0, 0, 0, 0.38);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 7px 10px;
+    }
+
+    .live {
+      color: var(--a3);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <main class="frame">
+    <header>
+      <h1 class="title">Phase Choir</h1>
+      <p class="hint">Pointer touch, noise, and memory drift. Every seed is a different room tune. Drag to pull trails into a temporary storm, then let it decay.</p>
+
+      <div class="toolbar">
+        <button type="button" id="reseedBtn">Re-seed</button>
+        <button type="button" id="pauseBtn">Pause</button>
+        <button type="button" id="copyBtn">Copy state link</button>
+        <button type="button" id="saveBtn">Save PNG</button>
+        <button type="button" id="clearBtn">Clear ghosts</button>
+
+        <div class="field">
+          <label for="seed">Seed</label>
+          <input id="seed" type="text" value="" maxlength="16" />
+        </div>
+
+        <div class="field">
+          <label for="density">Density</label>
+          <input id="density" type="range" min="180" max="900" value="440" />
+          <span id="densityVal">440</span>
+        </div>
+
+        <div class="field">
+          <label for="chaos">Chaos</label>
+          <input id="chaos" type="range" min="0" max="100" value="32" />
+          <span id="chaosVal">32</span>
+        </div>
+
+        <a class="return" href="./">Back to Ghost Radio</a>
+      </div>
+    </header>
+
+    <section class="stage">
+      <canvas id="c" aria-label="Phase Choir drawing stage"></canvas>
+      <div class="status" aria-live="polite">
+        <span class="pill" id="statusLine">state: live</span>
+        <span class="pill" id="seedLine">seed: initializing…</span>
+        <span class="pill live" id="frameLine">frame: 0</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const reseedBtn = document.getElementById('reseedBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const seedEl = document.getElementById('seed');
+    const densityEl = document.getElementById('density');
+    const densityVal = document.getElementById('densityVal');
+    const chaosEl = document.getElementById('chaos');
+    const chaosVal = document.getElementById('chaosVal');
+    const statusLine = document.getElementById('statusLine');
+    const seedLine = document.getElementById('seedLine');
+    const frameLine = document.getElementById('frameLine');
+
+    const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+
+    let w = 0;
+    let h = 0;
+    let cx = 0;
+    let cy = 0;
+    let t = 0;
+    let frame = 0;
+    let running = true;
+    let rafId = 0;
+    const pointer = {
+      x: 0,
+      y: 0,
+      active: false,
+      radius: 140,
+      pulse: 0,
+    };
+
+    function hashState() {
+      const seed = sanitizeSeed(seedEl.value);
+      const density = Number(densityEl.value);
+      const chaos = Number(chaosEl.value);
+      const hash = new URLSearchParams();
+      hash.set('seed', seed);
+      hash.set('density', String(density));
+      hash.set('chaos', String(chaos));
+      if (!running) hash.set('pause', '1');
+      history.replaceState(null, '', `${location.pathname}#${hash.toString()}`);
+    }
+
+    function parseSeed(raw) {
+      if (!raw) return Math.floor(Math.random() * 2_147_483_647);
+      let n = Number(raw);
+      if (Number.isFinite(n) && raw.trim() !== '') return Math.abs(Math.floor(n));
+      let h = 2166136261;
+      for (let i = 0; i < raw.length; i += 1) {
+        h ^= raw.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return Math.abs(h >>> 0);
+    }
+
+    function sanitizeSeed(raw) {
+      const parsed = Number(raw);
+      if (Number.isFinite(parsed) && parsed > 0) return String(Math.floor(parsed));
+      return String(Math.abs(parseSeed(raw) || 1));
+    }
+
+    function xorshift(seed) {
+      return function next() {
+        let x = seed;
+        x ^= x << 13;
+        x ^= x >> 17;
+        x ^= x << 5;
+        seed = x >>> 0;
+        return seed / 0x100000000;
+      };
+    }
+
+    const state = {
+      seed: 0,
+      density: 440,
+      chaos: 32,
+      particles: [],
+      rng: null,
+    };
+
+    function resize() {
+      w = canvas.clientWidth;
+      h = canvas.clientHeight;
+      canvas.width = Math.floor(w * DPR);
+      canvas.height = Math.floor(h * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      cx = w / 2;
+      cy = h / 2;
+    }
+
+    function randomizeStateFromHash() {
+      const params = new URLSearchParams(location.hash.replace(/^#/, ''));
+      const seedValue = params.get('seed') || seedEl.value || String(Math.floor(Math.random() * 1e9 + 42));
+      const densityValue = Number(params.get('density'));
+      const chaosValue = Number(params.get('chaos'));
+      const pauseValue = params.get('pause') === '1';
+
+      state.seed = parseSeed(seedValue);
+      state.density = Number.isFinite(densityValue) ? densityValue : 440;
+      state.chaos = Number.isFinite(chaosValue) ? chaosValue : 32;
+      running = !pauseValue;
+
+      seedEl.value = String(state.seed);
+      densityEl.value = String(state.density);
+      chaosEl.value = String(state.chaos);
+      densityVal.textContent = String(state.density);
+      chaosVal.textContent = String(state.chaos);
+      pauseBtn.textContent = running ? 'Pause' : 'Resume';
+      statusLine.textContent = running ? 'state: live' : 'state: paused';
+      statusLine.classList.toggle('live', running);
+
+      buildParticles();
+      hashState();
+    }
+
+    function buildParticles() {
+      state.rng = xorshift((state.seed ^ 0x9e3779b9) + 0x7f4a7c15);
+      state.particles = [];
+      for (let i = 0; i < state.density; i += 1) {
+        const a = state.rng() * Math.PI * 2;
+        const radius = Math.sqrt(state.rng()) * Math.min(w, h) * 0.48;
+        const orbit = 0.22 + state.rng() * 0.78;
+        const speed = (state.rng() * 0.0014 + 0.0004) * (state.rng() < 0.5 ? -1 : 1);
+        const phase = state.rng() * Math.PI * 2;
+        const hue = (Math.floor(state.rng() * 360) + i % 40 * 1.4) % 360;
+        const size = 0.4 + state.rng() * 1.4;
+        state.particles.push({
+          a,
+          radius,
+          orbit,
+          speed,
+          phase,
+          hue,
+          size,
+          x: cx + Math.cos(a) * radius,
+          y: cy + Math.sin(a) * radius * 0.62,
+        });
+      }
+      seedLine.textContent = `seed: ${state.seed}`;
+      seedLine.title = `state seed ${state.seed}`;
+      frame = 0;
+      ctx.clearRect(0, 0, w, h);
+    }
+
+    function reseed() {
+      const raw = seedEl.value.trim() || String(Math.floor(Math.random() * 1e9 + 11));
+      state.seed = parseSeed(raw);
+      seedEl.value = String(state.seed);
+      buildParticles();
+      hashState();
+      statusLine.textContent = 'state: reseeded';
+    }
+
+    function setDensity() {
+      state.density = Number(densityEl.value);
+      densityVal.textContent = String(state.density);
+      buildParticles();
+      hashState();
+    }
+
+    function setChaos() {
+      state.chaos = Number(chaosEl.value);
+      chaosVal.textContent = String(state.chaos);
+      hashState();
+    }
+
+    function copyLink() {
+      const href = `${location.origin}${location.pathname}${location.hash}`;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(href).then(() => {
+          statusLine.textContent = 'state: link copied';
+        }).catch(() => {
+          window.prompt('Copy this link:', href);
+        });
+        return;
+      }
+      window.prompt('Copy this link:', href);
+    }
+
+    function savePNG() {
+      const url = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `phase-choir-${state.seed}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      statusLine.textContent = 'state: frame captured';
+    }
+
+    function clearGhosts() {
+      ctx.fillStyle = 'rgba(6, 8, 13, 0.94)';
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    function updatePointer(ev) {
+      const rect = canvas.getBoundingClientRect();
+      const x = ev.clientX - rect.left;
+      const y = ev.clientY - rect.top;
+      pointer.x = x;
+      pointer.y = y;
+      pointer.pulse = 1;
+    }
+
+    function draw() {
+      if (!running) {
+        rafId = requestAnimationFrame(draw);
+        return;
+      }
+
+      t += 1;
+      frame += 1;
+      frameLine.textContent = `frame: ${frame}`;
+
+      const chaosAmount = state.chaos / 100;
+      const fade = 0.08 + (1 - chaosAmount) * 0.12;
+      const glow = chaosAmount * 45;
+
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = `rgba(5, 7, 12, ${fade})`;
+      ctx.fillRect(0, 0, w, h);
+
+      const time = t * 0.003;
+
+      for (let i = 0; i < state.particles.length; i += 1) {
+        const p = state.particles[i];
+        const drift = Math.sin(time * 0.22 + p.phase + i * 0.002);
+        const wobble = Math.cos(time * 1.4 + p.a * 7 + p.phase) * chaosAmount * p.orbit * 1.8;
+        const spin = Math.sin(time * 0.34 + p.a * 3) * chaosAmount;
+        const orbitScale = 0.55 + p.orbit * 1.15;
+
+        const baseR = p.radius * orbitScale + wobble * 14;
+        const baseA = p.a + p.speed * t + spin;
+
+        let nx = cx + Math.cos(baseA) * baseR;
+        let ny = cy + Math.sin(baseA * 1.32) * baseR * 0.64;
+
+        if (pointer.pulse > 0.01) {
+          const dx = pointer.x - nx;
+          const dy = pointer.y - ny;
+          const dist = Math.sqrt(dx * dx + dy * dy) + 0.0001;
+          const pull = Math.max(0, pointer.radius - dist) / pointer.radius;
+          const sway = pull * chaosAmount * 45;
+          nx += (dx / dist) * sway;
+          ny += (dy / dist) * sway;
+        }
+
+        const alpha = 0.18 + 0.55 * p.size * p.orbit;
+        ctx.strokeStyle = `hsla(${(p.hue + i * 0.2 + time * 14) % 360}, 85%, 60%, ${alpha})`;
+        ctx.lineWidth = 0.9 + p.size;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(nx, ny);
+        ctx.stroke();
+
+        p.x = nx;
+        p.y = ny;
+        p.phase += 0.001 + (chaosAmount * 0.003);
+
+        // occasional sparks
+        if ((i + frame + Math.floor(chaosAmount * 100)) % Math.floor(150 / (chaosAmount + 0.05)) === 0) {
+          const sparkR = (state.rng() * glow) + 8;
+          ctx.fillStyle = `rgba(209, 255, 114, ${0.18 + chaosAmount * 0.4})`;
+          ctx.beginPath();
+          ctx.arc(nx + drift * 2, ny - drift * 2, sparkR * 0.03, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      pointer.pulse *= 0.92;
+      if (pointer.pulse < 0.001) pointer.pulse = 0;
+
+      rafId = requestAnimationFrame(draw);
+    }
+
+    reseedBtn.addEventListener('click', reseed);
+    pauseBtn.addEventListener('click', () => {
+      running = !running;
+      pauseBtn.textContent = running ? 'Pause' : 'Resume';
+      statusLine.textContent = running ? 'state: live' : 'state: paused';
+      statusLine.classList.toggle('live', running);
+      if (running) {
+        pointer.pulse = 1;
+      }
+      hashState();
+    });
+
+    copyBtn.addEventListener('click', copyLink);
+    saveBtn.addEventListener('click', savePNG);
+    clearBtn.addEventListener('click', clearGhosts);
+
+    densityEl.addEventListener('change', setDensity);
+    densityEl.addEventListener('input', () => {
+      densityVal.textContent = densityEl.value;
+    });
+    chaosEl.addEventListener('change', setChaos);
+    chaosEl.addEventListener('input', () => {
+      chaosVal.textContent = chaosEl.value;
+    });
+
+    seedEl.addEventListener('change', () => {
+      reseed();
+    });
+
+    canvas.addEventListener('pointerdown', (event) => {
+      pointer.active = true;
+      updatePointer(event);
+      canvas.setPointerCapture(event.pointerId);
+      canvas.style.cursor = 'none';
+    });
+    canvas.addEventListener('pointermove', (event) => {
+      if (!pointer.active) return;
+      updatePointer(event);
+    });
+    canvas.addEventListener('pointerup', (event) => {
+      pointer.active = false;
+      pointer.pulse = 0;
+      if (event.currentTarget.hasPointerCapture && event.pointerId) {
+        canvas.releasePointerCapture(event.pointerId);
+      }
+      canvas.style.cursor = 'auto';
+    });
+    canvas.addEventListener('pointerleave', () => {
+      pointer.active = false;
+    });
+
+    window.addEventListener('keydown', (event) => {
+      if (event.key === ' ') {
+        event.preventDefault();
+        pauseBtn.click();
+      }
+      if (event.key.toLowerCase() === 'r') {
+        reseedBtn.click();
+      }
+      if (event.key.toLowerCase() === 'c') {
+        copyBtn.click();
+      }
+    });
+
+    window.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        if (running) {
+          running = false;
+          pauseBtn.textContent = 'Resume';
+          statusLine.textContent = 'state: paused';
+          statusLine.classList.remove('live');
+        }
+      } else if (!running) {
+        running = true;
+        pauseBtn.textContent = 'Pause';
+        statusLine.textContent = 'state: live';
+        statusLine.classList.add('live');
+      }
+      hashState();
+    });
+
+    window.addEventListener('hashchange', randomizeStateFromHash);
+    window.addEventListener('resize', () => {
+      resize();
+      buildParticles();
+    });
+
+    resize();
+    randomizeStateFromHash();
+    clearGhosts();
+    if (!rafId) rafId = requestAnimationFrame(draw);
+  </script>
+</body>
+</html>
