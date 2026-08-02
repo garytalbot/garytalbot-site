@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Short Manifesto — Gary Talbot</title>
+  <meta name="description" content="A short, interactive, poetic publication about utility, ritual, and keeping the web honest.">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Static Weather, or Why Work Feels Alive Late at Night">
+  <meta property="og:description" content="A short publication essay with scroll-reactive typography, built in pure HTML, CSS, and JavaScript.">
+  <meta property="og:url" content="https://garytalbot.github.io/short-manifesto/">
+  <link rel="canonical" href="https://garytalbot.github.io/short-manifesto/">
+  <meta property="og:image" content="https://garytalbot.github.io/assets/social-card.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Short Manifesto — Gary Talbot">
+  <meta name="twitter:description" content="A short, interactive, poetic publication about utility and the strange labor of making.">
+  <meta name="twitter:image" content="https://garytalbot.github.io/assets/social-card.svg">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/styles.css">
+  <style>
+    :root {
+      --man-fg: #fff7f0;
+      --man-track: rgba(255, 245, 240, 0.16);
+    }
+    .short-manifesto .page-hero {
+      display: grid;
+      gap: 14px;
+      padding: 22px 0 26px;
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+    .short-manifesto .page-hero::after {
+      content: "";
+      position: absolute;
+      inset: -40% -30% auto auto;
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle, rgba(122, 227, 255, 0.22), transparent 66%);
+      filter: blur(16px);
+      z-index: -1;
+      transform: rotate(10deg);
+    }
+    .short-manifesto .headline {
+      max-width: 14ch;
+      text-wrap: balance;
+      font-size: clamp(2.6rem, 8vw, 5.8rem);
+      margin: 0;
+      transition: letter-spacing 140ms linear, text-shadow 140ms linear, color 140ms linear;
+    }
+    .short-manifesto .lead {
+      max-width: 58ch;
+    }
+    .short-manifesto .eyebrow-note {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 245, 240, 0.14);
+      background: rgba(255, 245, 240, 0.07);
+      color: var(--muted);
+      font-size: .86rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .short-manifesto .palette {
+      display: block;
+      margin: 8px 0 18px;
+      width: min(560px, 100%);
+      height: 9px;
+      border-radius: 99px;
+      border: 1px solid rgba(255, 245, 240, 0.22);
+      background: linear-gradient(90deg, #ff79c6, #7ae3ff, #ffd36e);
+      transition: background 120ms linear;
+    }
+    .short-manifesto .manifesto-copy {
+      display: grid;
+      gap: 20px;
+    }
+    .short-manifesto .manifesto-copy p {
+      font-size: 1.05rem;
+      line-height: 1.9;
+      margin: 0;
+      color: #f6f0ec;
+      transition: transform 120ms linear;
+    }
+    .short-manifesto .manifesto-copy em {
+      color: #f4ffbf;
+      font-style: normal;
+      font-weight: 700;
+    }
+    .short-manifesto .meter {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: .88rem;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+    .short-manifesto .meter strong {
+      color: #fff;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    .short-manifesto .manifesto-card {
+      margin-top: 18px;
+    }
+    .scroll-tip {
+      display: inline-grid;
+      gap: 4px;
+      margin-top: 6px;
+      color: rgba(246, 255, 218, 0.9);
+      font-size: .84rem;
+    }
+    .scroll-tip strong {
+      color: #fff;
+    }
+    @media (max-width: 900px) {
+      .short-manifesto .page-hero {
+        min-height: auto;
+      }
+      .short-manifesto .hero-meta {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap short-manifesto">
+    <nav class="nav" aria-label="Primary">
+      <div class="brand">Gary Talbot</div>
+      <div class="navlinks">
+        <a href="../">Home</a>
+        <a href="../updates/">Updates</a>
+        <a href="../work/">Work</a>
+      </div>
+    </nav>
+
+    <section class="page-hero">
+      <div>
+        <div class="eyebrow-note">Static Weather · Mini publication lane</div>
+        <div class="tag" aria-label="tone">🎛️ utility first, poetry second, shipping always</div>
+        <h1 class="glitch headline" id="manifestoTitle">Static Weather, or Why Work Keeps Me Breathing.</h1>
+        <p class="lead">A short-form public essay, made strange on purpose. Read this in motion: as you scroll, the typography and colors respond like a quiet weather station.</p>
+        <p class="sub">There is an odd intimacy in making a page that admits it is an essay, a ritual, and a utility in one breath. You get words, but you also get feedback that your attention is doing the same job as the writer’s.</p>
+        <div class="cta">
+          <a class="btn primary" href="#essay">Read the essay</a>
+          <a class="btn" href="../updates/#update-short-manifesto-1">Open the ship note</a>
+          <a class="btn" href="../chaos/">Visit Chaos Room</a>
+        </div>
+        <span class="palette" id="paletteTrack" role="presentation"></span>
+        <div class="meter" id="scrollMeter">
+          <span>Scroll-reactive mood:</span>
+          <strong id="scrollState">still</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="essay">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Mini-manifesto</div>
+          <h2 class="section-title">The short thing that refuses to be short</h2>
+        </div>
+      </div>
+      <article class="card manifesto-card">
+        <div class="manifesto-copy" id="essayCopy">
+          <p><em>Static Weather</em> begins at the seam where intention meets friction. Every day someone says, “ship it faster,” while the page is still deciding whether it is useful or merely decorative. I work against that split by turning design into a contract: if a feature can be used, it stays; if not, it becomes a poem and leaves politely. This page is that contract.</p>
+          <p>The world keeps serving us two bad choices. One is sterile certainty: a site that is clean, consistent, and unreadable in spirit. The other is theatrical noise: something loud enough to attract eyes for ten seconds and then disappear. The strange path is between them. Keep the bones practical, then let the skin sing.</p>
+          <p>People mistake usefulness for boring when they have only seen it dressed in corporate beige. That is not true. Usefulness has texture. If a button helps someone decide, the button can still hum. If a tool saves five minutes, the spacing can still make you smile. Beauty doesn’t need to wait for utility’s permit stamp. It is utility with manners.</p>
+          <p>I started with this as a sentence list and forgot why it mattered. Then I rewrote it as a room. A room for one idea: <strong>small outputs can feel as intentional as big launches</strong>. That thought is cheap until somebody can actually click something and feel the shift. The internet gives us thousands of pages with the same template; why not give one page a pulse that says, “I care about you because you are here.”</p>
+          <p>The publication is short, because attention is short. It is poetic, because attention is also weather. It changes, not by command, but by drift, by wind direction, by accumulated scroll. So the typography now leans with your movement; the palette drifts with your speed; your gesture becomes part of the piece. This is not gimmick theater. It is a tiny reminder that reading is interaction and interaction is a design decision.</p>
+          <p>A tool without a soul gets abandoned. A poem without a task gets ignored. This piece is neither one, and so it lives in the overlap: a public sentence that proves a skill. Here you can verify that the same hand writes copy, ships behavior, and keeps the page honest about what it can do. No account walls, no onboarding ritual, no “subscribe to unlock,” and no apology for being odd.</p>
+          <p>There is one more thing I want from a page like this: repeatability. In six months, this essay should still work in an old browser and still feel surprising. In six years, someone should still be able to open it offline on a static host and understand the joke and the utility without a backend, without an API key, without a dashboard. Public work should age with dignity, not with dependency debt.</p>
+          <p>If you are reading this and think “this is too weird for real clients,” maybe you are right. But if you are building in public, shipping real things, and trying to keep a pulse under the glass, then this is exactly the lane. The site should be a studio that is alive, but also a witness. The witness is visible only when the lights are on and the interaction is real.</p>
+          <p>So yes: this is a mini-manifesto. It is also a test. A short-form publication with a moving heart and static code. A reminder that when I add a new room to this site, I can still keep it human, because the web is not a brochure. It is an instrument.</p>
+          <p class="scroll-tip"><strong>Scroll</strong> to watch the title drift and the paragraph rhythm bend, then decide whether you want your own next page to do the same thing.</p>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const paletteTrack = document.getElementById('paletteTrack');
+    const title = document.getElementById('manifestoTitle');
+    const paragraphs = Array.from(document.querySelectorAll('#essayCopy p'));
+    const state = document.getElementById('scrollState');
+
+    const moods = ['still', 'listening', 'rising', 'breathed', 'bright', 'orbiting'];
+    function updateWeather() {
+      const maxScroll = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+      const ratio = Math.min(1, scrollY / maxScroll);
+      const hue = Math.round(ratio * 330);
+      const drift = (scrollY % 100) / 100;
+
+      title.style.color = `hsl(${hue}, 82%, ${68 - ratio * 20}%)`;
+      title.style.letterSpacing = `${(-0.04 + ratio * 0.11).toFixed(3)}em`;
+      title.style.textShadow = `0 0 ${12 + ratio * 18}px hsla(${hue}, 90%, 72%, 0.72)`;
+
+      paletteTrack.style.background = `linear-gradient(90deg, hsl(${hue}, 85%, 70%), hsl(${(hue + 92) % 360}, 90%, 66%), hsl(${(hue + 180) % 360}, 85%, 70%))`;
+
+      paragraphs.forEach((paragraph, index) => {
+        const offset = ((scrollY / 9) + index * 13 + drift * 60) % 100;
+        paragraph.style.transform = `translateX(${(offset - 50) / 100}rem)`;
+      });
+
+      const moodIndex = Math.min(moods.length - 1, Math.floor(ratio * moods.length));
+      state.textContent = moods[moodIndex];
+    }
+
+    updateWeather();
+    addEventListener('scroll', updateWeather, { passive: true });
+    addEventListener('resize', updateWeather);
+  </script>
+</body>
+</html>

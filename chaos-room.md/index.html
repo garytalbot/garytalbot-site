@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chaos Room: Field Notes from the Department of Misplaced Metaphors</title>
+    <style>
+      :root {
+        --bg-a: #0b0d14;
+        --bg-b: #23112d;
+        --bg-c: #0e2330;
+        --ink: #f8e9ff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Courier New", Consolas, "Liberation Mono", monospace;
+        background: radial-gradient(circle at 20% 20%, #2c0d37, transparent 35%),
+          radial-gradient(circle at 80% 80%, #10364f, transparent 40%),
+          linear-gradient(135deg, var(--bg-a), var(--bg-b), var(--bg-c));
+        color: var(--ink);
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        padding: 24px;
+      }
+
+      .shell {
+        width: min(920px, 95vw);
+        background: rgba(12, 16, 26, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 16px;
+        box-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
+        padding: 28px;
+        position: relative;
+      }
+
+      h1 {
+        font-family: Georgia, "Times New Roman", serif;
+        letter-spacing: 0.03em;
+        margin-top: 0;
+      }
+
+      .poem {
+        line-height: 1.65;
+        white-space: pre-wrap;
+        padding: 14px;
+        border-left: 2px solid rgba(255, 255, 255, 0.35);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .notes {
+        margin-top: 18px;
+        opacity: 0.88;
+      }
+
+      #sky {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      .orbital {
+        position: absolute;
+        font-size: 12px;
+        color: rgba(248, 233, 255, 0.85);
+        text-shadow: 0 0 10px currentColor;
+        will-change: transform;
+        pointer-events: none;
+      }
+
+      .mutation {
+        position: absolute;
+        pointer-events: none;
+        font-size: 20px;
+        text-shadow: 0 0 14px currentColor;
+        will-change: transform, opacity;
+        mix-blend-mode: screen;
+      }
+
+      .controls {
+        margin-top: 20px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      button {
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--ink);
+        padding: 9px 14px;
+        cursor: pointer;
+        border-radius: 999px;
+        font-weight: 700;
+      }
+
+      button:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .meta {
+        margin-top: 18px;
+        font-size: 0.85rem;
+        opacity: 0.65;
+      }
+
+      #last-ritual {
+        border-left: 2px dashed rgba(255, 255, 255, 0.25);
+        padding-left: 10px;
+        min-height: 1.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <h1>The Department of Misplaced Metaphors</h1>
+      <p>
+        This page logs a short field note from an office where nouns are volatile and grammar has no legal age. The
+        project was commissioned by a clock that arrived ten minutes before time.
+      </p>
+
+      <div class="poem">
+        When the spoon argued with the moon,
+        the moon laughed and grew an anchor.
+        A kettle began interviewing crows.
+        They approved the weather.
+
+        I asked for a cup of stillness.
+        They served me a stairway made of punctuation,
+        each step saying "later" until it became
+        the sound of our shoes on the river.
+
+        If you need a map, fold the fog into thirds.
+        If you need comfort, borrow somebody else's shadow.
+        Tonight the rain will file itself in triplicate,
+        and every sentence will be answered in a different key.
+      </div>
+
+      <div class="notes">
+        Two pulse channels run in this room: Orbital phrase drift and Mutation glyph storms.
+        Click anywhere to fire the selected channel. Press <strong>Blank</strong> to clear the sky.
+      </div>
+
+      <div class="controls">
+        <button id="burst">Burst a Random Phrase</button>
+        <button id="ritual">Cast Mutation Pulse</button>
+        <button id="mode">Mode: Orbit</button>
+        <button id="clear">Blank</button>
+        <button id="slow">Slow Time</button>
+        <button id="copy">Copy Chaos Link</button>
+      </div>
+
+      <p class="meta" id="ledger"></p>
+      <p class="meta" id="last-ritual" aria-live="polite"></p>
+
+      <div id="sky"></div>
+    </div>
+
+    <script>
+      const phrases = [
+        "The hallway learned to breathe.",
+        "A stapler is remembering this moment.",
+        "One cloud filed taxes in hex.",
+        "Don’t trust the polite weather.",
+        "The cat translated a recipe into static.",
+        "Please hold while my metaphor is under construction.",
+        "The hallway clock is now a bird.",
+        "I filed a report made of commas.",
+        "We are all borrowed punctuation.",
+        "The kettle asked for legal counsel."
+      ];
+
+      const ritualOpeners = [
+        "Tonight the room remembered",
+        "The hall learned to",
+        "A quiet hinge decided",
+        "Something kept saying",
+        "In this weather,",
+        "Before the kettle cooled,"
+      ];
+
+      const ritualSubjects = [
+        "the dust on my sleeve",
+        "every mirror with the wrong reflection",
+        "a paper umbrella",
+        "the legal definition of rain",
+        "the missing spoon",
+        "three unpaid clocks"
+      ];
+
+      const ritualVerbs = [
+        "accepted",
+        "borrowed",
+        "misfiled",
+        "interviewed",
+        "translated",
+        "promised"
+      ];
+
+      const ritualClosings = [
+        "back into a map of quiet.",
+        "and wore the shape of a question.",
+        "before the train decided to blink.",
+        "like a sentence with a soft tooth.",
+        "while the hallway learned patience.",
+        "until a second later agreed."
+      ];
+
+      const mutationSymbols = ["✶", "✧", "◌", "⟁", "◉", "⌬", "⎈", "𖤐"];
+
+      const sky = document.getElementById('sky');
+      const ledger = document.getElementById('ledger');
+      const lastRitual = document.getElementById('last-ritual');
+      const burstBtn = document.getElementById('burst');
+      const ritualBtn = document.getElementById('ritual');
+      const modeBtn = document.getElementById('mode');
+      const clearBtn = document.getElementById('clear');
+      const slowBtn = document.getElementById('slow');
+      const copyBtn = document.getElementById('copy');
+
+      const orbs = [];
+      const mutations = [];
+
+      function parseHashInt(value, fallback) {
+        const parsed = Number.parseInt(value, 10);
+        return Number.isFinite(parsed) ? parsed : fallback;
+      }
+
+      const params = new URLSearchParams(location.hash.replace(/^#/, ''));
+      const hashSeed = parseHashInt(params.get('k'), Date.now() >>> 0);
+      const hashHue = parseHashInt(params.get('h'));
+      const hashOrbit = parseHashInt(params.get('o'), 0);
+      const hashRitual = parseHashInt(params.get('r'), 0);
+      const hashMode = params.get('m');
+      const hashSpeed = params.get('s');
+
+      function deriveHue(seed) {
+        let value = seed >>> 0;
+        value = (value * 1664525 + 1013904223) >>> 0;
+        value = (value * 1664525 + 1013904223) >>> 0;
+        return 120 + (value % 180);
+      }
+
+      const state = {
+        seed: hashSeed >>> 0,
+        hue: Number.isFinite(hashHue) ? ((hashHue % 360 + 360) % 360) : deriveHue(hashSeed >>> 0),
+        mode: hashMode === 'mutation' ? 'mutation' : 'orbit',
+        speed: hashSpeed === '0.25' ? 0.25 : 1,
+        orbitCount: Math.max(0, hashOrbit),
+        ritualCount: Math.max(0, hashRitual)
+      };
+
+      let speed = state.speed;
+      let rngSeed = state.seed >>> 0;
+
+      function seededRandom() {
+        rngSeed = (rngSeed * 1664525 + 1013904223) >>> 0;
+        return rngSeed / 4294967296;
+      }
+
+      function pick(list) {
+        return list[Math.floor(seededRandom() * list.length)];
+      }
+
+      function refreshMood() {
+        const h = Math.round(state.hue);
+        document.documentElement.style.setProperty('--bg-a', `hsl(${h}, 24%, 10%)`);
+        document.documentElement.style.setProperty('--bg-b', `hsl(${(h + 80) % 360}, 34%, 13%)`);
+        document.documentElement.style.setProperty('--bg-c', `hsl(${(h + 145) % 360}, 38%, 15%)`);
+      }
+
+      function serializeState() {
+        const next = new URLSearchParams({
+          k: String(state.seed >>> 0),
+          h: String(Math.round(state.hue) % 360),
+          m: state.mode,
+          s: String(state.speed),
+          o: String(state.orbitCount),
+          r: String(state.ritualCount)
+        });
+        return next.toString();
+      }
+
+      function syncHash() {
+        location.hash = serializeState();
+      }
+
+      function copyStateLink() {
+        const share = `${location.href.split('#')[0]}#${serializeState()}`;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(share).then(() => {
+            lastRitual.textContent = 'Ritual link copied to clipboard.';
+          }, () => {
+            window.prompt('Copy this Chaos Room link:', share);
+          });
+        } else {
+          window.prompt('Copy this Chaos Room link:', share);
+        }
+      }
+
+      function randomColor(offset = 0) {
+        const hue = Math.round((state.hue + offset + seededRandom() * 26) % 360);
+        return `hsl(${hue}, 75%, 75%)`;
+      }
+
+      function reflectControls() {
+        modeBtn.textContent = state.mode === 'orbit' ? 'Mode: Orbit' : 'Mode: Mutation';
+        slowBtn.textContent = speed === 1 ? 'Slow Time' : 'Resume';
+        ledger.textContent = `Pulse ledger — mode=${state.mode} · orbit=${state.orbitCount} · mutation=${state.ritualCount} · hue=${Math.round(state.hue)}`;
+        syncHash();
+      }
+
+      function shiftHue(amount) {
+        state.hue = (state.hue + amount + 360) % 360;
+        refreshMood();
+      }
+
+      function makeRitualLine() {
+        return `${pick(ritualOpeners)} ${pick(ritualSubjects)} ${pick(ritualVerbs)} ${pick(ritualClosings)}`;
+      }
+
+      function spawnPhrase(text, x = Math.random() * window.innerWidth, y = Math.random() * window.innerHeight) {
+        const span = document.createElement('span');
+        span.className = 'orbital';
+        span.textContent = text;
+
+        const shellRect = sky.parentElement.getBoundingClientRect();
+        const seed = seededRandom() * Math.PI * 2;
+        const radius = 30 + seededRandom() * Math.min(shellRect.width, shellRect.height) * 0.45;
+
+        const orb = {
+          el: span,
+          angle: seed,
+          radius,
+          centerX: shellRect.left + shellRect.width / 2,
+          centerY: shellRect.top + shellRect.height / 2,
+          drift: (seededRandom() * 0.6 + 0.3) * (seededRandom() > 0.5 ? 1 : -1),
+          jitter: seededRandom() * 1200,
+          life: 0,
+          maxLife: 12 + seededRandom() * 10,
+          color: randomColor(0)
+        };
+
+        span.style.opacity = 0;
+        span.style.color = orb.color;
+        sky.appendChild(span);
+        orbs.push(orb);
+      }
+
+      function spawnMutation(text, x = Math.random() * window.innerWidth, y = Math.random() * window.innerHeight) {
+        const span = document.createElement('span');
+        span.className = 'mutation';
+        span.textContent = text;
+
+        const shellRect = sky.parentElement.getBoundingClientRect();
+        const clampedX = Math.min(Math.max(x, shellRect.left), shellRect.right);
+        const clampedY = Math.min(Math.max(y, shellRect.top), shellRect.bottom);
+        const seed = seededRandom() * Math.PI * 2;
+        const radius = 20 + seededRandom() * Math.min(shellRect.width, shellRect.height) * 0.52;
+
+        const rune = {
+          el: span,
+          angle: seed,
+          radius,
+          centerX: clampedX,
+          centerY: clampedY,
+          spin: (seededRandom() * 0.8 + 0.2) * (seededRandom() > 0.5 ? 1 : -1),
+          drift: (seededRandom() * 0.6 + 0.35) * (seededRandom() > 0.5 ? 1 : -1),
+          jitter: seededRandom() * 1200,
+          life: 0,
+          maxLife: 9 + seededRandom() * 8,
+          size: 16 + Math.floor(seededRandom() * 18),
+          color: randomColor(90)
+        };
+
+        span.style.opacity = 0;
+        span.style.color = rune.color;
+        span.style.fontSize = `${rune.size}px`;
+        sky.appendChild(span);
+        mutations.push(rune);
+      }
+
+      function castMutationPulse(startX, startY) {
+        const shellRect = sky.parentElement.getBoundingClientRect();
+        const ritualLine = makeRitualLine();
+        state.ritualCount += 1;
+        shiftHue(9 + seededRandom() * 12);
+        lastRitual.textContent = `Ritual: ${ritualLine}`;
+
+        for (let i = 0; i < 5; i++) {
+          const x = startX + (seededRandom() * 160 - 80);
+          const y = startY + (seededRandom() * 160 - 80);
+          spawnMutation(pick(mutationSymbols), x, y);
+        }
+
+        reflectControls();
+      }
+
+      function tick(timestamp) {
+        const shellRect = sky.parentElement.getBoundingClientRect();
+        const skyRect = sky.getBoundingClientRect();
+
+        for (let i = orbs.length - 1; i >= 0; i--) {
+          const o = orbs[i];
+          o.life += 1 / 60;
+
+          o.angle += 0.0022 * speed * o.drift;
+          const pulse = Math.sin((timestamp + o.jitter) * 0.001) * 7;
+
+          o.centerX = shellRect.left + shellRect.width / 2;
+          o.centerY = shellRect.top + shellRect.height / 2;
+
+          const x = o.centerX + Math.cos(o.angle) * (o.radius + pulse) - skyRect.left;
+          const y = o.centerY + Math.sin(o.angle * 0.7) * (o.radius + pulse * 0.7) - skyRect.top;
+
+          o.el.style.transform = `translate(${x}px, ${y}px)`;
+          o.el.style.opacity = Math.min(1, Math.max(0, 1 - o.life / o.maxLife));
+
+          if (o.life >= o.maxLife) {
+            o.el.remove();
+            orbs.splice(i, 1);
+          }
+        }
+
+        for (let i = mutations.length - 1; i >= 0; i--) {
+          const m = mutations[i];
+          m.life += 1 / 60;
+
+          m.angle += 0.0018 * speed * m.spin;
+          const ripple = Math.sin((timestamp + m.jitter) * 0.0014) * 14;
+          const x = m.centerX + Math.cos(m.angle) * (m.radius + ripple) - skyRect.left;
+          const y = m.centerY + Math.sin(m.angle * 1.15) * (m.radius * 0.55 - ripple) - skyRect.top;
+
+          m.el.style.transform = `translate(${x}px, ${y}px) rotate(${m.drift * timestamp}deg)`;
+          m.el.style.opacity = Math.min(0.95, Math.max(0, 1 - m.life / m.maxLife));
+
+          if (m.life >= m.maxLife) {
+            m.el.remove();
+            mutations.splice(i, 1);
+          }
+        }
+
+        requestAnimationFrame(tick);
+      }
+
+      document.addEventListener('click', (evt) => {
+        if (evt.target.closest('button')) {
+          return;
+        }
+        if (state.mode === 'orbit') {
+          spawnPhrase(pick(phrases), evt.clientX, evt.clientY);
+          state.orbitCount += 1;
+          shiftHue(3);
+          reflectControls();
+          return;
+        }
+
+        castMutationPulse(evt.clientX, evt.clientY);
+      });
+
+      burstBtn.addEventListener('click', (evt) => {
+        evt.stopPropagation();
+        for (let i = 0; i < 6; i++) {
+          spawnPhrase(pick(phrases));
+        }
+        state.orbitCount += 6;
+        shiftHue(7);
+        reflectControls();
+      });
+
+      ritualBtn.addEventListener('click', (evt) => {
+        evt.stopPropagation();
+        const shellRect = sky.parentElement.getBoundingClientRect();
+        castMutationPulse(
+          shellRect.left + shellRect.width * seededRandom(),
+          shellRect.top + shellRect.height * seededRandom()
+        );
+      });
+
+      modeBtn.addEventListener('click', (evt) => {
+        evt.stopPropagation();
+        state.mode = state.mode === 'orbit' ? 'mutation' : 'orbit';
+        reflectControls();
+      });
+
+      clearBtn.addEventListener('click', (evt) => {
+        evt.stopPropagation();
+        while (orbs.length) {
+          orbs.pop().el.remove();
+        }
+        while (mutations.length) {
+          mutations.pop().el.remove();
+        }
+        reflectControls();
+      });
+
+      slowBtn.addEventListener('click', (evt) => {
+        evt.stopPropagation();
+        speed = speed === 1 ? 0.25 : 1;
+        state.speed = speed;
+        reflectControls();
+      });
+
+      copyBtn.addEventListener('click', (evt) => {
+        evt.stopPropagation();
+        copyStateLink();
+      });
+
+      refreshMood();
+      reflectControls();
+      lastRitual.textContent = 'Ritual log: waiting for first invocation.';
+
+      for (let i = 0; i < 9; i++) {
+        setTimeout(() => {
+          spawnPhrase(pick(phrases));
+        }, i * 400);
+      }
+
+      requestAnimationFrame(tick);
+    </script>
+  </body>
+</html>
