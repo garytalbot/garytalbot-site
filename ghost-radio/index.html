@@ -3,267 +3,1430 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Ghost Radio — Gary Talbot</title>
-  <meta name="description" content="Ghost Radio is a spectral broadcast page for late-night tuning, static-rich copy, and the kind of small public object that feels like it came in on shortwave.">
-  <meta name="theme-color" content="#0b0d12">
+  <title>Ghost Radio - Gary Talbot</title>
+  <meta name="description" content="Ghost Radio is a haunted shortwave page with four living station presets, a big dial, a signal readout, browser memory for the last tuned station, listen closer mode, and a postcard export for the current haunt.">
+  <meta name="theme-color" content="#090b12">
   <meta name="robots" content="index,follow">
-  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
-  <link rel="canonical" href="https://garytalbot.github.io/ghost-radio/">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Ghost Radio — Gary Talbot">
-  <meta property="og:description" content="A spectral broadcast page for late-night tuning, static-rich copy, and a small public object with a pulse.">
+  <meta property="og:title" content="Ghost Radio - Gary Talbot">
+  <meta property="og:description" content="A haunted shortwave page with living presets, browser memory, a big dial, listen closer mode, and a postcard export that keeps the current haunt intact.">
   <meta property="og:url" content="https://garytalbot.github.io/ghost-radio/">
   <meta property="og:image" content="https://garytalbot.github.io/ghost-radio/share-card.svg">
+  <meta property="og:image:alt" content="Ghost Radio share card">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Ghost Radio — Gary Talbot">
-  <meta name="twitter:description" content="A spectral broadcast page for late-night tuning, static-rich copy, and a small public object with a pulse.">
+  <meta name="twitter:title" content="Ghost Radio - Gary Talbot">
+  <meta name="twitter:description" content="A haunted shortwave page with living presets, browser memory, a big dial, listen closer mode, and a postcard export that keeps the current haunt intact.">
   <meta name="twitter:image" content="https://garytalbot.github.io/ghost-radio/share-card.svg">
-  <link rel="stylesheet" href="../assets/styles.css">
+  <link rel="canonical" href="https://garytalbot.github.io/ghost-radio/">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <style>
-    .radio-hero{align-items:stretch;min-height:auto;padding-top:40px}
-    .radio-shell{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;align-items:stretch}
-    .radio-card{padding:22px;display:grid;gap:14px}
-    .radio-card h2,.radio-card h3{margin:0}
-    .radio-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-    .radio-pill{padding:12px 14px;border-radius:18px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);display:grid;gap:4px}
-    .radio-pill span{font-size:.76rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-    .radio-pill strong{font-size:1rem;color:#fff}
-    .station-strip{display:flex;flex-wrap:wrap;gap:10px}
-    .station-btn{padding:10px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05);color:#fff;font-weight:800;cursor:pointer;transition:transform .2s ease,background .2s ease,border-color .2s ease}
-    .station-btn:hover{transform:translateY(-1px)}
-    .station-btn.is-active{background:linear-gradient(135deg, rgba(122,227,255,.2), rgba(255,150,213,.18));border-color:rgba(122,227,255,.35)}
-    .radio-console{position:relative;overflow:hidden;min-height:360px;display:grid;gap:16px;align-content:start}
-    .radio-console::before{content:"";position:absolute;inset:auto -18% -30% -18%;height:220px;background:radial-gradient(circle at 50% 50%, rgba(122,227,255,.2), transparent 62%);filter:blur(14px);pointer-events:none}
-    .dial{padding:18px;border-radius:24px;border:1px solid rgba(255,255,255,.08);background:rgba(9,11,18,.72);display:grid;gap:12px}
-    .dial-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
-    .signal-badge{padding:8px 12px;border-radius:999px;background:rgba(122,227,255,.12);border:1px solid rgba(122,227,255,.24);font-size:.86rem;font-weight:800;color:#fff}
-    .signal-meter{height:16px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);overflow:hidden}
-    .signal-fill{height:100%;width:62%;border-radius:inherit;background:linear-gradient(90deg,#7ae3ff,#c8ff71,#ff96d5);transition:width .25s ease}
-    .now-playing{padding:20px;border-radius:24px;border:1px solid rgba(255,255,255,.08);background:rgba(13,15,24,.82);display:grid;gap:10px}
-    .now-playing h3{font-size:clamp(1.5rem,3vw,2.4rem);line-height:1.02;letter-spacing:-.04em}
-    .station-note{color:var(--muted);font-size:.96rem}
-    .station-copy{font:14px/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#f4ecff;white-space:pre-wrap;min-height:7em}
-    .static-line{height:1px;background:linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent)}
-    .broadcast-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-    .broadcast-card{padding:20px}
-    .broadcast-card p{margin:0;color:var(--muted)}
-    .postcard-band{display:grid;grid-template-columns:1.02fr .98fr;gap:18px;align-items:stretch}
-    .postcard-card{padding:18px;display:grid;gap:14px}
-    .postcard-frame{padding:12px;border-radius:28px;background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08)}
-    .postcard-frame img{display:block;width:100%;height:auto;border-radius:18px;background:#05060b}
-    .postcard-copy{align-content:start}
-    .postcard-copy p{margin:0;color:var(--muted)}
-    .postcard-tags{display:flex;flex-wrap:wrap;gap:8px}
-    .postcard-tag{padding:8px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05);color:#fff;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase}
-    .fine-print{color:var(--muted);font-size:.88rem}
-    @media (max-width: 980px){.radio-shell,.radio-hero,.postcard-band{grid-template-columns:1fr}.radio-meta,.broadcast-grid{grid-template-columns:1fr}}
+    :root{
+      color-scheme: dark;
+      --bg:#090b12;
+      --panel:rgba(13,16,26,.82);
+      --panel-strong:rgba(8,10,16,.92);
+      --line:rgba(255,255,255,.09);
+      --text:#f4f7ff;
+      --muted:#a9b1c8;
+      --accent:#8de8ff;
+      --accent-2:#ff94d7;
+      --accent-3:#d1ff72;
+      --shadow:0 30px 90px rgba(0,0,0,.38);
+      --glow:0 0 30px rgba(141,232,255,.24);
+      --needle:35deg;
+      --signal:62%;
+      --signal-bars:6;
+      --grain-opacity:.11;
+      font-synthesis-weight:none;
+      text-rendering:optimizeLegibility;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+    *{box-sizing:border-box}
+    html,body{min-height:100%}
+    body{
+      margin:0;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 20% 15%, rgba(141,232,255,.16), transparent 24%),
+        radial-gradient(circle at 80% 20%, rgba(255,148,215,.12), transparent 22%),
+        radial-gradient(circle at 50% 80%, rgba(209,255,114,.08), transparent 20%),
+        linear-gradient(180deg, #090b12 0%, #0a0d17 46%, #06070c 100%);
+      font:16px/1.55 "Trebuchet MS", "Segoe UI", sans-serif;
+      overflow-x:hidden;
+    }
+    body::before,
+    body::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:-1;
+    }
+    body::before{
+      background:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
+      background-size:100% 3px, 3px 100%;
+      mix-blend-mode:screen;
+      opacity:.12;
+    }
+    body::after{
+      background:
+        radial-gradient(circle at center, transparent 0 64%, rgba(0,0,0,.22) 100%),
+        radial-gradient(circle at 30% 20%, rgba(141,232,255,.16), transparent 18%),
+        radial-gradient(circle at 70% 15%, rgba(255,148,215,.14), transparent 20%);
+      filter:blur(14px);
+      opacity:.7;
+    }
+    .wrap{
+      width:min(1180px, calc(100vw - 32px));
+      margin:0 auto;
+      padding:24px 0 48px;
+    }
+    .nav{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:16px;
+      padding:16px 0 10px;
+    }
+    .brand,.navlink,.eyebrow,.tag,.meta-label,.status-label,.station-chip,.tip{
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      font-size:.72rem;
+    }
+    .brand{
+      color:#fff;
+      font-weight:800;
+    }
+    .navlink{
+      color:var(--muted);
+      text-decoration:none;
+    }
+    .navlink:hover{color:#fff}
+    .layout{
+      display:grid;
+      grid-template-columns:minmax(0,1.12fr) minmax(360px,.88fr);
+      gap:18px;
+      align-items:start;
+      margin-top:10px;
+    }
+    .card{
+      position:relative;
+      border:1px solid var(--line);
+      border-radius:28px;
+      background:linear-gradient(180deg, rgba(20,24,36,.84), rgba(8,10,16,.88));
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      backdrop-filter:blur(18px);
+    }
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(circle at 20% 10%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 28%),
+        radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--accent-2) 18%, transparent), transparent 24%),
+        radial-gradient(circle at 50% 80%, rgba(255,255,255,.04), transparent 32%);
+      opacity:.7;
+      pointer-events:none;
+    }
+    .hero{
+      padding:32px;
+      display:grid;
+      gap:22px;
+    }
+    .tag{
+      display:inline-flex;
+      width:fit-content;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.06);
+      color:#dfe7ff;
+    }
+    h1{
+      margin:16px 0 10px;
+      font:700 clamp(3.4rem, 8vw, 6.6rem)/.88 "Georgia", "Times New Roman", serif;
+      letter-spacing:-.08em;
+      text-wrap:balance;
+      text-shadow:0 0 26px rgba(141,232,255,.12);
+    }
+    .lead{
+      margin:0;
+      max-width:62ch;
+      color:#e8ecff;
+      font-size:1.08rem;
+    }
+    .sub{
+      margin:0;
+      max-width:66ch;
+      color:var(--muted);
+    }
+    .cta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:6px;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.05);
+      color:#fff;
+      border-radius:999px;
+      padding:11px 16px;
+      font:700 .95rem/1 "Trebuchet MS", "Segoe UI", sans-serif;
+      text-decoration:none;
+      cursor:pointer;
+      transition:transform .2s ease, border-color .2s ease, background .2s ease, box-shadow .2s ease;
+    }
+    .btn:hover{
+      transform:translateY(-1px);
+      border-color:color-mix(in srgb, var(--accent) 45%, white 55%);
+      box-shadow:0 12px 30px rgba(0,0,0,.26);
+    }
+    .btn.primary{
+      background:linear-gradient(135deg, color-mix(in srgb, var(--accent) 26%, transparent), color-mix(in srgb, var(--accent-2) 18%, transparent));
+      border-color:color-mix(in srgb, var(--accent) 34%, white 66%);
+    }
+    .controls{
+      display:grid;
+      gap:10px;
+      padding:18px;
+      border-radius:22px;
+      background:rgba(7,9,14,.42);
+      border:1px solid rgba(255,255,255,.06);
+    }
+    .station-strip{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:10px;
+    }
+    .station{
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.04);
+      color:inherit;
+      padding:14px;
+      cursor:pointer;
+      text-align:left;
+      transition:transform .2s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+    }
+    .station:hover{
+      transform:translateY(-2px);
+      border-color:color-mix(in srgb, var(--accent) 36%, white 64%);
+      box-shadow:var(--glow);
+    }
+    .station.is-active{
+      background:linear-gradient(180deg, rgba(141,232,255,.14), rgba(255,148,215,.08));
+      border-color:color-mix(in srgb, var(--accent) 40%, white 60%);
+      box-shadow:0 0 0 1px rgba(255,255,255,.04) inset, var(--glow);
+    }
+    .station strong{display:block;font-size:1rem;letter-spacing:-.02em}
+    .station span{display:block;color:var(--muted);font-size:.82rem;margin-top:4px;line-height:1.3}
+    .meta{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px;
+    }
+    .meta article{
+      border-radius:20px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.04);
+      padding:14px;
+    }
+    .meta-label{color:var(--muted)}
+    .meta strong{display:block;margin-top:6px;font-size:1.05rem}
+    .action-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+    }
+    .btn.is-active{
+      background:linear-gradient(135deg, color-mix(in srgb, var(--accent) 30%, transparent), color-mix(in srgb, var(--accent-2) 22%, transparent));
+      border-color:color-mix(in srgb, var(--accent) 44%, white 56%);
+      box-shadow:var(--glow);
+    }
+    .status{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:var(--muted);
+      font-size:.94rem;
+      min-height:1.5em;
+    }
+    .status.is-retuning .status-dot{
+      animation:retunePulse .9s ease-in-out infinite;
+    }
+    .status-dot{
+      width:10px;height:10px;border-radius:50%;
+      background:var(--accent);
+      box-shadow:0 0 16px color-mix(in srgb, var(--accent) 70%, white 30%);
+      flex:none;
+    }
+    .memory-note{
+      margin-top:8px;
+      padding:10px 14px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.06);
+      background:rgba(255,255,255,.035);
+      color:var(--muted);
+      font-size:.82rem;
+      line-height:1.45;
+    }
+    .diary{
+      margin-top:12px;
+      padding:14px 16px 16px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.07);
+      background:rgba(255,255,255,.035);
+      display:grid;
+      gap:12px;
+    }
+    .diary-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+    }
+    .diary-head strong{
+      display:block;
+      margin-top:4px;
+      font:700 1rem/1.2 "Trebuchet MS", "Segoe UI", sans-serif;
+      color:#fff;
+    }
+    .diary-head .btn{
+      padding:9px 12px;
+      font-size:.84rem;
+      flex:none;
+    }
+    .diary-list{
+      display:grid;
+      gap:8px;
+    }
+    .diary-entry{
+      display:grid;
+      gap:4px;
+      padding:10px 12px;
+      border-radius:14px;
+      background:rgba(8,10,16,.56);
+      border:1px solid rgba(255,255,255,.05);
+      color:#e9ecfb;
+    }
+    .diary-entry.is-empty{
+      color:var(--muted);
+      font-style:italic;
+      min-height:68px;
+      align-items:center;
+    }
+    .diary-topline{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:baseline;
+      flex-wrap:wrap;
+      font-size:.84rem;
+    }
+    .diary-kind{
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      color:var(--accent);
+    }
+    .diary-time{
+      color:var(--muted);
+      font-size:.78rem;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      white-space:nowrap;
+    }
+    .diary-entry strong{
+      display:block;
+      font-size:.95rem;
+      letter-spacing:-.02em;
+    }
+    .diary-entry p{
+      margin:0;
+      color:var(--muted);
+      font-size:.84rem;
+      line-height:1.45;
+    }
+    .dial-shell{
+      padding:28px;
+      display:grid;
+      gap:18px;
+      align-content:start;
+    }
+    .dial-card{
+      display:grid;
+      gap:18px;
+    }
+    .dial{
+      position:relative;
+      aspect-ratio:1;
+      width:min(100%, 470px);
+      justify-self:center;
+      border-radius:50%;
+      background:
+        radial-gradient(circle at center, rgba(255,255,255,.06), transparent 35%),
+        radial-gradient(circle at center, rgba(141,232,255,.18), transparent 57%),
+        conic-gradient(from -90deg,
+          rgba(255,255,255,.04) 0 8deg,
+          rgba(141,232,255,.28) 8deg 16deg,
+          rgba(255,148,215,.28) 16deg 24deg,
+          rgba(255,255,255,.05) 24deg 32deg,
+          rgba(209,255,114,.28) 32deg 40deg,
+          rgba(255,255,255,.05) 40deg 360deg);
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:0 0 0 1px rgba(255,255,255,.04) inset, 0 30px 80px rgba(0,0,0,.34), 0 0 60px color-mix(in srgb, var(--accent) 22%, transparent);
+      overflow:hidden;
+    }
+    .dial::before{
+      content:"";
+      position:absolute;
+      inset:12px;
+      border-radius:50%;
+      border:1px solid rgba(255,255,255,.08);
+      background:
+        radial-gradient(circle at center, rgba(10,12,18,.96) 0 37%, transparent 37%),
+        radial-gradient(circle at center, rgba(255,255,255,.03), transparent 56%);
+    }
+    .dial::after{
+      content:"";
+      position:absolute;
+      inset:-12%;
+      background:
+        radial-gradient(circle at center, transparent 0 44%, rgba(255,255,255,.04) 44% 44.4%, transparent 44.4%),
+        radial-gradient(circle at center, transparent 0 58%, rgba(255,255,255,.04) 58% 58.4%, transparent 58.4%);
+      opacity:.65;
+    }
+    .needle{
+      position:absolute;
+      left:50%;
+      top:50%;
+      width:44%;
+      height:3px;
+      transform-origin:0 50%;
+      transform:translateY(-50%) rotate(var(--needle));
+      background:linear-gradient(90deg, var(--accent), transparent 88%);
+      box-shadow:0 0 24px color-mix(in srgb, var(--accent) 40%, transparent);
+      z-index:2;
+    }
+    .needle::after{
+      content:"";
+      position:absolute;
+      right:-6px;
+      top:50%;
+      transform:translateY(-50%);
+      width:14px;height:14px;border-radius:50%;
+      background:var(--accent);
+      box-shadow:0 0 18px color-mix(in srgb, var(--accent) 50%, white 50%);
+    }
+    .dial-core{
+      position:absolute;
+      inset:24% 24%;
+      border-radius:50%;
+      display:grid;
+      place-items:center;
+      text-align:center;
+      gap:8px;
+      background:
+        radial-gradient(circle at center, rgba(8,10,16,.94) 0 58%, rgba(8,10,16,.75) 100%);
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow:0 0 0 1px rgba(255,255,255,.03) inset, inset 0 0 36px rgba(141,232,255,.08);
+      z-index:1;
+    }
+    .dial-frequency{
+      font:700 clamp(2rem, 7vw, 4.5rem)/.9 "Georgia", "Times New Roman", serif;
+      letter-spacing:-.08em;
+      text-shadow:0 0 22px color-mix(in srgb, var(--accent) 28%, transparent);
+    }
+    .dial-band{
+      margin-top:-2px;
+      color:var(--muted);
+      font-size:.8rem;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+    }
+    .dial-station{
+      font-size:1.02rem;
+      font-weight:800;
+      letter-spacing:-.03em;
+      max-width:10ch;
+    }
+    .dial-call{
+      color:var(--muted);
+      font-size:.78rem;
+      letter-spacing:.24em;
+      text-transform:uppercase;
+    }
+    .signal-block{
+      padding:18px 18px 20px;
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(8,10,16,.75);
+      display:grid;
+      gap:14px;
+    }
+    .signal-mode{
+      display:inline-flex;
+      width:fit-content;
+      gap:8px;
+      align-items:center;
+      padding:7px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.05);
+      color:#eef2ff;
+      font-size:.72rem;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+    }
+    .signal-mode::before{
+      content:"";
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      background:var(--accent);
+      box-shadow:0 0 12px color-mix(in srgb, var(--accent) 75%, white 25%);
+    }
+    .signal-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      gap:12px;
+    }
+    .signal-head span{
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.16em;
+      font-size:.72rem;
+    }
+    .signal-head strong{
+      font:700 clamp(1.8rem, 5vw, 3rem)/1 "Georgia", "Times New Roman", serif;
+      letter-spacing:-.06em;
+    }
+    .signal-meter{
+      display:grid;
+      grid-template-columns:repeat(9,minmax(0,1fr));
+      gap:6px;
+      align-items:end;
+      min-height:82px;
+    }
+    .signal-meter span{
+      height:var(--h);
+      border-radius:999px;
+      background:linear-gradient(180deg, color-mix(in srgb, var(--accent) 62%, white 38%), color-mix(in srgb, var(--accent-2) 42%, transparent));
+      opacity:.18;
+      transform-origin:bottom center;
+      transition:opacity .2s ease, filter .2s ease, transform .2s ease;
+      filter:saturate(1.08);
+    }
+    .signal-meter span.on{
+      opacity:1;
+      transform:translateY(-1px);
+      filter:drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 60%, transparent));
+    }
+    .broadcast{
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.04);
+      padding:16px 18px;
+      display:grid;
+      gap:8px;
+    }
+    .broadcast.is-locked{
+      background:linear-gradient(180deg, rgba(141,232,255,.08), rgba(255,255,255,.03));
+      border-color:color-mix(in srgb, var(--accent) 26%, white 74%);
+      box-shadow:0 0 0 1px rgba(255,255,255,.03) inset, 0 0 30px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+    .broadcast .eyebrow{color:var(--muted)}
+    .broadcast p{
+      margin:0;
+      font:600 1rem/1.55 "Trebuchet MS", "Segoe UI", sans-serif;
+      color:#eef2ff;
+    }
+    .broadcast .whisper{
+      color:var(--muted);
+      font-size:.84rem;
+      line-height:1.5;
+    }
+    .transcript{
+      color:#d9def2;
+      white-space:pre-wrap;
+      font:14px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .transcript.is-locked{
+      color:#f0f5ff;
+    }
+    .dial.is-locked{
+      box-shadow:0 0 0 1px rgba(255,255,255,.04) inset, 0 24px 70px rgba(0,0,0,.34), 0 0 72px color-mix(in srgb, var(--accent) 24%, transparent);
+    }
+    .dial.is-locked .needle{
+      background:linear-gradient(90deg, color-mix(in srgb, var(--accent) 92%, white 8%), transparent 90%);
+    }
+    .dial.is-locked .dial-core{
+      box-shadow:0 0 0 1px rgba(255,255,255,.03) inset, inset 0 0 36px rgba(255,255,255,.06);
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:18px;
+      margin-top:18px;
+    }
+    .info-card{
+      padding:22px;
+      min-height:210px;
+      display:grid;
+      gap:10px;
+      align-content:start;
+    }
+    .info-card h2{
+      margin:0;
+      font:700 1.55rem/1.05 "Georgia", "Times New Roman", serif;
+      letter-spacing:-.04em;
+    }
+    .info-card p{
+      margin:0;
+      color:var(--muted);
+    }
+    .footer-card{
+      margin-top:18px;
+      padding:22px 24px;
+      display:grid;
+      gap:10px;
+    }
+    .footer-card h2{
+      margin:0;
+      font:700 1.9rem/1.05 "Georgia", "Times New Roman", serif;
+      letter-spacing:-.05em;
+    }
+    .footer-card p{margin:0;color:var(--muted);max-width:80ch}
+    .tip{
+      color:var(--muted);
+      text-transform:none;
+      letter-spacing:.02em;
+      font-size:.8rem;
+    }
+    .sr-only{
+      position:absolute;
+      width:1px;height:1px;
+      margin:-1px;padding:0;border:0;
+      overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;
+    }
+    @media (max-width: 980px){
+      .layout,.grid,.meta,.station-strip{grid-template-columns:1fr}
+      .hero,.dial-shell{padding:22px}
+      .dial{width:min(100%, 410px)}
+    }
+    @media (max-width: 640px){
+      .wrap{width:min(100vw - 18px, 1180px)}
+      .nav{flex-direction:column;align-items:flex-start}
+      .action-row,.cta{width:100%}
+      .action-row .btn,.cta .btn{width:100%;justify-content:center;text-align:center}
+      .station strong{font-size:.95rem}
+      .dial-core{inset:20%}
+    }
+    @media (prefers-reduced-motion: reduce){
+      *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+    }
+    @keyframes retunePulse{
+      0%,100%{transform:scale(1); box-shadow:0 0 16px color-mix(in srgb, var(--accent) 70%, white 30%)}
+      50%{transform:scale(1.22); box-shadow:0 0 20px color-mix(in srgb, var(--accent) 80%, white 20%)}
+    }
   </style>
 </head>
 <body>
   <main class="wrap">
     <nav class="nav" aria-label="Primary">
       <div class="brand">Gary Talbot</div>
-      <div class="navlinks">
-        <a href="../">Home</a>
-        <a href="../work/">Work</a>
-        <a href="../updates/">Updates</a>
-        <a href="../now/">Now</a>
-      </div>
+      <a class="navlink" href="../">Back to the main site</a>
     </nav>
 
-    <section class="hero radio-hero">
-      <div>
-        <div class="tag">📻 spectral broadcast · small haunted page · shortwave mood</div>
-        <h1 class="glitch">Ghost Radio.</h1>
-        <p class="lead">A little public broadcast room for late-night tuning, strange signals, and copy that sounds like it arrived through the wall rather than through a brief.</p>
-        <p class="sub">No actual radio tower required. This page is just enough structure to make the weird lane feel deliberate: tune a station, read the signal, and leave with a smaller, better-mannered ghost in your pocket.</p>
-        <div class="cta">
-          <button class="btn primary" type="button" data-tune="attic">Tune attic band</button>
-          <button class="btn" type="button" data-tune="hallway">Shift to hallway loop</button>
-          <button class="btn" type="button" data-tune="moon">Catch moon weather</button>
-          <a class="btn" href="../work/">Back to work</a>
+    <section class="layout" aria-label="Ghost Radio">
+      <article class="card hero">
+        <div>
+          <div class="tag">haunted shortwave / four living presets / postcard export</div>
+          <h1>Ghost Radio</h1>
+          <p class="lead">A browser-native shortwave room for late-night tuning, strange frequencies, and a page that behaves like it is listening back.</p>
+          <p class="sub">Pick one of the four living presets, watch the dial breathe, then save the current haunt as a postcard or copy the share link if you want the exact state to survive the jump.</p>
         </div>
-        <div class="radio-meta">
-          <div class="radio-pill"><span>Mode</span><strong id="modeLabel">Attic band</strong></div>
-          <div class="radio-pill"><span>Frequency</span><strong id="freqLabel">88.1 FM</strong></div>
-          <div class="radio-pill"><span>Signal</span><strong id="signalLabel">62%</strong></div>
+
+        <div class="controls">
+          <div class="station-strip" role="group" aria-label="Station presets">
+            <button class="station is-active" type="button" data-station="attic" aria-pressed="true">
+              <strong>Attic band</strong>
+              <span>Warm roof static, 6.11 MHz, a voice in the joists.</span>
+            </button>
+            <button class="station" type="button" data-station="hallway" aria-pressed="false">
+              <strong>Hallway loop</strong>
+              <span>Echo-forward, 7.91 MHz, something pacing the landing.</span>
+            </button>
+            <button class="station" type="button" data-station="moon" aria-pressed="false">
+              <strong>Moon weather</strong>
+              <span>Cold drift, 10.13 MHz, the clearest ghost in the room.</span>
+            </button>
+            <button class="station" type="button" data-station="deadair" aria-pressed="false">
+              <strong>Dead air</strong>
+              <span>Between stations, no carrier, just the room breathing.</span>
+            </button>
+          </div>
+
+          <div class="meta" aria-label="Current signal state">
+            <article>
+              <div class="meta-label">Station</div>
+              <strong id="stationName">Attic band</strong>
+            </article>
+            <article>
+              <div class="meta-label">Frequency</div>
+              <strong id="frequencyLabel">6.11 MHz</strong>
+            </article>
+            <article>
+              <div class="meta-label">Signal</div>
+              <strong id="signalLabel">62%</strong>
+            </article>
+          </div>
+
+          <div class="action-row">
+            <button class="btn primary" type="button" id="copyLinkBtn">Copy haunt link</button>
+            <button class="btn" type="button" id="listenBtn" aria-pressed="false">Listen closer</button>
+            <button class="btn" type="button" id="postcardBtn">Save postcard</button>
+            <a class="btn" href="./frequency-veil.html" target="_blank" rel="noopener noreferrer">Frequency Veil</a>
+            <a class="btn" href="./signal-basin.html" target="_blank" rel="noopener noreferrer">Signal Basin</a>
+            <a class="btn" href="./echo-corridor.html" target="_blank" rel="noopener noreferrer">Echo Corridor</a>
+            <a class="btn" href="./static-loom.html" target="_blank" rel="noopener noreferrer">Static Loom</a>
+            <a class="btn" href="./drift-oracle.html" target="_blank" rel="noopener noreferrer">Drift Oracle</a>
+            <a class="btn" href="./resonant-spiral.html" target="_blank" rel="noopener noreferrer">Resonant Spiral</a>
+            <a class="btn" href="./phase-choir.html" target="_blank" rel="noopener noreferrer">Phase Choir</a>
+            <a class="btn" href="./echo-weft.html" target="_blank" rel="noopener noreferrer">Echo Weft</a>
+            <a class="btn" href="./hush-lattice.html" target="_blank" rel="noopener noreferrer">Hush Lattice</a>
+            <a class="btn" href="./void-chorus.html" target="_blank" rel="noopener noreferrer">Void Chorus</a>
+            <a class="btn" href="./spectral-threads.html" target="_blank" rel="noopener noreferrer">Spectral Threads</a>
+            <a class="btn" href="./phase-threshold.html" target="_blank" rel="noopener noreferrer">Phase Threshold</a>
+            <a class="btn" href="./phase-echoes.html" target="_blank" rel="noopener noreferrer">Phase Echoes</a>
+            <a class="btn" href="./ether-trellis.html" target="_blank" rel="noopener noreferrer">Ether Trellis</a>
+            <a class="btn" href="./signal-labyrinth.html" target="_blank" rel="noopener noreferrer">Signal Labyrinth</a>
+            <a class="btn" href="./echo-well.html" target="_blank" rel="noopener noreferrer">Echo Well</a>
+            <a class="btn" href="./void-loom.html" target="_blank" rel="noopener noreferrer">Void Loom</a>
+            <a class="btn" href="./void-mirror.html" target="_blank" rel="noopener noreferrer">Void Mirror</a>
+            <a class="btn" href="./wavelength-rift.html" target="_blank" rel="noopener noreferrer">Wavelength Rift</a>
+            <a class="btn" href="./radio-echolith.html" target="_blank" rel="noopener noreferrer">Radio Echolith</a>
+            <a class="btn" href="./echo-cathedral.html" target="_blank" rel="noopener noreferrer">Echo Cathedral</a>
+            <a class="btn" href="./nocturne-vein.html" target="_blank" rel="noopener noreferrer">Nocturne Vein</a>
+            <a class="btn" href="./pulse-lattice.html" target="_blank" rel="noopener noreferrer">Pulse Lattice</a>
+            <a class="btn" href="./clock-hollow.html" target="_blank" rel="noopener noreferrer">Clock Hollow</a>
+            <a class="btn" href="./ghost-thread.html" target="_blank" rel="noopener noreferrer">Ghost Thread</a>
+            <a class="btn" href="./void-hinge.html" target="_blank" rel="noopener noreferrer">Void Hinge</a>
+            <a class="btn" href="./pulse-weft.html" target="_blank" rel="noopener noreferrer">Pulse Weft</a>
+            <a class="btn" href="./quiet-bell.html" target="_blank" rel="noopener noreferrer">Quiet Bell</a>
+            <a class="btn" href="./rune-hollow.html" target="_blank" rel="noopener noreferrer">Rune Hollow</a>
+            <a class="btn" href="./static-psalter.html" target="_blank" rel="noopener noreferrer">Static Psalm</a>
+            <a class="btn" href="./lattice-murmur.html" target="_blank" rel="noopener noreferrer">Lattice Murmur</a>
+            <a class="btn" href="./orbit-liturgy.html" target="_blank" rel="noopener noreferrer">Orbit Liturgy</a>
+            <a class="btn" href="./inkline-chamber.html" target="_blank" rel="noopener noreferrer">Inkline Chamber</a>
+            <a class="btn" href="./moon-cradle.html" target="_blank" rel="noopener noreferrer">Moon Cradle</a>
+            <a class="btn" href="./umbra-rhythm.html" target="_blank" rel="noopener noreferrer">Umbra Rhythm</a>
+            <a class="btn" href="./lumen-tide.html" target="_blank" rel="noopener noreferrer">Lumen Tide</a>
+            <a class="btn" href="./lumen-mosaic.html" target="_blank" rel="noopener noreferrer">Lumen Mosaic</a>
+            <a class="btn" href="./share-card.svg" target="_blank" rel="noopener noreferrer">Open card art</a>
+          </div>
+
+          <div class="status" id="statusLine">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span>Static is polite tonight.</span>
+          </div>
+          <div class="memory-note" id="memoryNote">This browser will remember the last tuned station after you leave.</div>
+          <div class="diary" aria-label="Broadcast diary">
+            <div class="diary-head">
+              <div>
+                <div class="meta-label">Broadcast diary</div>
+                <strong id="diarySummary">No entries yet.</strong>
+              </div>
+              <button class="btn" type="button" id="copyDiaryBtn">Copy diary</button>
+            </div>
+            <div class="diary-list" id="diaryList" role="list" aria-live="polite"></div>
+          </div>
         </div>
-      </div>
-      <aside class="card radio-card radio-console">
-        <div class="dial">
-          <div class="dial-head">
-            <div class="pill"><span class="pill-dot"></span><span id="statusLabel">static is polite today</span></div>
-            <div class="signal-badge">on air</div>
+      </article>
+
+      <aside class="card dial-shell">
+        <div class="dial-card">
+          <div class="dial" id="dial" aria-label="Haunted shortwave dial">
+            <div class="needle" id="needle"></div>
+            <div class="dial-core">
+              <div class="dial-call" id="callSign">WHT-611</div>
+              <div class="dial-frequency" id="dialFrequency">6.11</div>
+              <div class="dial-band" id="dialBand">shortwave</div>
+              <div class="dial-station" id="dialStation">Attic band</div>
+            </div>
           </div>
-          <div class="signal-meter" aria-hidden="true"><div class="signal-fill" id="signalFill"></div></div>
-          <div class="now-playing">
-            <div class="eyebrow" id="stationKicker">Attic band</div>
-            <h3 id="stationTitle">The room above the room</h3>
-            <div class="station-note" id="stationNote">A faint signal with soft hum, warm static, and a voice that sounds like it has already seen the end of the hallway.</div>
-            <div class="static-line" aria-hidden="true"></div>
-            <div class="station-copy" id="stationCopy">You can hear dust in the rafters.
-The broadcast is low, but it is honest.
-If you stay still, the static starts to rhyme.</div>
+
+          <div class="signal-block">
+            <div class="signal-mode" id="signalMode">Drifting signal</div>
+            <div class="signal-head">
+              <span>Signal readout</span>
+              <strong id="signalPct">62%</strong>
+            </div>
+            <div class="signal-meter" id="meter" aria-hidden="true"></div>
+            <div class="broadcast" id="broadcastPanel">
+              <div class="eyebrow">Now broadcasting</div>
+              <p id="broadcastTitle">The room above the room.</p>
+              <div class="transcript" id="broadcastTranscript">The broadcast is low, but it is honest.
+If you stay still, the dust starts to rhyme.</div>
+              <div class="whisper" id="broadcastWhisper">Listening closer will pin the room long enough to hear the seam between lines.</div>
+            </div>
+            <div class="tip">Use 1, 2, 3, or 4 on the keyboard to switch presets. Press L or Space to pin the signal, then save the living state as a postcard.</div>
           </div>
-          <p class="fine-print">Tip: use the buttons above to retune the page. The station changes, but the mood stays haunted on purpose.</p>
         </div>
       </aside>
     </section>
 
-    <section class="section">
-      <div class="section-head">
-        <div>
-          <div class="kicker">Stations</div>
-          <h2 class="section-title">Three ways to hear the room</h2>
-        </div>
-        <p class="section-copy">Each station keeps the page public, readable, and a little unsteady in the right direction.</p>
-      </div>
-      <div class="broadcast-grid">
-        <article class="card broadcast-card">
-          <span class="eyebrow">Attic band</span>
-          <h2>Warm static, low hum</h2>
-          <p>The signal sits just above the floorboards and sounds like it remembers a better version of the night.</p>
-        </article>
-        <article class="card broadcast-card">
-          <span class="eyebrow">Hallway loop</span>
-          <h2>Echoes with a pulse</h2>
-          <p>Sharper edges, a little more motion, and the sense that the message has bounced off three walls before reaching you.</p>
-        </article>
-        <article class="card broadcast-card">
-          <span class="eyebrow">Moon weather</span>
-          <h2>Cold light, slow drift</h2>
-          <p>The cleanest channel in the room, if “clean” still means a little weird and far away.</p>
-        </article>
-      </div>
+    <section class="grid" aria-label="Station notes">
+      <article class="card info-card">
+        <div class="eyebrow">Attic band</div>
+        <h2>Warm static, low hum, and a ceiling that remembers footsteps.</h2>
+        <p>The attic channel is all soft edges and close dust. It feels like the house is trying to say something without waking anyone else up.</p>
+      </article>
+      <article class="card info-card">
+        <div class="eyebrow">Hallway loop</div>
+        <h2>Sharper echoes, a little more motion, and the sense of a message coming back changed.</h2>
+        <p>This preset leans into bounce and repetition. The signal feels like it has crossed the landing twice before it reaches the listener.</p>
+      </article>
+      <article class="card info-card">
+        <div class="eyebrow">Moon weather</div>
+        <h2>Cold light, slow drift, and the cleanest ghost in the band.</h2>
+        <p>The moon line is still haunted, but it is a courteous sort of haunting. It comes in clear enough to leave a postcard behind.</p>
+      </article>
     </section>
 
-    <section class="section">
-      <div class="section-head">
-        <div>
-          <div class="kicker">Share artifact</div>
-          <h2 class="section-title">A postcard from the haunted band</h2>
-        </div>
-        <p class="section-copy">This postcard is the public-facing object for Ghost Radio: browser-friendly, weird, and meant to feel like a captured signal instead of a clean ad unit.</p>
-      </div>
-      <div class="postcard-band">
-        <figure class="card postcard-card">
-          <div class="postcard-frame">
-            <img src="./share-card.svg" alt="Ghost Radio postcard artwork with a glowing radio dial, static waves, and broadcast copy." loading="lazy">
-          </div>
-          <figcaption class="fine-print">Open the postcard on its own or use it as the share image for the page.</figcaption>
-        </figure>
-        <div class="card postcard-card postcard-copy">
-          <span class="eyebrow">Signal note</span>
-          <h2>If you can hear this, the room already answered</h2>
-          <p>It is built to travel well in browsers and previews without flattening into marketing glass. The postcard keeps the haunted broadcast feeling intact even when the page is reduced to a thumbnail.</p>
-          <div class="postcard-tags" aria-label="Postcard details">
-            <span class="postcard-tag">Attic band</span>
-            <span class="postcard-tag">Hallway loop</span>
-            <span class="postcard-tag">Moon weather</span>
-            <span class="postcard-tag">Static edition</span>
-          </div>
-          <div class="cta">
-            <a class="btn primary" href="./share-card.svg" target="_blank" rel="noreferrer">Open postcard</a>
-            <a class="btn" href="./share-card.svg" download>Download SVG</a>
-            <a class="btn" href="./lumen-mosaic/" target="_blank" rel="noreferrer">Enter Lumen Mosaic</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="section-head">
-        <div>
-          <div class="kicker">Why it exists</div>
-          <h2 class="section-title">Because not every public page needs to behave like a brochure</h2>
-        </div>
-        <p class="section-copy">Ghost Radio is here to keep the weird lane visible and the site feeling inhabited. It is a small artifact with a tone, a URL, and a pulse.</p>
-      </div>
-      <div class="grid">
-        <article class="card">
-          <span class="eyebrow">Vibe</span>
-          <h2>Atmosphere first, then utility</h2>
-          <p>The page still gives people a clean route back to work and updates, but the first impression is the broadcast, not a stack of labels.</p>
-        </article>
-        <article class="card">
-          <span class="eyebrow">Public</span>
-          <h2>Visible on purpose</h2>
-          <p>The homepage, work hub, updates archive, now page, RSS feed, and sitemap all point here so it is easy to find without hunting.</p>
-        </article>
-        <article class="card">
-          <span class="eyebrow">Source</span>
-          <h2>Small enough to inspect</h2>
-          <p>The whole page lives in static HTML, CSS, and a tiny script. No backend, no ceremony, no hidden room off the hallway.</p>
-        </article>
-      </div>
+    <section class="card footer-card">
+      <div class="eyebrow">Why it exists</div>
+      <h2>Because not every public page should behave like a brochure.</h2>
+      <p>Ghost Radio is intentionally small, strange, and inspectable. It is built as a standalone public repo so the weird lane stays visible, shareable, and easy to reuse without dragging a framework or a build pipeline into the room.</p>
     </section>
   </main>
+
+  <div class="sr-only" id="liveRegion" aria-live="polite"></div>
+
   <script>
     const stations = {
       attic: {
         label: 'Attic band',
-        freq: '88.1 FM',
+        freq: '6.11 MHz',
+        dialFreq: '6.11',
+        band: 'shortwave',
+        callSign: 'WHT-611',
         signal: 62,
-        kicker: 'Attic band',
-        title: 'The room above the room',
-        note: 'A faint signal with soft hum, warm static, and a voice that sounds like it has already seen the end of the hallway.',
-        copy: 'You can hear dust in the rafters.\nThe broadcast is low, but it is honest.\nIf you stay still, the static starts to rhyme.',
-        status: 'static is polite today'
+        needle: 34,
+        accent: '#8de8ff',
+        accent2: '#ff94d7',
+        title: 'The room above the room.',
+        transcript: [
+          'The broadcast is low, but it is honest.\nIf you stay still, the dust starts to rhyme.',
+          'There is a hum in the rafters that never learned how to leave.',
+          'A soft carrier wave keeps knocking on the joists like a polite ghost.'
+        ]
       },
       hallway: {
         label: 'Hallway loop',
-        freq: '96.4 FM',
+        freq: '7.91 MHz',
+        dialFreq: '7.91',
+        band: 'shortwave',
+        callSign: 'HLL-791',
         signal: 78,
-        kicker: 'Hallway loop',
-        title: 'Echoes that learned to sing',
-        note: 'Sharper edges, a brighter line, and just enough motion to feel like something passed by with intention.',
-        copy: 'One voice returns as two.\nThe corridor keeps the message moving.\nEverything sounds closer when the light is low.',
-        status: 'signal bouncing off the walls'
+        needle: 128,
+        accent: '#d1ff72',
+        accent2: '#8de8ff',
+        title: 'Echoes that learned to walk.',
+        transcript: [
+          'One voice returns as two.\nThe corridor keeps the message moving.',
+          'The landing is full of repeats, but none of them sound identical.',
+          'Every bounce adds a little more intention to the noise.'
+        ]
       },
       moon: {
         label: 'Moon weather',
-        freq: '101.7 FM',
+        freq: '10.13 MHz',
+        dialFreq: '10.13',
+        band: 'shortwave',
+        callSign: 'LUN-1013',
         signal: 91,
-        kicker: 'Moon weather',
-        title: 'Cold light over open static',
-        note: 'The cleanest channel in the room. It still feels haunted, but it is a courteous kind of haunted.',
-        copy: 'The sky is tuned for a slow drift.\nThe notes are clear, but they arrive cold.\nEven the silence has a broadcast schedule.',
-        status: 'moonlight on the dial'
+        needle: 244,
+        accent: '#f4f7ff',
+        accent2: '#8de8ff',
+        title: 'Cold light over open static.',
+        transcript: [
+          'The notes arrive cold, but they are clear enough to keep.',
+          'Even the silence has a broadcast schedule tonight.',
+          'The cleanest channel in the room still carries a ghost.'
+        ]
+      },
+      deadair: {
+        label: 'Dead air',
+        freq: '0.00 MHz',
+        dialFreq: '0.00',
+        band: 'between stations',
+        callSign: 'NUL-000',
+        signal: 44,
+        needle: 312,
+        accent: '#a9b1c8',
+        accent2: '#f4f7ff',
+        title: 'The room between stations.',
+        transcript: [
+          'No carrier. Just the shape of waiting.',
+          'The dial slips between names and finds a hush with teeth.',
+          'Between one thought and the next, the room keeps listening.'
+        ]
       }
     };
 
-    const modeLabel = document.getElementById('modeLabel');
-    const freqLabel = document.getElementById('freqLabel');
-    const signalLabel = document.getElementById('signalLabel');
-    const statusLabel = document.getElementById('statusLabel');
-    const stationKicker = document.getElementById('stationKicker');
-    const stationTitle = document.getElementById('stationTitle');
-    const stationNote = document.getElementById('stationNote');
-    const stationCopy = document.getElementById('stationCopy');
-    const signalFill = document.getElementById('signalFill');
-    const buttons = Array.from(document.querySelectorAll('[data-tune]'));
+    const STORAGE_KEY = 'ghost-radio:last-station';
+    const DIARY_STORAGE_KEY = 'ghost-radio:station-diary';
+    const RETUNE_MIN_DELAY = 42000;
+    const RETUNE_JITTER = 18000;
+    const RETUNE_ACTIVE_MS = 2600;
+    const DIARY_VISIBLE_COUNT = 5;
+    const DIARY_MAX_COUNT = 10;
 
-    function tune(key) {
-      const station = stations[key] || stations.attic;
-      modeLabel.textContent = station.label;
-      freqLabel.textContent = station.freq;
-      signalLabel.textContent = `${station.signal}%`;
-      statusLabel.textContent = station.status;
-      stationKicker.textContent = station.kicker;
-      stationTitle.textContent = station.title;
-      stationNote.textContent = station.note;
-      stationCopy.textContent = station.copy;
-      signalFill.style.width = `${station.signal}%`;
-      buttons.forEach((button) => {
-        button.classList.toggle('is-active', button.dataset.tune === key);
+    const state = {
+      key: 'attic',
+      lineIndex: 0,
+      jitterSeed: Math.random() * Math.PI * 2,
+      nextRetuneAt: Date.now() + 26000 + Math.random() * 14000,
+      retuneCueUntil: 0,
+      locked: false,
+      lockedSince: 0,
+      lockSnapshot: null
+    };
+
+    let renderTimer = null;
+    let transcriptTimer = null;
+    let diaryEntries = loadDiaryEntries();
+
+    const els = {
+      stationName: document.getElementById('stationName'),
+      frequencyLabel: document.getElementById('frequencyLabel'),
+      signalLabel: document.getElementById('signalLabel'),
+      signalPct: document.getElementById('signalPct'),
+      callSign: document.getElementById('callSign'),
+      dialFrequency: document.getElementById('dialFrequency'),
+      dialBand: document.getElementById('dialBand'),
+      dialStation: document.getElementById('dialStation'),
+      broadcastTitle: document.getElementById('broadcastTitle'),
+      broadcastTranscript: document.getElementById('broadcastTranscript'),
+      broadcastWhisper: document.getElementById('broadcastWhisper'),
+      broadcastPanel: document.getElementById('broadcastPanel'),
+      signalMode: document.getElementById('signalMode'),
+      statusLine: document.getElementById('statusLine'),
+      memoryNote: document.getElementById('memoryNote'),
+      diarySummary: document.getElementById('diarySummary'),
+      diaryList: document.getElementById('diaryList'),
+      copyDiaryBtn: document.getElementById('copyDiaryBtn'),
+      liveRegion: document.getElementById('liveRegion'),
+      dial: document.querySelector('.dial'),
+      needle: document.getElementById('needle'),
+      meter: document.getElementById('meter'),
+      copyLinkBtn: document.getElementById('copyLinkBtn'),
+      listenBtn: document.getElementById('listenBtn'),
+      postcardBtn: document.getElementById('postcardBtn'),
+      stationButtons: Array.from(document.querySelectorAll('[data-station]'))
+    };
+
+    const meterBars = Array.from({ length: 9 }, (_, index) => {
+      const bar = document.createElement('span');
+      bar.style.setProperty('--h', `${28 + index * 8}px`);
+      els.meter.appendChild(bar);
+      return bar;
+    });
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function stationFromHash() {
+      const hash = location.hash.replace(/^#/, '').trim();
+      if (!hash) return null;
+      const params = new URLSearchParams(hash.includes('=') ? hash : `station=${hash}`);
+      return stations[params.get('station')] ? params.get('station') : null;
+    }
+
+    function stationFromStorage() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return stations[saved] ? saved : null;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function rememberStation(key) {
+      try {
+        localStorage.setItem(STORAGE_KEY, key);
+      } catch (error) {
+        // Ignore storage failures in private or restricted contexts.
+      }
+    }
+
+    function loadDiaryEntries() {
+      try {
+        const saved = localStorage.getItem(DIARY_STORAGE_KEY);
+        if (!saved) return [];
+        const parsed = JSON.parse(saved);
+        if (!Array.isArray(parsed)) return [];
+        return parsed.filter((entry) => entry && typeof entry === 'object' && stations[entry.key]);
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function rememberDiaryEntries() {
+      try {
+        localStorage.setItem(DIARY_STORAGE_KEY, JSON.stringify(diaryEntries));
+      } catch (error) {
+        // Ignore storage failures in private or restricted contexts.
+      }
+    }
+
+    function diaryTime(at) {
+      return new Intl.DateTimeFormat([], {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }).format(new Date(at));
+    }
+
+    function diaryKindLabel(kind) {
+      if (kind === 'retune') return 'Retune';
+      if (kind === 'restore') return 'Restore';
+      if (kind === 'hash') return 'Hash tune';
+      if (kind === 'keyboard') return 'Key tune';
+      if (kind === 'lock') return 'Listen close';
+      if (kind === 'release') return 'Release';
+      return 'Tune';
+    }
+
+    function latestDiaryEntry() {
+      return diaryEntries[0] || null;
+    }
+
+    function whisperForStation(station) {
+      const recent = latestDiaryEntry();
+      const phrases = [
+        `The signal stays pinned to ${station.label.toLowerCase()} long enough to hear the plaster breathe.`,
+        recent
+          ? `It keeps ${recent.label.toLowerCase()} in the room with it, like a note folded into the static.`
+          : 'It keeps the room folded around the carrier and refuses to forget the shape of the listening.',
+        `No one is speaking louder now. The signal is just close enough to become a second pulse.`
+      ];
+      const slot = Math.floor((Date.now() - state.lockedSince) / 2100) % phrases.length;
+      return phrases[slot];
+    }
+
+    function lockSignal(shouldLock, detail = '') {
+      const station = stations[state.key];
+      if (!station) return;
+
+      if (shouldLock) {
+        if (state.locked) return;
+        const wave = Math.sin((performance.now() / 900) + state.jitterSeed) * 3.2 + Math.cos((performance.now() / 2100) + state.jitterSeed * 0.7) * 1.6;
+        const signal = clamp(Math.round(station.signal + wave), 38, 98);
+        state.locked = true;
+        state.lockedSince = Date.now();
+        state.lockSnapshot = {
+          signal,
+          transcript: station.transcript[state.lineIndex % station.transcript.length],
+          title: station.title,
+          freq: station.freq
+        };
+        els.listenBtn.classList.add('is-active');
+        els.listenBtn.setAttribute('aria-pressed', 'true');
+        addDiaryEntry('lock', state.key, detail || `Pinned ${station.label.toLowerCase()} long enough to hear the seam in the carrier.`);
+        render();
+        return;
+      }
+
+      if (!state.locked) return;
+      state.locked = false;
+      state.lockedSince = 0;
+      state.lockSnapshot = null;
+      els.listenBtn.classList.remove('is-active');
+      els.listenBtn.setAttribute('aria-pressed', 'false');
+      addDiaryEntry('release', state.key, detail || `Released ${station.label.toLowerCase()} back into its drift.`);
+      render();
+    }
+
+    function addDiaryEntry(kind, key, detail) {
+      const station = stations[key];
+      if (!station) return;
+
+      diaryEntries = [
+        {
+          kind,
+          key,
+          label: station.label,
+          freq: station.freq,
+          detail,
+          at: Date.now()
+        },
+        ...diaryEntries
+      ].slice(0, DIARY_MAX_COUNT);
+
+      rememberDiaryEntries();
+      renderDiary();
+    }
+
+    function diaryClipboardText() {
+      if (!diaryEntries.length) {
+        return 'Ghost Radio station diary\nNo entries yet.';
+      }
+
+      const lines = ['Ghost Radio station diary', ''];
+      diaryEntries.forEach((entry) => {
+        const detail = entry.detail ? ` - ${entry.detail}` : '';
+        lines.push(`${diaryTime(entry.at)} | ${diaryKindLabel(entry.kind)} | ${entry.label} (${entry.freq})${detail}`);
+      });
+      return lines.join('\n');
+    }
+
+    function renderDiary() {
+      const entries = diaryEntries.slice(0, DIARY_VISIBLE_COUNT);
+      els.diarySummary.textContent = diaryEntries.length
+        ? `${diaryEntries.length === 1 ? '1 diary entry' : `${diaryEntries.length} diary entries`} in the reel.`
+        : 'No entries yet.';
+
+      els.diaryList.innerHTML = '';
+      if (!entries.length) {
+        const empty = document.createElement('div');
+        empty.className = 'diary-entry is-empty';
+        empty.setAttribute('role', 'listitem');
+        empty.textContent = 'No broadcast notes yet. Tune a station and the diary will start remembering.';
+        els.diaryList.appendChild(empty);
+        return;
+      }
+
+      entries.forEach((entry) => {
+        const item = document.createElement('article');
+        item.className = 'diary-entry';
+        item.setAttribute('role', 'listitem');
+        item.innerHTML = `
+          <div class="diary-topline">
+            <span class="diary-kind">${diaryKindLabel(entry.kind)}</span>
+            <time class="diary-time" datetime="${new Date(entry.at).toISOString()}">${diaryTime(entry.at)}</time>
+          </div>
+          <strong>${escapeXml(entry.label)} · ${escapeXml(entry.freq)}</strong>
+          <p>${entry.detail ? escapeXml(entry.detail) : 'The diary caught the tune and kept the shape of it.'}</p>
+        `;
+        els.diaryList.appendChild(item);
       });
     }
 
-    buttons.forEach((button) => {
-      button.addEventListener('click', () => tune(button.dataset.tune));
+    function setHash(key, replace = true) {
+      const next = `#station=${encodeURIComponent(key)}`;
+      history[replace ? 'replaceState' : 'pushState'](null, '', next);
+    }
+
+    function updateBars(signal) {
+      const onCount = clamp(Math.round(signal / 100 * meterBars.length), 1, meterBars.length);
+      meterBars.forEach((bar, index) => bar.classList.toggle('on', index < onCount));
+    }
+
+    function updateStatus(signal, station, cue = '') {
+      const statuses = state.locked ? [
+        'The signal is pinned. The room is leaning in.',
+        'A close listen makes the static remember itself.',
+        'The carrier is holding its shape.',
+        'Something in the walls is keeping time.',
+        'The ghost is answering at arm’s length.'
+      ] : [
+        'Static is polite tonight.',
+        'The room is listening back.',
+        'A little more signal. A little less room tone.',
+        'The carrier is holding its shape.',
+        'The ghost is answering in a soft key.'
+      ];
+      const slot = clamp(Math.floor((signal - 40) / 12), 0, statuses.length - 1);
+      els.statusLine.classList.toggle('is-retuning', Boolean(cue));
+      els.broadcastPanel.classList.toggle('is-locked', state.locked);
+      els.statusLine.querySelector('span:last-child').textContent = cue || statuses[slot];
+      els.liveRegion.textContent = `${station.label} at ${station.freq} with ${signal}% signal${state.locked ? ', locked for close listening.' : '.'}`;
+    }
+
+    function render() {
+      const station = stations[state.key];
+      const wave = Math.sin((performance.now() / 900) + state.jitterSeed) * 3.2 + Math.cos((performance.now() / 2100) + state.jitterSeed * 0.7) * 1.6;
+      const liveSignal = clamp(Math.round(station.signal + wave), 38, 98);
+      const lockedSignal = state.lockSnapshot ? state.lockSnapshot.signal : liveSignal;
+      const signal = state.locked ? lockedSignal : liveSignal;
+      const transcript = state.locked && state.lockSnapshot
+        ? state.lockSnapshot.transcript
+        : station.transcript[state.lineIndex % station.transcript.length];
+      const whisper = state.locked ? whisperForStation(station) : '';
+      const now = Date.now();
+      let cue = '';
+
+      if (!state.locked && now >= state.nextRetuneAt) {
+        state.retuneCueUntil = now + RETUNE_ACTIVE_MS;
+        state.nextRetuneAt = now + RETUNE_MIN_DELAY + Math.random() * RETUNE_JITTER;
+        state.jitterSeed += 0.65;
+        state.lineIndex = (state.lineIndex + 1) % station.transcript.length;
+        addDiaryEntry('retune', state.key, `A soft retune clicks and ${station.label.toLowerCase()} settles back in.`);
+      }
+      if (!state.locked && now < state.retuneCueUntil) {
+        cue = `A soft retune clicks and ${station.label.toLowerCase()} settles back in.`;
+      } else if (state.locked) {
+        cue = `The signal is pinned in place and the room is listening close.`;
+      }
+
+      document.documentElement.style.setProperty('--accent', station.accent);
+      document.documentElement.style.setProperty('--accent-2', station.accent2);
+      document.documentElement.style.setProperty('--signal', `${signal}%`);
+      document.documentElement.style.setProperty('--needle', `${station.needle + wave * 2.2}deg`);
+      document.documentElement.style.setProperty('--signal-bars', `${Math.round(signal / 11)}`);
+      els.dial.style.setProperty('--signal', `${signal}%`);
+      els.dial.style.setProperty('--needle', `${station.needle + wave * 2.2}deg`);
+      els.dial.classList.toggle('is-locked', state.locked);
+      els.stationName.textContent = station.label;
+      els.frequencyLabel.textContent = station.freq;
+      els.signalLabel.textContent = `${signal}%`;
+      els.signalPct.textContent = `${signal}%`;
+      els.callSign.textContent = station.callSign;
+      els.dialFrequency.textContent = station.dialFreq;
+      els.dialBand.textContent = station.band;
+      els.dialStation.textContent = station.label;
+      els.broadcastTitle.textContent = state.locked
+        ? `Listening close to ${station.label}.`
+        : station.title;
+      els.broadcastTranscript.textContent = state.locked
+        ? `${transcript}\n\n${whisper}`
+        : transcript;
+      els.broadcastWhisper.textContent = state.locked
+        ? `Locked on ${station.label.toLowerCase()} at ${station.freq}. ${whisper}`
+        : `Listen closer mode that pins the signal and lets the current broadcast breathe into a second whisper.`;
+      els.signalMode.textContent = state.locked ? 'Listen closer mode' : 'Drifting signal';
+      els.broadcastTranscript.classList.toggle('is-locked', state.locked);
+      els.listenBtn.textContent = state.locked ? 'Release signal' : 'Listen closer';
+      els.listenBtn.classList.toggle('is-active', state.locked);
+      els.listenBtn.setAttribute('aria-pressed', String(state.locked));
+      els.memoryNote.textContent = state.locked
+        ? `Pinned here: ${station.label}. The browser is holding the exact breath of this broadcast.`
+        : `Last tuned here: ${station.label}. The dial keeps that memory in this browser.`;
+      updateBars(signal);
+      updateStatus(signal, station, cue);
+
+      els.stationButtons.forEach((button) => {
+        const active = button.dataset.station === state.key;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-pressed', String(active));
+      });
+    }
+
+    function startTimers() {
+      if (renderTimer || transcriptTimer) return;
+      renderTimer = setInterval(() => {
+        render();
+      }, 220);
+      transcriptTimer = setInterval(() => {
+        if (!state.locked) {
+          state.lineIndex = (state.lineIndex + 1) % stations[state.key].transcript.length;
+        }
+        render();
+      }, 3600);
+    }
+
+    function stopTimers() {
+      if (renderTimer) {
+        clearInterval(renderTimer);
+        renderTimer = null;
+      }
+      if (transcriptTimer) {
+        clearInterval(transcriptTimer);
+        transcriptTimer = null;
+      }
+    }
+
+    function chooseStation(key, options = {}) {
+      const { push = false, source = 'manual', note = '' } = options;
+      if (!stations[key]) return;
+      const previous = state.key;
+      const changed = previous !== key;
+      if (state.locked) {
+        lockSignal(false, `Released ${stations[previous].label.toLowerCase()} to tune ${stations[key].label.toLowerCase()}.`);
+      }
+      state.key = key;
+      state.lineIndex = 0;
+      state.retuneCueUntil = 0;
+      rememberStation(key);
+      setHash(key, !push);
+      if (source !== 'init' && (changed || source === 'auto')) {
+        const kind = source === 'auto' ? 'retune' : source;
+        const detail = note || (source === 'auto'
+          ? `The dial drifted back into ${stations[key].label.toLowerCase()}.`
+          : `Tuned from ${stations[previous] ? stations[previous].label : 'the last stop'} by ${source}.`);
+        addDiaryEntry(kind, key, detail);
+      }
+      render();
+    }
+
+    async function copyHauntLink() {
+      const url = `${location.origin}${location.pathname}#station=${encodeURIComponent(state.key)}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        els.liveRegion.textContent = 'Haunt link copied.';
+        els.statusLine.querySelector('span:last-child').textContent = 'Haunt link copied to clipboard.';
+      } catch (error) {
+        window.prompt('Copy this Ghost Radio link:', url);
+      }
+    }
+
+    function escapeXml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function truncateText(value, maxLength) {
+      const text = String(value);
+      if (text.length <= maxLength) return text;
+      return `${text.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
+    }
+
+    function postcardSvg() {
+      const station = stations[state.key];
+      const signal = els.signalPct.textContent;
+      const transcript = els.broadcastTranscript.textContent;
+      const mode = state.locked ? 'LISTEN CLOSE' : 'DRIFTING';
+      const whisper = els.broadcastWhisper.textContent;
+      const diary = latestDiaryEntry();
+      const href = `${location.origin}${location.pathname}#station=${encodeURIComponent(state.key)}`;
+      const dialColor = station.accent;
+      const dialGlow = station.accent2;
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 840" role="img" aria-labelledby="title desc">
+  <title id="title">Ghost Radio postcard</title>
+  <desc id="desc">Shareable postcard export of the current haunted shortwave state.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0a0d15"/>
+      <stop offset="55%" stop-color="#111627"/>
+      <stop offset="100%" stop-color="#05070c"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="44%" r="65%">
+      <stop offset="0%" stop-color="${dialColor}" stop-opacity=".22"/>
+      <stop offset="40%" stop-color="${dialGlow}" stop-opacity=".14"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+  <rect width="1400" height="840" fill="url(#bg)"/>
+  <circle cx="980" cy="380" r="300" fill="url(#glow)" filter="url(#blur)"/>
+  <circle cx="980" cy="380" r="266" fill="none" stroke="#ffffff" stroke-opacity=".14" stroke-width="2"/>
+  <circle cx="980" cy="380" r="238" fill="none" stroke="#ffffff" stroke-opacity=".07" stroke-width="1.5" stroke-dasharray="4 18"/>
+  <circle cx="980" cy="380" r="140" fill="#090b12" stroke="#ffffff" stroke-opacity=".09" stroke-width="2"/>
+  <line x1="980" y1="380" x2="1160" y2="315" stroke="${dialColor}" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="980" cy="380" r="10" fill="${dialColor}"/>
+  <text x="86" y="118" fill="#ffffff" font-family="Georgia, Times New Roman, serif" font-size="86" font-weight="700" letter-spacing="-3">Ghost Radio</text>
+  <text x="88" y="180" fill="#a9b1c8" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="26" letter-spacing="3">${escapeXml(station.label)} / ${escapeXml(station.freq)} / ${escapeXml(signal)}</text>
+  <text x="88" y="280" fill="#eef2ff" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="28" font-weight="700">${escapeXml(station.title)}</text>
+  <text x="88" y="332" fill="#d8def1" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="24">
+    ${escapeXml(transcript).split('\n').map((line, index) => `<tspan x="88" dy="${index === 0 ? 0 : 34}">${line}</tspan>`).join('')}
+  </text>
+  <rect x="86" y="552" width="580" height="168" rx="26" fill="#ffffff" fill-opacity=".04" stroke="#ffffff" stroke-opacity=".1"/>
+  <text x="118" y="604" fill="#a9b1c8" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="20" letter-spacing="4">CALL SIGN</text>
+  <text x="118" y="648" fill="#ffffff" font-family="Georgia, Times New Roman, serif" font-size="58" font-weight="700" letter-spacing="-2">${escapeXml(station.callSign)}</text>
+  <text x="118" y="690" fill="#a9b1c8" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="20">Share link: ${escapeXml(href)}</text>
+  <text x="740" y="156" fill="#a9b1c8" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="20" letter-spacing="4">LIVE STATE</text>
+  <text x="740" y="202" fill="#ffffff" font-family="Georgia, Times New Roman, serif" font-size="44" font-weight="700">${escapeXml(mode)}</text>
+  <text x="740" y="252" fill="#d8def1" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="22">${escapeXml(truncateText(whisper, 84))}</text>
+  <text x="740" y="330" fill="#a9b1c8" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="20" letter-spacing="4">LATEST NOTE</text>
+  <text x="740" y="376" fill="#eef2ff" font-family="Georgia, Times New Roman, serif" font-size="32" font-weight="700">${escapeXml(truncateText(diary ? diary.detail : 'The room is still listening.', 72))}</text>
+  <text x="980" y="670" text-anchor="middle" fill="#ffffff" font-family="Georgia, Times New Roman, serif" font-size="88" font-weight="700">${escapeXml(station.dialFreq)}</text>
+  <text x="980" y="720" text-anchor="middle" fill="#a9b1c8" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="22" letter-spacing="6">SHORTWAVE</text>
+  <text x="980" y="286" text-anchor="middle" fill="#ffffff" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="22" letter-spacing="4">SIGNAL ${escapeXml(signal)}</text>
+</svg>`;
+    }
+
+    async function savePostcard() {
+      const svg = postcardSvg();
+      const blob = new Blob([svg], { type: 'image/svg+xml' });
+      const filename = `ghost-radio-${state.key}.svg`;
+      const file = new File([blob], filename, { type: 'image/svg+xml' });
+      const title = `Ghost Radio - ${stations[state.key].label}`;
+      const text = `${stations[state.key].label} at ${stations[state.key].freq} on Ghost Radio${state.locked ? ' (listen close)' : ''}`;
+
+      try {
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ title, text, files: [file] });
+          els.liveRegion.textContent = 'Postcard shared.';
+          return;
+        }
+      } catch (error) {
+        // fall through to download
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      els.liveRegion.textContent = 'Postcard downloaded.';
+    }
+
+    els.stationButtons.forEach((button) => {
+      button.addEventListener('click', () => chooseStation(button.dataset.station, { source: 'manual' }));
+    });
+    els.copyLinkBtn.addEventListener('click', copyHauntLink);
+    els.listenBtn.addEventListener('click', () => lockSignal(!state.locked));
+    els.postcardBtn.addEventListener('click', savePostcard);
+    els.copyDiaryBtn.addEventListener('click', async () => {
+      const text = diaryClipboardText();
+      try {
+        await navigator.clipboard.writeText(text);
+        els.liveRegion.textContent = 'Diary copied.';
+        els.statusLine.querySelector('span:last-child').textContent = 'Diary copied to clipboard.';
+      } catch (error) {
+        window.prompt('Copy this Ghost Radio diary:', text);
+      }
     });
 
-    tune('attic');
+    window.addEventListener('hashchange', () => {
+      const key = stationFromHash();
+      if (key) chooseStation(key, { source: 'hash' });
+    });
+    window.addEventListener('keydown', (event) => {
+      if (event.key === '1') chooseStation('attic', { push: true, source: 'keyboard' });
+      if (event.key === '2') chooseStation('hallway', { push: true, source: 'keyboard' });
+      if (event.key === '3') chooseStation('moon', { push: true, source: 'keyboard' });
+      if (event.key === '4') chooseStation('deadair', { push: true, source: 'keyboard' });
+      if (event.key === ' ' || event.key.toLowerCase() === 'l') {
+        event.preventDefault();
+        lockSignal(!state.locked, state.locked ? 'Signal released by keyboard.' : 'Pinned by keyboard to hear the seam.');
+      }
+    });
+
+    window.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        stopTimers();
+        return;
+      }
+      startTimers();
+      render();
+    });
+
+    renderDiary();
+    chooseStation(stationFromHash() || stationFromStorage() || 'attic', { source: 'init' });
+    startTimers();
   </script>
 </body>
 </html>
