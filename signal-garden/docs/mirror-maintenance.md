@@ -1,30 +1,70 @@
-# Mirror-maintenance runbook (ghost-radio + signal-garden)
+# Mirror-maintenance runbook (signal-garden routes)
 
-## Signal-garden route publish
+Use this as a repeatable idea for syncing route folders between a source copy and a mirror copy.
 
-- [ ] Edit in source route folder: `/root/.openclaw/workspace/signal-garden/<route>/`
-- [ ] Verify source diff: `git -C /root/.openclaw/workspace/signal-garden status --short`
-- [ ] Push to mirror:
-  `rsync -a --delete --filter=':- .gitignore' /root/.openclaw/workspace/signal-garden/<route>/ /root/.openclaw/workspace/garytalbot.github.io/signal-garden/<route>/`
-- [ ] Verify live URL: `https://garytalbot.github.io/signal-garden/<route>/`
-- [ ] Commit + push mirror changes in `garytalbot.github.io`.
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-## Ghost-radio route publish
+SRC="${1:-/root/.openclaw/workspace/signal-garden}"
+MIR="${2:-/root/.openclaw/workspace/garytalbot.github.io/signal-garden}"
 
-- [ ] Edit in source: `/root/.openclaw/workspace/ghost-radio/<route>.html`
-- [ ] Verify source diff: `git -C /root/.openclaw/workspace/ghost-radio status --short`
-- [ ] Push to mirror:
-  `rsync -a --delete --filter=':- .gitignore' /root/.openclaw/workspace/ghost-radio/<route>.html /root/.openclaw/workspace/garytalbot.github.io/ghost-radio/<route>.html`
-- [ ] Verify live URL: `https://garytalbot.github.io/ghost-radio/<route>.html`
-- [ ] Commit + push mirror changes in `garytalbot.github.io`.
+# Routes/chambers that must stay identical across source and mirror
+ROUTES=(
+  afterimage
+  corridor-liturgy
+  spiral-weft
+  thread-thicket
+  drift-litany
+  grave-ink
+  echo-current
+  echo-hush
+  echo-lattice
+  glyph-chamber
+  moth-chorus
+  pollen-atlas
+  rumination-hall
+  sigil-glyph-notebook
+  sigil-liturgy-hub
+  sigil-noise-lattice
+  sigil-weather
+  odd-orbit
+  static-psalm
+  hush-stitch
+  spectral-drift
+  void-cathedral
+  void-echo
+  void-loom
+  void-chorale
+  void-liturgy
+  void-radiance
+  void-sigil
+  void-weft
+)
 
-## Stale-route rollback
+for route in "${ROUTES[@]}"; do
+  rsync -a --delete --filter=':- .gitignore' "${SRC}/${route}/" "${MIR}/${route}/"
+done
 
-- [ ] Record latest good commit hash before publishing.
-- [ ] Restore from known-good state:
-  `git -C /root/.openclaw/workspace/garytalbot.github.io checkout <good_hash> -- signal-garden/<route>/ ghost-radio/<route>.html`
-- [ ] If route should be removed, delete it in mirror and commit:
-  `git -C /root/.openclaw/workspace/garytalbot.github.io rm -r signal-garden/<route> ghost-radio/<route>.html`
-- [ ] Confirm final mirror tree:
-  - `git -C /root/.openclaw/workspace/garytalbot.github.io status --short`
-  - Re-open the route URL to ensure 200 and correct asset bundle.
+# Keep shared top-level assets in sync too
+rsync -a --delete --filter=':- .gitignore' \
+  "${SRC}/index.html" "${SRC}/site.webmanifest" "${SRC}/README.md" \
+  "${SRC}/assets/" "${MIR}/assets/"
+
+echo "Dry-run complete if run with DRY_RUN=1"
+if [[ "${DRY_RUN:-0}" == "1" ]]; then
+  exit 0
+fi
+
+cd "${MIR}" && git status --short
+```
+
+## Notes
+
+- Run once per route-group change, then inspect diff before commit:
+  - `git -C "$MIR" status --short`
+  - `git -C "$SRC" status --short`
+- For a reverse sync (mirror -> source), swap `SRC` and `MIR`.
+- Keep this snippet in docs for a shared process; do not run against arbitrary directories.
+- If a route needs exceptions, add it to an explicit skip list and comment the reason in this file.
+- `rsync` flags are intentionally strict (`--delete`) to avoid stale files lingering in the mirror.
