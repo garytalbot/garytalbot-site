@@ -33,6 +33,7 @@ ROUTES=(
   sigil-weather
   odd-orbit
   static-psalm
+  fracture-orbit
   hush-stitch
   spectral-drift
   void-cathedral
