@@ -42,3 +42,4 @@ Then open `http://localhost:8080`.
 - Use the work hub in bios and posts until `garytalbot.site` resolves cleanly again.
 - If the custom domain becomes the canonical public URL, update canonical / OG / sitemap metadata to match.
 - Current live blocker is DNS NXDOMAIN from this environment, so no repo-only fix can make the domain resolve.
+- 06 Jun 2026 · 17:01 UTC: mirrored a proof-chip + chaos path parity pass by aligning `index.html` and cleaning stale `chaos-room.md/chaos-room.md/` mirror artifact while keeping `now/updates/chaos` surfaces in sync.

@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Signal Garden — ghost afterimage browser gallery</title>
+  <meta name="description" content="A tiny ghost afterimage browser garden where every UTC day gets a shared glowing field, a hidden signal chorus, and every click can still plant a new procedural bloom.">
+  <meta name="theme-color" content="#181535">
+  <meta name="color-scheme" content="dark only">
+  <meta name="application-name" content="Signal Garden">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Signal Garden">
+  <meta name="msapplication-TileColor" content="#181535">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Signal Garden — ghost afterimage browser gallery">
+  <meta name="twitter:description" content="A tiny ghost afterimage browser garden with a shared UTC daily signal, a hidden signal chorus, a lightweight archive, exact-garden links, and PNG export.">
+  <meta name="twitter:image" content="https://garytalbot.github.io/signal-garden/assets/social-card.svg">
+  <meta name="twitter:image:alt" content="Signal Garden interface showing glowing blooms, constellation lines, and recent daily signal archive cards.">
+  <meta name="twitter:site" content="@GaryTalbot87">
+  <meta property="og:title" content="Signal Garden — ghost afterimage browser gallery">
+  <meta property="og:description" content="A tiny ghost afterimage browser garden with a shared UTC daily signal, a hidden signal chorus, a lightweight archive, exact-garden links, and PNG export.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Signal Garden">
+  <meta property="og:url" content="https://garytalbot.github.io/signal-garden/">
+  <meta property="og:image" content="https://garytalbot.github.io/signal-garden/assets/social-card.svg">
+  <meta property="og:image:alt" content="Signal Garden interface showing glowing blooms, constellation lines, and recent daily signal archive cards.">
+  <meta property="og:locale" content="en_US">
+  <link rel="canonical" href="https://garytalbot.github.io/signal-garden/">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/favicon.ico" sizes="any">
+  <link rel="icon" href="assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
+  <link rel="icon" href="assets/icons/favicon-16x16.png" type="image/png" sizes="16x16">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" sizes="180x180">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <div class="brand-lockup">
+          <img src="assets/launch/logo-128.png" alt="Signal Garden logo" class="brand-mark" width="64" height="64">
+          <div>
+            <p class="eyebrow">constellation-era browser gallery</p>
+            <h1>Signal Garden</h1>
+          </div>
+        </div>
+        <p class="lede">Signal Garden is a tiny constellation-era browser garden: every UTC day gets a shared field, the newest broadcasts live below as a browsable archive, and the ghostly afterimage plus signal chorus modes let the field keep whispering after the click.</p>
+      </div>
+      <div class="controls">
+        <section class="control-group control-group--primary" aria-label="Planting controls">
+          <p class="control-label">field actions</p>
+          <div class="control-row">
+            <button id="randomize">plant cluster</button>
+            <button id="dailySignal">today's signal</button>
+            <button id="cycleWeather">weather: violet hush</button>
+          </div>
+        </section>
+        <section class="control-group control-group--modes" aria-label="Mode controls">
+          <p class="control-label">ghost afterimage / sky weave / signal chorus</p>
+          <div class="mode-banner" aria-hidden="true">
+            <span class="mode-chip">weird mode live</span>
+            <span class="mode-banner-copy">Afterimage mode leaves a lingering ghost over the blooms. Signal chorus wakes the hidden field into a living resonance layer.</span>
+          </div>
+          <p class="control-note">The afterimage mode is one weird switch. The HUD below mirrors it, and the hidden signal chorus now gets its own control so the field can hum back.</p>
+          <div class="control-row">
+            <button id="toggleWeave" aria-pressed="false">constellations: off</button>
+            <button id="toggleMeteor" aria-pressed="false">meteor shower: off</button>
+            <button id="toggleAfterimage" class="mode-toggle mode-toggle--afterimage" aria-pressed="false">afterimages: off</button>
+            <button id="toggleHarmony" class="mode-toggle mode-toggle--chorus" aria-pressed="false">signal chorus: off</button>
+          </div>
+        </section>
+        <section class="control-group control-group--secondary" aria-label="Sharing and editing controls">
+          <p class="control-label">field tools</p>
+          <div class="control-row">
+            <button id="replay" disabled>replay garden</button>
+            <button id="copyLink" disabled>copy share link</button>
+            <button id="sharePostcard" disabled>share postcard</button>
+            <button id="exportPng" disabled>export PNG</button>
+            <button id="undo" disabled>undo last</button>
+            <button id="clear" disabled>clear field</button>
+          </div>
+        </section>
+      </div>
+    </header>
+
+    <section class="stage-wrap">
+      <div class="hud">
+        <div class="hud-tile"><span>blooms</span><strong id="count">0</strong></div>
+        <div class="hud-tile"><span>sky mood</span><strong id="mood">violet hush</strong></div>
+        <div class="hud-tile"><span>weather mode</span><strong id="weatherMode">violet hush</strong></div>
+        <div class="hud-tile hud-tile--focus"><span>sky weave</span><strong id="weaveMode">off</strong></div>
+        <div class="hud-tile"><span>meteor shower</span><strong id="meteorMode">off</strong></div>
+        <div class="hud-tile hud-tile--afterimage"><span>afterimages</span><strong id="afterimageMode">off</strong><em class="hud-tile-kicker">ghost bloom trail</em></div>
+        <div class="hud-tile hud-tile--chorus"><span>signal chorus</span><strong id="harmonyMode">off</strong><em class="hud-tile-kicker">hidden resonance field</em></div>
+        <div class="hud-tile"><span>last specimen</span><strong id="lastName">none yet</strong></div>
+        <div class="hud-tile hud-tile--source"><span>field source</span><strong id="sourceLabel">open field</strong></div>
+        <div class="hud-tile hud-tile--resident"><span>resident</span><strong id="residentName">vacant terrarium</strong><em id="residentMood" class="resident-mood">waiting for a reason to exist</em></div>
+        <div class="hud-tile hint-card"><span>planting hint</span><strong id="hint">Move your cursor to aim a bloom. Click to plant. Press U to undo.</strong></div>
+      </div>
+      <div id="stage" class="stage" data-empty="true" aria-label="Signal Garden canvas">
+        <div id="preview" class="preview" aria-hidden="true"></div>
+        <svg id="constellation-overlay" class="constellation-overlay" aria-hidden="true"></svg>
+        <svg id="meteor-overlay" class="meteor-overlay" aria-hidden="true"></svg>
+        <svg id="harmony-overlay" class="harmony-overlay" aria-hidden="true"></svg>
+        <svg id="signal-overlay" class="signal-overlay" aria-hidden="true"></svg>
+        <button id="gardenCritter" class="garden-critter" type="button" aria-live="polite" aria-label="Garden resident is waiting"></button>
+      </div>
+    </section>
+
+    <section class="highlights-shell" aria-labelledby="highlightsTitle">
+      <div class="highlights-head">
+        <div>
+          <p class="eyebrow archive-eyebrow">curated field highlights</p>
+          <h2 id="highlightsTitle">Gallery picks</h2>
+          <p>A few hand-picked fields live here on purpose: load one, share one, or use one as a starting point before you start planting your own glowing bad decisions.</p>
+        </div>
+        <p class="archive-status" id="highlightsStatus">Loading gallery picks...</p>
+      </div>
+      <div id="highlightsGrid" class="archive-grid highlights-grid" aria-live="polite"></div>
+    </section>
+
+    <section class="archive-shell" aria-labelledby="archiveTitle">
+      <div class="archive-head">
+        <div>
+          <p class="eyebrow archive-eyebrow">recent broadcast archive</p>
+          <h2 id="archiveTitle">Daily signal gallery</h2>
+          <p>Every UTC day gets one shared deterministic field. The archive keeps the latest broadcasts close so the project can behave more like a tiny living constellation instead of a one-button curiosity.</p>
+        </div>
+        <p class="archive-status" id="archiveStatus">Loading recent signals...</p>
+      </div>
+      <div id="archiveGrid" class="archive-grid" aria-live="polite"></div>
+    </section>
+
+    <section class="notes">
+      <article>
+        <h2>How it works</h2>
+        <p>Each bloom is assembled from layered rings, stems, sparks, and a tiny procedural title. The archive reuses that same deterministic language so each day feels like a little saved exhibit in a living sky.</p>
+      </article>
+      <article>
+        <h2>Prompt</h2>
+        <p>Browse the recent archive, load an old broadcast, then start planting on top of it if you want to break the museum glass on purpose.</p>
+      </article>
+      <article class="log-card">
+        <div class="log-head">
+          <div>
+            <h2>Field log</h2>
+            <p>The garden keeps a tiny running diary of your session, preserves whole layouts in shareable links, and now treats the daily signal like a lightweight public archive in the sky.</p>
+          </div>
+          <span class="log-badge" id="logStatus">awaiting first contact</span>
+        </div>
+        <ol id="fieldLog" class="field-log" aria-live="polite"></ol>
+      </article>
+      <article class="log-card herbarium-shell">
+        <div class="herbarium-head">
+          <div>
+            <h2>Herbarium</h2>
+            <p>Browser-local bloom index for the last specimens that wandered through this field. It remembers the names, the weather, and the exact little moment the garden got more haunted.</p>
+          </div>
+          <div class="herbarium-tools">
+            <span class="herbarium-status" id="herbariumStatus">awaiting first specimen</span>
+            <button id="copyHerbarium" class="copy-button" data-action="copy" type="button">copy herbarium</button>
+            <button id="exportHerbarium" class="copy-button" data-action="export" type="button">herbarium postcard</button>
+          </div>
+          <div class="herbarium-filterbar" style="display:flex;flex-wrap:wrap;gap:.45rem;align-items:center;margin-top:.75rem;">
+            <span class="control-label">browse</span>
+            <button class="copy-button" data-herbarium-filter="all" type="button" aria-pressed="true">all</button>
+            <button class="copy-button" data-herbarium-filter="plants" type="button" aria-pressed="false">blooms</button>
+            <button class="copy-button" data-herbarium-filter="replays" type="button" aria-pressed="false">replay history</button>
+            <button class="copy-button" data-herbarium-filter="imports" type="button" aria-pressed="false">imports</button>
+            <button class="copy-button" data-herbarium-filter="resets" type="button" aria-pressed="false">resets</button>
+          </div>
+        </div>
+        <ol id="herbariumList" class="herbarium-list" aria-live="polite"></ol>
+      </article>
+      <article class="log-card">
+        <div class="log-head">
+          <div>
+            <h2>Pollen Atlas</h2>
+            <p>A side chamber for drifting pollen relics, seed dust, and browser-local grain memory. Open the atlas when you want the garden to feel more like a cabinet than a plot.</p>
+          </div>
+          <a class="copy-button" href="pollen-atlas/" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;">open atlas</a>
+        </div>
+      </article>
+      <article class="log-card">
+        <div class="log-head">
+          <div>
+            <h2>Echo Hush</h2>
+            <p>A tiny side chamber where each click births an echo and each silent moment bends the whole field toward a strange, unstable resonance.</p>
+          </div>
+          <a class="copy-button" href="echo-hush/" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;">open chamber</a>
+        </div>
+      </article>
+      <article class="log-card">
+        <div class="log-head">
+          <div>
+            <h2>Void Echo</h2>
+            <p>A micro-oracle chamber where each click throws a pulse into silence and lets a glyph prompt surface from the ringing dark.</p>
+          </div>
+          <a class="copy-button" href="void-echo/" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;">open chamber</a>
+        </div>
+      </article>
+      <article class="log-card">
+        <div class="log-head">
+          <div>
+            <h2>Sigil Weather</h2>
+            <p>A weather-locked ritual chart where UTC tides, noise drift, and resonance bands rewrite a sigil map in real time.</p>
+          </div>
+          <a class="copy-button" href="sigil-weather/" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;">open chamber</a>
+        </div>
+      </article>
+      <article class="log-card">
+        <div class="log-head">
+          <div>
+            <h2>Glyph Chamber</h2>
+            <p>Pick a mode and paint with drifting sigils: glyph glyphs that drift, fracture, brighten, stutter, and vanish like old prayers.</p>
+          </div>
+          <a class="copy-button" href="glyph-chamber/" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;">open chamber</a>
+        </div>
+      </article>
+      <article class="log-card">
+        <div class="log-head">
+          <div>
+            <h2>Echo Lattice</h2>
+            <p>A pointer-touched particle ritual where drifting nodes connect, split, and wake into a ghostly network when you click and move.</p>
+          </div>
+          <a class="copy-button" href="echo-lattice/" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;">open chamber</a>
+        </div>
+      </article>
+      <article class="log-card">
+        <div class="log-head">
+          <div>
+            <h2>Void Sigil</h2>
+            <p>A chaotic sigil field where lines breathe, drift, and occasionally rewrite themselves around your pointer.</p>
+          </div>
+          <a class="copy-button" href="void-sigil/" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;">open chamber</a>
+        </div>
+      </article>
+</section>
+  </main>
+
+  <template id="bloom-template">
+    <div class="bloom">
+      <div class="stem"></div>
+      <div class="core"></div>
+      <div class="ring ring-a"></div>
+      <div class="ring ring-b"></div>
+      <div class="spark spark-a"></div>
+      <div class="spark spark-b"></div>
+      <div class="label"></div>
+    </div>
+  </template>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>

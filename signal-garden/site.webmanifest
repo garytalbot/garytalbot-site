@@ -1,0 +1,27 @@
+{
+  "id": "/signal-garden/",
+  "name": "Signal Garden",
+  "short_name": "Signal Garden",
+  "description": "A tiny browser gallery where every UTC day gets a shared glowing field and every click can still plant a new procedural bloom.",
+  "start_url": "/signal-garden/",
+  "scope": "/signal-garden/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#181535",
+  "theme_color": "#181535",
+  "categories": ["art", "graphics", "entertainment", "lifestyle"],
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
