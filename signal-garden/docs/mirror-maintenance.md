@@ -15,9 +15,11 @@ ROUTES=(
   corridor-liturgy
   spiral-weft
   thread-thicket
-  drift-litany
-  lumen-surge
-  grave-ink
+    drift-litany
+    lumen-surge
+    lumen-loam
+    mud-liturgy
+    grave-ink
   echo-current
   echo-hush
   echo-lattice
