@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lumen Mosaic</title>
+  <meta
+    name="description"
+    content="Lumen Mosaic is a compact haunted chamber where seedable light-points drift across a dark field, knot in response to movement, and preserve a stable state snapshot."
+  />
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  <meta property="og:title" content="Lumen Mosaic" />
+  <meta property="og:description" content="A small seedable particle chamber with pointer-gated stitches, soft gravity, and postcard-style still exports." />
+  <meta property="og:url" content="https://garytalbot.github.io/ghost-radio/lumen-mosaic.html" />
+  <meta property="og:image" content="https://garytalbot.github.io/ghost-radio/share-card.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Lumen Mosaic" />
+  <style>
+    :root {
+      --bg: #070a12;
+      --panel: rgba(12, 16, 26, 0.82);
+      --ink: #ebf2ff;
+      --soft: #95a6c7;
+      --a: #8de8ff;
+      --b: #ff94d7;
+      --line: rgba(255, 255, 255, 0.15);
+      font-synthesis-weight: none;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+
+    body {
+      background:
+        radial-gradient(circle at 22% 20%, rgba(141, 232, 255, 0.16), transparent 36%),
+        radial-gradient(circle at 78% 14%, rgba(255, 148, 215, 0.12), transparent 28%),
+        #070a12;
+      color: var(--ink);
+      overflow: hidden;
+      font: 14px/1.45 "Trebuchet MS", "Segoe UI", sans-serif;
+    }
+
+    canvas {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      cursor: crosshair;
+    }
+
+    .panel {
+      position: fixed;
+      inset: 12px;
+      top: 10px;
+      z-index: 2;
+      max-width: min(940px, calc(100vw - 24px));
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 20px 75px rgba(0, 0, 0, 0.45);
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 1fr;
+    }
+
+    .panel h1 {
+      margin: 0;
+      font: 700 1.25rem/1.2 "Trebuchet MS", "Segoe UI", sans-serif;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #f2f8ff;
+    }
+
+    .panel p {
+      margin: 0;
+      color: var(--soft);
+    }
+
+    .toolbar,
+    .row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 999px;
+      padding: 7px 11px;
+      background: rgba(255, 255, 255, 0.04);
+      color: #fff;
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+      transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+    }
+
+    .btn:hover {
+      border-color: color-mix(in srgb, var(--a) 35%, white 65%);
+      box-shadow: 0 0 0 1px rgba(141, 232, 255, 0.22);
+      transform: translateY(-1px);
+    }
+
+    .btn.primary {
+      border-color: color-mix(in srgb, var(--a) 45%, white 55%);
+      background: rgba(141, 232, 255, 0.2);
+    }
+
+    .value {
+      margin-right: 8px;
+      color: #b5f0ff;
+      font-size: 12px;
+      min-width: 58px;
+      display: inline-block;
+    }
+
+    .line {
+      color: #bfd4ff;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+
+    label {
+      color: #c9d6f1;
+      font-size: 12px;
+      width: 80px;
+    }
+
+    input[type="range"] {
+      width: min(180px, calc(100vw - 250px));
+    }
+
+    .seed {
+      color: #deccff;
+      word-break: break-all;
+      font-size: 11px;
+    }
+
+    @media (max-width: 700px) {
+      .panel { inset: 8px; top: 8px; }
+      input[type="range"] { width: 120px; }
+      .line { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="mosaicCanvas" aria-label="Lumen Mosaic chamber"></canvas>
+
+  <aside class="panel">
+    <h1>Lumen Mosaic</h1>
+    <p>Seeded light stitches drift across a dark sky, then braid when you pass through their pull zones.</p>
+    <div class="toolbar" role="group" aria-label="Lumen controls">
+      <button class="btn primary" id="toggleBtn">Pulse: on</button>
+      <button class="btn" id="reseatBtn">Reseat points</button>
+      <button class="btn" id="reseedBtn">New seed</button>
+      <button class="btn" id="copyBtn">Copy scene link</button>
+      <button class="btn" id="saveBtn">Save still</button>
+      <a class="btn" href="./" target="_blank" rel="noopener noreferrer">Return home</a>
+    </div>
+    <div class="line">
+      <label for="density">Density</label>
+      <input id="density" type="range" min="120" max="420" value="250" step="1" />
+      <span class="value" id="densityOut">250</span>
+      <label for="cohesion">Cohesion</label>
+      <input id="cohesion" type="range" min="0.05" max="0.9" value="0.28" step="0.01" />
+      <span class="value" id="cohesionOut">0.28</span>
+      <span id="status">status: waking.</span>
+    </div>
+    <div class="line seed" id="seedLine">seed: ...</div>
+  </aside>
+
+  <script>
+    const canvas = document.getElementById('mosaicCanvas');
+    const ctx = canvas.getContext('2d', { alpha: false });
+    const toggleBtn = document.getElementById('toggleBtn');
+    const reseatBtn = document.getElementById('reseatBtn');
+    const reseedBtn = document.getElementById('reseedBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const densityInput = document.getElementById('density');
+    const cohesionInput = document.getElementById('cohesion');
+    const densityOut = document.getElementById('densityOut');
+    const cohesionOut = document.getElementById('cohesionOut');
+    const statusEl = document.getElementById('status');
+    const seedLine = document.getElementById('seedLine');
+
+    const TWO_PI = Math.PI * 2;
+    let running = true;
+    let seed = Number.parseInt(new URLSearchParams(location.search).get('seed') || '', 16);
+    let rng = makeRng(Number.isFinite(seed) ? seed : Math.floor(Math.random() * 0xffffffff));
+    let points = [];
+    const pointer = { x: -9999, y: -9999, down: false };
+    let density = Number(densityInput.value);
+    let cohesion = Number(cohesionInput.value);
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+
+    function makeRng(a) {
+      let s = a >>> 0 || 0x9a11b7a0;
+      return function() {
+        s ^= s << 13;
+        s ^= s >>> 17;
+        s ^= s << 5;
+        return (s >>> 0) / 0x100000000;
+      };
+    }
+
+    function reseed() {
+      seed = Math.floor(Math.random() * 0xffffffff) >>> 0;
+      rng = makeRng(seed);
+      seedLine.textContent = `seed: ${seed.toString(16).padStart(8, '0')}`;
+      reseedPoints();
+      syncUrl();
+    }
+
+    function syncUrl() {
+      const u = new URL(location.href);
+      u.searchParams.set('seed', seed.toString(16));
+      u.searchParams.set('density', density.toString());
+      u.searchParams.set('cohesion', cohesion.toFixed(2));
+      history.replaceState(null, '', u);
+    }
+
+    function reseedPoints() {
+      points = Array.from({ length: density }, () => {
+        const x = rng() * width;
+        const y = rng() * height;
+        return {
+          x,
+          y,
+          ox: x,
+          oy: y,
+          vx: (rng() - 0.5) * 0.3,
+          vy: (rng() - 0.5) * 0.3,
+          age: rng() * 1000,
+          life: 700 + rng() * 900,
+          hue: Math.floor(rng() * 120) + 180
+        };
+      });
+    }
+
+    function resize() {
+      dpr = Math.max(1, window.devicePixelRatio || 1);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function step() {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = 'rgba(7,10,18,0.2)';
+      ctx.fillRect(0, 0, width, height);
+
+      for (const p of points) {
+        const dx = pointer.x - p.x;
+        const dy = pointer.y - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const pull = Math.max(0, 220 - dist) / 220;
+        const angle = Math.atan2(dy, dx) + Math.sin((p.age + p.x * 0.01) * 0.002) * 0.4;
+        const force = 0.01 + cohesion * 0.5;
+
+        p.vx = p.vx * 0.98 + Math.cos(angle) * force * pull;
+        p.vy = p.vy * 0.98 + Math.sin(angle) * force * pull;
+        p.x += p.vx + Math.sin((p.age + p.oy) * 0.002) * 0.3;
+        p.y += p.vy + Math.cos((p.age + p.ox) * 0.002) * 0.3;
+
+        if (p.x < 0 || p.x > width) p.vx *= -0.98;
+        if (p.y < 0 || p.y > height) p.vy *= -0.98;
+        p.x = Math.min(width - 2, Math.max(2, p.x));
+        p.y = Math.min(height - 2, Math.max(2, p.y));
+
+        const line = Math.min(1, pull + p.age / 3000);
+        const radius = 1.2 + pull * 2;
+        const alpha = pointer.down ? 0.7 : 0.5;
+        ctx.fillStyle = `hsla(${p.hue + line * 90}, 90%, 66%, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, radius, 0, TWO_PI);
+        ctx.fill();
+
+        if (dist < 70 && pull > 0) {
+          ctx.strokeStyle = `hsla(${(p.hue + 45) % 360}, 90%, 72%, ${pull * 0.45})`;
+          ctx.lineWidth = 0.6;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(pointer.x, pointer.y);
+          ctx.stroke();
+        }
+      }
+
+      for (let i = 1; i < points.length; i++) {
+        const a = points[i];
+        const b = points[i - 1];
+        const d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (d < 55) {
+          const t = 1 - d / 55;
+          ctx.strokeStyle = `rgba(141, 232, 255, ${t * 0.12})`;
+          ctx.lineWidth = 0.7;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
+      }
+
+      ctx.fillStyle = 'rgba(255,255,255,0.2)';
+      ctx.beginPath();
+      ctx.arc(pointer.x, pointer.y, 2, 0, TWO_PI);
+      ctx.fill();
+      statusEl.textContent = `status: ${running ? 'sewn' : 'quiet'} · points ${points.length} · age ${Math.round(points[0]?.age ?? 0)}`;
+
+      if (running) requestAnimationFrame(step);
+    }
+
+    function applyDensity(next) {
+      density = next;
+      densityOut.textContent = String(next);
+      reseedPoints();
+      syncUrl();
+    }
+
+    function init() {
+      const params = new URLSearchParams(location.search);
+      if (params.has('seed') && Number.isFinite(Number.parseInt(params.get('seed'), 16))) {
+        seed = Number.parseInt(params.get('seed'), 16) >>> 0;
+      } else {
+        seed = Math.floor(Math.random() * 0xffffffff) >>> 0;
+      }
+
+      const densityParam = Number(params.get('density'));
+      const cohesionParam = Number(params.get('cohesion'));
+      if (Number.isFinite(densityParam) && densityParam >= 120 && densityParam <= 420) {
+        density = densityParam;
+      }
+      if (Number.isFinite(cohesionParam) && cohesionParam >= 0.05 && cohesionParam <= 0.9) {
+        cohesion = cohesionParam;
+      }
+
+      densityInput.value = String(density);
+      cohesionInput.value = String(cohesion);
+      densityOut.textContent = String(density);
+      cohesionOut.textContent = cohesion.toFixed(2);
+
+      rng = makeRng(seed);
+      seedLine.textContent = `seed: ${seed.toString(16).padStart(8, '0')}`;
+      reseedPoints();
+      resize();
+      syncUrl();
+      step();
+    }
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('mousemove', (event) => {
+      pointer.x = event.clientX;
+      pointer.y = event.clientY;
+    });
+    window.addEventListener('mouseleave', () => {
+      pointer.x = width / 2;
+      pointer.y = height / 2;
+      pointer.down = false;
+    });
+    window.addEventListener('mousedown', () => {
+      pointer.down = true;
+      for (let i = 0; i < 4; i++) {
+        points.push({
+          x: pointer.x + (Math.random() - 0.5) * 20,
+          y: pointer.y + (Math.random() - 0.5) * 20,
+          ox: pointer.x,
+          oy: pointer.y,
+          vx: (Math.random() - 0.5) * 1.2,
+          vy: (Math.random() - 0.5) * 1.2,
+          age: 0,
+          life: 900,
+          hue: Math.floor(Math.random() * 360)
+        });
+      }
+      if (points.length > density * 2) points.length = density * 2;
+    });
+    window.addEventListener('mouseup', () => { pointer.down = false; });
+    window.addEventListener('touchmove', (event) => {
+      const t = event.touches[0];
+      if (!t) return;
+      pointer.x = t.clientX;
+      pointer.y = t.clientY;
+    }, { passive: true });
+
+    toggleBtn.addEventListener('click', () => {
+      running = !running;
+      toggleBtn.textContent = `Pulse: ${running ? 'on' : 'off'}`;
+      if (running) requestAnimationFrame(step);
+      statusEl.textContent = `status: ${running ? 'reknitting' : 'paused'}`;
+    });
+    reseatBtn.addEventListener('click', () => {
+      reseedPoints();
+      statusEl.textContent = 'status: reseated';
+    });
+    reseedBtn.addEventListener('click', reseed);
+    densityInput.addEventListener('input', (event) => applyDensity(Number(event.target.value)));
+    cohesionInput.addEventListener('input', (event) => {
+      cohesion = Number(event.target.value);
+      cohesionOut.textContent = cohesion.toFixed(2);
+      syncUrl();
+    });
+    copyBtn.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(location.href);
+      copyBtn.textContent = 'Copied';
+      setTimeout(() => (copyBtn.textContent = 'Copy scene link'), 900);
+    });
+    saveBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = `lumen-mosaic-${Date.now()}.png`;
+      link.click();
+    });
+
+    init();
+  </script>
+</body>
+</html>
